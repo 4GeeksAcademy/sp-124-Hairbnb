@@ -22,3 +22,17 @@ class User(db.Model):
             "phone": self.phone,
             "notes": self.notes,
         }
+        
+class Barbershop(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(nullable=False)
+    address: Mapped[str] = mapped_column(nullable=False)
+    phone: Mapped[int] = mapped_column(nullable=False)
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "address": self.address,
+            "phone": self.phone,
+        }

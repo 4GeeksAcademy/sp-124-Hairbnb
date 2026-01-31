@@ -115,7 +115,6 @@ export const UserForm = () => {
                     />
                 </div>
 
-                {/* Contraseña */}
                 <div className="col-12 col-md-6 col-lg-6">
                     <label className="form-label" htmlFor="password">Contraseña</label>
                     <input
@@ -150,7 +149,6 @@ export const UserForm = () => {
                 </div>
             </div>
 
-            {/* Botones */}
             <div className="mt-4 d-flex justify-content-around">
                 <button
                     type="submit"
