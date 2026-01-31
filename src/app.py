@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import db, User, Barbershop
+from api.models import db, User, Barbershop, Owner
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
@@ -200,6 +200,97 @@ def delete_barbershop(barbershop_id):
     db.session.delete(barbershop)
     db.session.commit()
     return jsonify({"msg": "Barberia eliminada correctamente"}), 200
+
+
+
+#ENDPOINTS DE DUEÑOS
+
+@app.route("/owners", methods=["GET"])
+def get_owners():
+    owners = Owner.query.all()
+    data = [owner.serialize() for owner in owners]
+    return jsonify(data), 200
+
+
+@app.route("/owners", methods=["POST"])
+def new_owner():
+    data = request.json
+    name = data.get("name")
+    email = data.get("email")
+    phone = data.get("phone")
+    password = data.get("password")
+    barbershop_id = data.get("barbershop_id")
+
+    # Validaciones básicas
+    if not name:
+        return jsonify({"msg": "Necesitas ingresar un nombre"}), 400
+    if not email:
+        return jsonify({"msg": "Necesitas ingresar un email"}), 400
+    if not phone:
+        return jsonify({"msg": "Necesitas ingresar un teléfono"}), 400
+    if not password:
+        return jsonify({"msg": "Necesitas ingresar una contraseña"}), 400
+    if not barbershop_id:
+        return jsonify({"msg": "Necesitas asignar una barbería"}), 400
+
+    # Verificar duplicados
+    if Owner.query.filter_by(email=email).first():
+        return jsonify({"msg": "Email ya registrado."}), 400
+    if Owner.query.filter_by(phone=phone).first():
+        return jsonify({"msg": "Teléfono ya registrado."}), 400
+
+    # Crear owner
+    new_owner = Owner(
+        name=name,
+        email=email,
+        phone=phone,
+        password=password,
+        barbershop_id=barbershop_id
+    )
+    db.session.add(new_owner)
+    db.session.commit()
+
+    return jsonify({"msg": "Dueño " + name + " creado"}), 201
+
+
+@app.route("/owners/<int:owner_id>", methods=["GET"])
+def get_single_owner(owner_id):
+    owner = Owner.query.get(owner_id)
+    if not owner:
+        return jsonify({"msg": "Dueño no encontrado"}), 404
+    return jsonify(owner.serialize()), 200
+
+
+@app.route("/owners/<int:owner_id>", methods=["PUT"])
+def edit_owner(owner_id):
+    owner = Owner.query.get(owner_id)
+    if not owner:
+        return jsonify({"msg": "Dueño no encontrado"}), 404
+
+    data = request.json
+
+    owner.name = data.get("name", owner.name)
+    owner.email = data.get("email", owner.email)
+    owner.phone = data.get("phone", owner.phone)
+    owner.password = data.get("password", owner.password)
+    owner.barbershop_id = data.get("barbershop_id", owner.barbershop_id)
+
+    db.session.commit()
+    return jsonify({"msg": "Dueño " + owner.name + " actualizado"}), 200
+
+
+@app.route("/owners/<int:owner_id>", methods=["DELETE"])
+def delete_owner(owner_id):
+    owner = Owner.query.get(owner_id)
+    if not owner:
+        return jsonify({"msg": "Dueño no encontrado"}), 404
+
+    db.session.delete(owner)
+    db.session.commit()
+    return jsonify({"msg": "Dueño " + owner.name + " eliminado correctamente"}), 200
+
+
+
 
 
 
