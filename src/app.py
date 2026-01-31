@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import db, User
+from api.models import db, User, Barbershop
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
@@ -56,7 +56,7 @@ def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code
 
 # generate sitemap with all your endpoints
-
+# ENDPOINTS DE USUARIOS
 @app.route("/users", methods=["GET"])
 def get_users():
     users = User.query.all()
@@ -132,6 +132,75 @@ def delete_user(user_id):
     db.session.delete(user)
     db.session.commit()
     return jsonify({"msg": "Usuario eliminado correctamente"}), 200
+
+
+#ENDPOINTS DE BARBERIAS
+@app.route("/barbershops", methods=["GET"])
+def get_barbershops():
+    barbershops = Barbershop.query.all()
+    data = [barbershop.serialize() for barbershop in barbershops]
+    return jsonify(data), 200
+
+@app.route("/barbershops", methods=["POST"])
+def new_barbershop():
+    data = request.json
+    name = data.get("name")
+    address = data.get("address")
+    phone = data.get("phone")
+    
+    existing_barbershop = Barbershop.query.filter_by(phone=phone).first()
+    if existing_barbershop:
+        return jsonify({"msg": "Telefono ya registrado."}), 400 #400, o 409 que indica conflicto?
+    
+    if not name:
+        return jsonify({"msg": "Necesitas ingresar un nombre"}), 400
+    if not address:
+        return jsonify({"msg": "Necesitas ingresar una dirección"}), 400
+    if not phone:
+        return jsonify({"msg": "Necesitas ingresar un teléfono"}), 400
+    
+    # Añadir excepción si el email ya se encuentra en el sistema
+    
+    new_barbershop = Barbershop(name=name, address=address, phone=phone,)
+    db.session.add(new_barbershop)
+    db.session.commit()
+
+    return jsonify({"msg":"Barbería "+ name + " creada"}), 201
+
+@app.route("/barbershops/<int:barbershop_id>", methods=["GET"])
+def get_single_barbershop(barbershop_id):
+    barbershop = Barbershop.query.get(barbershop_id)
+    if not barbershop:
+        return jsonify({"msg": "No encontrada"}) , 404
+    data = barbershop.serialize()
+
+    return jsonify(data), 200
+
+@app.route("/barbershops/<int:barbershop_id>", methods=["PUT"])
+def edit_barbershop(barbershop_id):
+    barbershop = Barbershop.query.get(barbershop_id)
+    if not barbershop:
+        return jsonify({"msg": "No encontrada"}) , 404
+    
+    data = request.json
+    
+    barbershop.name = data.get("name",barbershop.name)
+    barbershop.address = data.get("address",barbershop.address)
+    barbershop.phone = data.get("phone",barbershop.phone)
+    
+    db.session.commit()
+    return jsonify({"msg": "Barberia " + barbershop.name + " actualizada"}), 200
+
+@app.route("/barbershops/<int:barbershop_id>", methods=["DELETE"])
+def delete_barbershop(barbershop_id):
+    barbershop = Barbershop.query.get(barbershop_id)
+    if not barbershop:
+        return jsonify({"msg": "Barberia no encontrada"}), 404
+    
+    db.session.delete(barbershop)
+    db.session.commit()
+    return jsonify({"msg": "Barberia eliminada correctamente"}), 200
+
 
 
 @app.route('/')

@@ -9,6 +9,10 @@ import { Layout } from "./pages/Layout";
 import { Home } from "./pages/Home";
 import { Users } from "./pages/Users";
 import { UserForm } from "./pages/UserForm";
+import { Barbershops } from "./pages/Barbershops";
+import { BarbershopForm } from "./pages/BarbershopForm";
+
+
 
 export const router = createBrowserRouter(
     createRoutesFromElements(
@@ -25,6 +29,8 @@ export const router = createBrowserRouter(
         <Route path= "/" element={<Home />} />
         <Route path="/users" element={<Users />} />
         <Route path="/users_form" element={<UserForm />} />
+        <Route path="/barbershops" element={<Barbershops />} />
+        <Route path="/barbershops_form" element={<BarbershopForm />} />
       </Route>
     )
 );
