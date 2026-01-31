@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean
-from sqlalchemy.orm import Mapped, mapped_column
+from typing import List
+from sqlalchemy import String, Boolean, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 db = SQLAlchemy()
 
@@ -10,7 +11,7 @@ class User(db.Model):
     last_name: Mapped[str] = mapped_column(nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
     email: Mapped[str] = mapped_column(nullable=False, unique=True)
-    phone: Mapped[int] = mapped_column(nullable=False)
+    phone: Mapped[int] = mapped_column(nullable=False, unique=True)
     notes: Mapped[str] = mapped_column(nullable=True)
 
     def serialize(self):
@@ -27,7 +28,9 @@ class Barbershop(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(nullable=False)
     address: Mapped[str] = mapped_column(nullable=False)
-    phone: Mapped[int] = mapped_column(nullable=False)
+    phone: Mapped[int] = mapped_column(nullable=False, unique=True)
+    
+    owners: Mapped[List["Owner"]] = relationship(back_populates="barbershop")
     
     def serialize(self):
         return {
@@ -35,4 +38,24 @@ class Barbershop(db.Model):
             "name": self.name,
             "address": self.address,
             "phone": self.phone,
+        }
+        
+class Owner(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(nullable=False)
+    email: Mapped[str] = mapped_column(nullable=False, unique=True)
+    phone: Mapped[int] = mapped_column(nullable=False, unique=True)
+    password: Mapped[str] = mapped_column(nullable=False)
+    barbershop_id: Mapped[int] = mapped_column(ForeignKey("barbershop.id"))
+    
+    barbershop: Mapped["Barbershop"] = relationship(back_populates="owners")
+    
+    def serialize(self):
+        return{
+            "id": self.id,
+            "name": self.name,
+            "email": self.email,
+            "phone": self.phone,
+            "barbershop_id": self.barbershop_id,
+            "barbershop_name": self.barbershop.name if self.barbershop else None
         }

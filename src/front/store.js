@@ -1,10 +1,11 @@
 export const initialStore = () => {
   return {
     users: [],
-    barbershops: [],
-    barbershopsInfo: null,
     userInfo: null,
-    error: ""
+    barbershops: [],
+    barbershopInfo: null,
+    owners: [],
+    ownerInfo: null,
   };
 };
 
@@ -22,6 +23,11 @@ export default function storeReducer(store, action = {}) {
     case "set-barbershopInfo":
       return { ...store, barbershopInfo: action.payload };
 
+    case "set-owners":
+      return { ...store, owners: action.payload };
+
+    case "set-ownerInfo":
+      return { ...store, ownerInfo: action.payload };
     default:
       return store; 
   }
