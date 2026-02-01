@@ -15,6 +15,9 @@ import { Owners } from "./pages/Owners";
 import { OwnerForm } from "./pages/OwnerForm";
 import { Services } from "./pages/Services";
 import { ServiceForm } from "./pages/ServiceForm";
+import { Barbers } from "./pages/Barbers";
+import { BarberForm } from "./pages/BarberForm";
+
 
 
 
@@ -39,6 +42,8 @@ export const router = createBrowserRouter(
         <Route path="/owners_form" element={<OwnerForm />} />
         <Route path="/services" element={<Services />} />
         <Route path="/services_form" element={<ServiceForm />} />
+        <Route path="/barbers" element={<Barbers />} />
+        <Route path="/barbers_form" element={<BarberForm />} />
       </Route>
     )
 );
