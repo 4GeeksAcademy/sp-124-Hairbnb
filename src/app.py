@@ -6,11 +6,12 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import db, User, Barbershop, Owner, Service, Barber
+from api.models import db, User, Barbershop, Owner, Service, Barber, Schedule
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
 from flask_cors import CORS
+from datetime import datetime
 
 # from models import Person
 
@@ -428,7 +429,89 @@ def delete_barber(barber_id):
     return jsonify({"msg": "Barbero eliminado correctamente"}), 200
 
 
+# ENDPOINTS DE HORARIOS
 
+@app.route("/schedules", methods=["GET"])
+def get_schedule():
+    schedules = Schedule.query.all()
+    data = [schedule.serialize() for schedule in schedules]
+    return jsonify(data), 200
+
+@app.route("/schedules", methods=["POST"])
+def new_schedule():
+    data = request.json
+    barber_id = data.get("barber_id")
+    start_time = data.get("start_time")
+    end_time = data.get("end_time")
+
+    if not start_time:
+        return jsonify({"msg": "Necesitas indicar la hora de inicio"}), 400
+    if not end_time:
+        return jsonify({"msg": "Necesitas indicar la hora de fin"}), 400
+    if not barber_id:
+        return jsonify({"msg": "Necesitas indicar el barbero"}), 400
+
+
+    start_time_obj = datetime.strptime(start_time, "%H:%M").time()
+    end_time_obj = datetime.strptime(end_time, "%H:%M").time()
+    if end_time_obj <= start_time_obj:
+        return jsonify({"msg": "La hora de fin debe ser mayor que la de inicio"}), 400
+    
+    new_schedule = Schedule(
+        start_time=start_time_obj,
+        end_time=end_time_obj,
+        barber_id=barber_id
+    )
+    db.session.add(new_schedule)
+    db.session.commit()
+
+    return jsonify({"msg": f"Horario creado para el barbero {barber_id}"}), 201
+
+@app.route("/schedules/<int:schedule_id>", methods=["GET"])
+def get_single_schedule(schedule_id):
+    schedule = Schedule.query.get(schedule_id)
+    if not schedule:
+        return jsonify({"msg": "No encontrado"}) , 404
+    data = schedule.serialize()
+
+    return jsonify(data), 200
+
+@app.route("/schedules/<int:schedule_id>", methods=["PUT"])
+def edit_schedule(schedule_id):
+    schedule = Schedule.query.get(schedule_id)
+    if not schedule:
+        return jsonify({"msg": "Horario no encontrado"}), 404
+
+    data = request.json
+    barber_id = data.get("barber_id", schedule.barber_id)
+    start_time = data.get("start_time")
+    end_time = data.get("end_time")
+    
+    if start_time and end_time:
+        start_obj = datetime.strptime(start_time, "%H:%M").time()
+        end_obj = datetime.strptime(end_time, "%H:%M").time()
+        if end_obj <= start_obj:
+            return jsonify({"msg": "La hora de fin debe ser mayor que la de inicio"}), 400
+
+    if start_time:
+        schedule.start_time = datetime.strptime(start_time, "%H:%M").time()
+    if end_time:
+        schedule.end_time = datetime.strptime(end_time, "%H:%M").time()
+
+    schedule.barber_id = barber_id
+    db.session.commit()
+
+    return jsonify({"msg": f"Horario {schedule_id} actualizado correctamente"}), 200
+
+@app.route("/schedules/<int:schedule_id>", methods=["DELETE"])
+def delete_schedule(schedule_id):
+    schedule = Schedule.query.get(schedule_id)
+    if not schedule:
+        return jsonify({"msg": "Horario no encontrado"}), 404
+    
+    db.session.delete(schedule)
+    db.session.commit()
+    return jsonify({"msg": "Horario eliminado correctamente"}), 200
 
 
 

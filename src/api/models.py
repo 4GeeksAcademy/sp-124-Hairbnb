@@ -1,7 +1,9 @@
 from flask_sqlalchemy import SQLAlchemy
 from typing import List
 from sqlalchemy import String, Boolean, ForeignKey
+from sqlalchemy import Time
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from datetime import time, datetime
 
 db = SQLAlchemy()
 
@@ -95,13 +97,30 @@ class Barber(db.Model):
     barbershop_id: Mapped[int] = mapped_column(ForeignKey("barbershop.id"))
 
     barbershop: Mapped["Barbershop"] = relationship(back_populates="barbers")
+    schedules: Mapped[List["Schedule"]] = relationship(back_populates="barber")
 
     def serialize(self):
         return {
             "id": self.id,
             "name": self.name,
             "email": self.email,
-            "password": self.password,
             "barbershop_id": self.barbershop_id,
             "barbershop_name": self.barbershop.name if self.barbershop else None
+        }
+
+class Schedule(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    barber_id: Mapped[int] = mapped_column(ForeignKey("barber.id"))
+    start_time = mapped_column(Time, nullable=False)
+    end_time = mapped_column(Time, nullable=False)
+    barber: Mapped["Barber"] = relationship(back_populates="schedules")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "start_time": self.start_time.strftime("%H:%M") if self.start_time else None,
+            "end_time": self.end_time.strftime("%H:%M") if self.end_time else None,
+            "barber_id": self.barber_id,
+            "barber_name": self.barber.name if self.barber else None,
+            "barbershop_name": self.barber.barbershop.name if self.barber and self.barber.barbershop else None
         }
