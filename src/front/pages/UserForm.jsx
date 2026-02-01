@@ -126,16 +126,6 @@ export const UserForm = () => {
                     />
                 </div>
                 <div className="col-12 col-md-6 col-lg-6">
-                    <label className="form-label" htmlFor="notes">Notas</label>
-                    <textarea
-                        className="form-control"
-                        id="notes"
-                        name="notes"
-                        value={data.notes}
-                        onChange={handleChange}
-                    />
-                </div>
-                <div className="col-12 col-md-6 col-lg-6">
                     <label className="form-label" htmlFor="phone">Teléfono</label>
                     <input
                         className="form-control"
@@ -143,6 +133,16 @@ export const UserForm = () => {
                         name="phone"
                         type="number"
                         value={data.phone}
+                        onChange={handleChange}
+                    />
+                </div>
+                <div className="col-12 col-md-6 col-lg-6">
+                    <label className="form-label" htmlFor="notes">Notas</label>
+                    <textarea
+                        className="form-control"
+                        id="notes"
+                        name="notes"
+                        value={data.notes}
                         onChange={handleChange}
                     />
                 </div>
