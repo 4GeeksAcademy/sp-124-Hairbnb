@@ -31,6 +31,7 @@ class Barbershop(db.Model):
     phone: Mapped[int] = mapped_column(nullable=False, unique=True)
     
     owners: Mapped[List["Owner"]] = relationship(back_populates="barbershop")
+    services: Mapped[List["Service"]] = relationship(back_populates="barbershop")
     
     def serialize(self):
         return {
@@ -56,6 +57,25 @@ class Owner(db.Model):
             "name": self.name,
             "email": self.email,
             "phone": self.phone,
+            "barbershop_id": self.barbershop_id,
+            "barbershop_name": self.barbershop.name if self.barbershop else None
+        }
+        
+class Service(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(nullable=False)
+    duration: Mapped[int] = mapped_column(nullable=False)
+    price: Mapped[int] = mapped_column(nullable=False)
+    barbershop_id: Mapped[int] = mapped_column(ForeignKey("barbershop.id"))
+    
+    barbershop: Mapped["Barbershop"] = relationship(back_populates="services")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "duration": self.duration,
+            "price": self.price,
             "barbershop_id": self.barbershop_id,
             "barbershop_name": self.barbershop.name if self.barbershop else None
         }

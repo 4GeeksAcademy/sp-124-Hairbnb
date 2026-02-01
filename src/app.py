@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import db, User, Barbershop, Owner
+from api.models import db, User, Barbershop, Owner, Service
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
@@ -290,10 +290,87 @@ def delete_owner(owner_id):
     return jsonify({"msg": "Dueño " + owner.name + " eliminado correctamente"}), 200
 
 
+# ENDPOINTS DE SERVICIOS
+
+@app.route("/services", methods=["GET"])
+def get_services():
+    services = Service.query.all()
+    data = [service.serialize() for service in services]
+    return jsonify(data), 200
+
+@app.route("/services", methods=["POST"])
+def new_service():
+    data = request.json
+    name = data.get("name")
+    duration = data.get("duration")
+    price = data.get("price")
+    barbershop_id = data.get("barbershop_id")
+
+    if not name:
+        return jsonify({"msg": "Necesitas ingresar un nombre"}), 400
+    if not duration:
+        return jsonify({"msg": "Necesitas añadir su duración"}), 400
+    if not price:
+        return jsonify({"msg": "Necesitas indicar el precio"}), 400
+    if not barbershop_id:
+        return jsonify({"msg": "Necesitas ingresar una barbería"}), 400
+    
+    
+    new_service = Service(name=name, duration=duration, price=price, barbershop_id=barbershop_id)
+    db.session.add(new_service)
+    db.session.commit()
+
+    return jsonify({"msg":"Servicio "+ name + " creado"}), 201
+
+@app.route("/services/<int:service_id>", methods=["GET"])
+def get_single_service(service_id):
+    service = Service.query.get(service_id)
+    if not service:
+        return jsonify({"msg": "No encontrado"}) , 404
+    data = service.serialize()
+
+    return jsonify(data), 200
+
+@app.route("/services/<int:service_id>", methods=["PUT"])
+def edit_service(service_id):
+    service = Service.query.get(service_id)
+    if not service:
+        return jsonify({"msg": "No encontrado"}) , 404
+    
+    data = request.json
+    
+    service.name = data.get("name",service.name)
+    service.duration = data.get("duration",service.duration)
+    service.price = data.get("price",service.price)
+    service.barbershop_id = data.get("barbershop_id",service.barbershop_id)
+
+    
+    db.session.commit()
+    return jsonify({"msg": "Servicio " + service.name + " actualizado"}), 200
+
+@app.route("/services/<int:service_id>", methods=["DELETE"])
+def delete_service(service_id):
+    service = Service.query.get(service_id)
+    if not service:
+        return jsonify({"msg": "Servicio no encontrado"}), 404
+    
+    db.session.delete(service)
+    db.session.commit()
+    return jsonify({"msg": "Servicio eliminado correctamente"}), 200
 
 
 
 
+
+
+
+
+
+
+
+
+
+# NO TOCAR
 @app.route('/')
 def sitemap():
     if ENV == "development":

@@ -2,16 +2,15 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 
-export const OwnerForm = () => {
+export const ServiceForm = () => {
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
 
     const [data, setData] = useState({
         id: null,
         name: "",
-        email: "",
-        phone: "",
-        password: "",
+        duration: "",
+        price: "",
         barbershop_id: ""
     });
 
@@ -25,17 +24,16 @@ export const OwnerForm = () => {
     }, []);
 
     useEffect(() => {
-        if (store.ownerInfo) {
+        if (store.serviceInfo) {
             setData({
-                id: store.ownerInfo.id,
-                name: store.ownerInfo.name || "",
-                email: store.ownerInfo.email || "",
-                phone: store.ownerInfo.phone || "",
-                password: store.ownerInfo.password || "",
-                barbershop_id: store.ownerInfo.barbershop_id || ""
+                id: store.serviceInfo.id,
+                name: store.serviceInfo.name || "",
+                duration: store.serviceInfo.duration || "",
+                price: store.serviceInfo.price || "",
+                barbershop_id: store.serviceInfo.barbershop_id || ""
             });
         }
-    }, [store.ownerInfo]);
+    }, [store.serviceInfo]);
 
     const handleChange = (e) => {
         setData(prev => ({
@@ -49,8 +47,8 @@ export const OwnerForm = () => {
         const isEditing = !!data.id;
 
         const url = isEditing
-            ? `${import.meta.env.VITE_BACKEND_URL}/owners/${data.id}`
-            : `${import.meta.env.VITE_BACKEND_URL}/owners`;
+            ? `${import.meta.env.VITE_BACKEND_URL}/services/${data.id}`
+            : `${import.meta.env.VITE_BACKEND_URL}/services`;
 
         const method = isEditing ? "PUT" : "POST";
 
@@ -64,17 +62,17 @@ export const OwnerForm = () => {
             const result = await resp.json();
 
             dispatch({
-                type: "set-owners",
+                type: "set-services",
                 payload: isEditing
-                    ? store.owners.map(o => o.id === data.id ? result : o)
-                    : [...store.owners, result]
+                    ? store.services.map(s => s.id === data.id ? result : s)
+                    : [...store.services, result]
             });
 
-            dispatch({ type: "set-ownerInfo", payload: null });
-            navigate("/owners");
+            dispatch({ type: "set-serviceInfo", payload: null });
+            navigate("/services");
 
         } catch (error) {
-            console.error("Error guardando dueño:", error);
+            console.error("Error guardando servicio:", error);
         }
     };
 
@@ -82,7 +80,7 @@ export const OwnerForm = () => {
         <form className="mx-auto p-4" onSubmit={handleSubmit}>
             <div className="row g-3">
 
-                <div className="col-12 col-md-6">
+                <div className="col-sm-12 col-md-6 col-lg-4">
                     <label className="form-label" htmlFor="name">Nombre</label>
                     <input
                         className="form-control"
@@ -94,41 +92,36 @@ export const OwnerForm = () => {
                     />
                 </div>
 
-                <div className="col-12 col-md-6">
-                    <label className="form-label" htmlFor="email">Correo</label>
-                    <input
-                        className="form-control"
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={data.email}
-                        onChange={handleChange}
-                    />
+                <div className="col-sm-12 col-md-6 col-lg-4">
+                    <label className="form-label" htmlFor="duration">Duración</label>
+                    <div className="input-group">
+                        <input
+                            className="form-control"
+                            id="duration"
+                            name="duration"
+                            type="number"
+                            value={data.duration}
+                            onChange={handleChange}
+                        />
+                        <div className="input-group-text"><span className="fa-regular fa-clock"></span></div>
+                    </div>
                 </div>
 
-                <div className="col-12 col-md-6">
-                    <label className="form-label" htmlFor="phone">Teléfono</label>
+                <div className="col-sm-12 col-md-6 col-lg-4">
+                    <label className="form-label" htmlFor="price">Precio</label>
+                    <div className="input-group">
                     <input
                         className="form-control"
-                        id="phone"
-                        name="phone"
-                        type="text"
-                        value={data.phone}
+                        id="price"
+                        name="price"
+                        type="number"
+                        value={data.price}
                         onChange={handleChange}
                     />
+                    <div className="input-group-text"><span className="fa-solid fa-money-bill-1"></span></div>
+                    </div>
                 </div>
 
-                <div className="col-12 col-md-6">
-                    <label className="form-label" htmlFor="password">Contraseña</label>
-                    <input
-                        className="form-control"
-                        id="password"
-                        name="password"
-                        type="password"
-                        value={data.password}
-                        onChange={handleChange}
-                    />
-                </div>
 
                 <div className="col-12 col-md-6 mx-auto">
                     <label className="form-label text-center" htmlFor="barbershop_id">Barbería</label>
@@ -147,14 +140,14 @@ export const OwnerForm = () => {
                 </div>
             </div>
 
-            <div className="mt-5 d-flex justify-content-around">
+            <div className="mt-4 d-flex justify-content-around">
                 <button
                     type="submit"
                     className="btn btn-outline-secondary mx-3 w-25"
                 >
                     {data.id ? "Actualizar" : "Crear"}
                 </button>
-                <Link to="/owners" className="btn btn-secondary mx-3 w-25">Volver</Link>
+                <Link to="/services" className="btn btn-secondary mx-3 w-25">Volver</Link>
             </div>
         </form>
     );

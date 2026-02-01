@@ -9,9 +9,17 @@ export const Home = () => {
 		<div className="text-center mt-5">
 			<img src="/public/Logo-HBNB-completo.png" width="20%"></img>
 			<p className="display-6 m-4">Bienvenido a la base de datos de Hairbnb</p>
-			<button type="button" className="btn btn-outline-secondary m-2" onClick={() => navigate("/users")}>Sección de usuarios</button>
-			<button type="button" className="btn btn-outline-secondary m-2" onClick={() => navigate("/owners")}>Sección de dueños</button>
-			<button type="button" className="btn btn-outline-secondary m-2" onClick={() => navigate("/barbershops")}>Sección de barberías</button>
+			<div className="mx-5 my-5">
+				<button type="button" className="btn btn-outline-secondary m-2" onClick={() => navigate("/users")}>Sección de usuarios</button>
+				<button type="button" className="btn btn-outline-secondary m-2" onClick={() => navigate("/owners")}>Sección de dueños</button>
+				<button type="button" className="btn btn-outline-secondary m-2" onClick={() => navigate("/barbershops")}>Sección de barberías</button>
+			</div>
+
+			<hr className="m-auto w-50" />
+
+			<div className="mx-5 my-5">
+				<button type="button" className="btn btn-outline-secondary m-2" onClick={() => navigate("/services")}>Sección de servicios</button>
+			</div>
 		</div>
 	);
 }; 
