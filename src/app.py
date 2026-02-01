@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import db, User, Barbershop, Owner, Service
+from api.models import db, User, Barbershop, Owner, Service, Barber
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
@@ -358,6 +358,74 @@ def delete_service(service_id):
     db.session.commit()
     return jsonify({"msg": "Servicio eliminado correctamente"}), 200
 
+
+# ENDPOINTS DE BARBEROS
+
+@app.route("/barbers", methods=["GET"])
+def get_barber():
+    barbers = Barber.query.all()
+    data = [barber.serialize() for barber in barbers]
+    return jsonify(data), 200
+
+@app.route("/barber", methods=["POST"])
+def new_barber():
+    data = request.json
+    name = data.get("name")
+    email = data.get("email")
+    password = data.get("password")
+    barbershop_id = data.get("barbershop_id")
+
+    if not name:
+        return jsonify({"msg": "Necesitas ingresar un nombre"}), 400
+    if not email:
+        return jsonify({"msg": "Necesitas añadir un email"}), 400
+    if not password:
+        return jsonify({"msg": "Necesitas indicar una contraseña"}), 400
+    if not barbershop_id:
+        return jsonify({"msg": "Necesitas ingresar una barbería"}), 400
+    
+    
+    new_barber = Barber(name=name, email=email, password=password, barbershop_id=barbershop_id)
+    db.session.add(new_barber)
+    db.session.commit()
+
+    return jsonify({"msg":"Barbero "+ name + " creado"}), 201
+
+@app.route("/barbers/<int:barber_id>", methods=["GET"])
+def get_single_barber(barber_id):
+    barber = Barber.query.get(barber_id)
+    if not barber:
+        return jsonify({"msg": "No encontrado"}) , 404
+    data = barber.serialize()
+
+    return jsonify(data), 200
+
+@app.route("/barbers/<int:barber_id>", methods=["PUT"])
+def edit_barber(barber_id):
+    barber = Barber.query.get(barber_id)
+    if not barber:
+        return jsonify({"msg": "No encontrado"}) , 404
+    
+    data = request.json
+    
+    barber.name = data.get("name",barber.name)
+    barber.email = data.get("email",barber.email)
+    barber.password = data.get("password",barber.password)
+    barber.barbershop_id = data.get("barbershop_id",barber.barbershop_id)
+
+    
+    db.session.commit()
+    return jsonify({"msg": "Barbero " + barber.name + " actualizado"}), 200
+
+@app.route("/barbers/<int:barber_id>", methods=["DELETE"])
+def delete_barber(barber_id):
+    barber = Barber.query.get(barber_id)
+    if not barber:
+        return jsonify({"msg": "Barbero no encontrado"}), 404
+    
+    db.session.delete(barber)
+    db.session.commit()
+    return jsonify({"msg": "Barbero eliminado correctamente"}), 200
 
 
 
