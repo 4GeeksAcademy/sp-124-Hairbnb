@@ -16,6 +16,8 @@ export const BarberForm = () => {
 
     const [barbershops, setBarbershops] = useState([]);
 
+    const isEditing = !!data.id;
+
     useEffect(() => {
         fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`)
             .then(resp => resp.json())
@@ -130,8 +132,8 @@ export const BarberForm = () => {
                         id="password"
                         name="password"
                         type="password"
+                        placeholder={isEditing ? "Solo rellenar en caso de querer editarla" : ""}
                         value={data.password}
-                        placeholder="Solo rellenar si se quiere cambiar"
                         onChange={handleChange}
                     />
                 </div>
@@ -144,7 +146,7 @@ export const BarberForm = () => {
                         name="barbershop_id"
                         value={data.barbershop_id}
                         onChange={handleChange}
-                         required
+                        required
                     >
                         <option value="">Selecciona una barbería</option>
                         {barbershops.map(b => (
