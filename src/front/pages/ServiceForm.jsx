@@ -61,6 +61,12 @@ export const ServiceForm = () => {
 
             const result = await resp.json();
 
+            if (result.message) {
+                dispatch({ type: "set-message", payload: result.message });
+            }
+
+            if (!resp.ok) return;
+
             dispatch({
                 type: "set-services",
                 payload: isEditing
@@ -69,10 +75,14 @@ export const ServiceForm = () => {
             });
 
             dispatch({ type: "set-serviceInfo", payload: null });
-            navigate("/services");
+
+            setTimeout(() => navigate("/services"), 1200);
 
         } catch (error) {
-            console.error("Error guardando servicio:", error);
+            dispatch({
+                type: "set-message",
+                payload: { type: "error", msg: "Error de conexión con el servidor" }
+            });
         }
     };
 
@@ -110,15 +120,15 @@ export const ServiceForm = () => {
                 <div className="col-sm-12 col-md-6 col-lg-4">
                     <label className="form-label" htmlFor="price">Precio</label>
                     <div className="input-group">
-                    <input
-                        className="form-control"
-                        id="price"
-                        name="price"
-                        type="number"
-                        value={data.price}
-                        onChange={handleChange}
-                    />
-                    <div className="input-group-text"><span className="fa-solid fa-money-bill-1"></span></div>
+                        <input
+                            className="form-control"
+                            id="price"
+                            name="price"
+                            type="number"
+                            value={data.price}
+                            onChange={handleChange}
+                        />
+                        <div className="input-group-text"><span className="fa-solid fa-money-bill-1"></span></div>
                     </div>
                 </div>
 

@@ -10,7 +10,6 @@ export const BarberForm = () => {
         id: null,
         name: "",
         email: "",
-        phone: "",
         password: "",
         barbershop_id: ""
     });
@@ -30,7 +29,7 @@ export const BarberForm = () => {
                 id: store.barberInfo.id,
                 name: store.barberInfo.name || "",
                 email: store.barberInfo.email || "",
-                password: store.barberInfo.password || "",
+                password: "",
                 barbershop_id: store.barberInfo.barbershop_id || ""
             });
         }
@@ -45,6 +44,7 @@ export const BarberForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         const isEditing = !!data.id;
 
         const url = isEditing
@@ -62,23 +62,41 @@ export const BarberForm = () => {
 
             const result = await resp.json();
 
+            if (result.message) {
+                dispatch({
+                    type: "set-message",
+                    payload: result.message
+                });
+            }
+
+            if (!resp.ok) return;
+
             dispatch({
                 type: "set-barbers",
-                payload: store.barbers.map(b => b.id === data.id ? result : b)
+                payload: isEditing
+                    ? store.barbers.map(b => b.id === data.id ? result : b)
+                    : [...store.barbers, result]
             });
 
             dispatch({ type: "set-barberInfo", payload: null });
+
             navigate("/barbers");
 
         } catch (error) {
-            console.error("Error guardando barbero:", error);
+            dispatch({
+                type: "set-message",
+                payload: {
+                    type: "error",
+                    msg: "Error de conexión con el servidor"
+                }
+            });
         }
     };
+
 
     return (
         <form className="mx-auto p-4" onSubmit={handleSubmit}>
             <div className="row g-3">
-
                 <div className="col-12 col-md-6">
                     <label className="form-label" htmlFor="name">Nombre</label>
                     <input
@@ -88,6 +106,7 @@ export const BarberForm = () => {
                         type="text"
                         value={data.name}
                         onChange={handleChange}
+                        required
                     />
                 </div>
 
@@ -100,6 +119,7 @@ export const BarberForm = () => {
                         type="email"
                         value={data.email}
                         onChange={handleChange}
+                        required
                     />
                 </div>
 
@@ -111,6 +131,7 @@ export const BarberForm = () => {
                         name="password"
                         type="password"
                         value={data.password}
+                        placeholder="Solo rellenar si se quiere cambiar"
                         onChange={handleChange}
                     />
                 </div>
@@ -123,6 +144,7 @@ export const BarberForm = () => {
                         name="barbershop_id"
                         value={data.barbershop_id}
                         onChange={handleChange}
+                         required
                     >
                         <option value="">Selecciona una barbería</option>
                         {barbershops.map(b => (
@@ -133,10 +155,7 @@ export const BarberForm = () => {
             </div>
 
             <div className="mt-5 d-flex justify-content-around">
-                <button
-                    type="submit"
-                    className="btn btn-outline-secondary mx-3 w-25"
-                >
+                <button type="submit" className="btn btn-outline-secondary mx-3 w-25">
                     {data.id ? "Actualizar" : "Crear"}
                 </button>
                 <Link to="/barbers" className="btn btn-secondary mx-3 w-25">Volver</Link>

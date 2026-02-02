@@ -31,7 +31,7 @@ export const OwnerForm = () => {
                 name: store.ownerInfo.name || "",
                 email: store.ownerInfo.email || "",
                 phone: store.ownerInfo.phone || "",
-                password: store.ownerInfo.password || "",
+                password: "",
                 barbershop_id: store.ownerInfo.barbershop_id || ""
             });
         }
@@ -46,12 +46,11 @@ export const OwnerForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const isEditing = !!data.id;
 
+        const isEditing = !!data.id;
         const url = isEditing
             ? `${import.meta.env.VITE_BACKEND_URL}/owners/${data.id}`
             : `${import.meta.env.VITE_BACKEND_URL}/owners`;
-
         const method = isEditing ? "PUT" : "POST";
 
         try {
@@ -63,6 +62,14 @@ export const OwnerForm = () => {
 
             const result = await resp.json();
 
+            if (result.message) {
+                dispatch({ type: "set-message", payload: result.message });
+
+                setTimeout(() => dispatch({ type: "set-message", payload: null }), 3000);
+            }
+
+            if (!resp.ok) return;
+
             dispatch({
                 type: "set-owners",
                 payload: isEditing
@@ -71,17 +78,23 @@ export const OwnerForm = () => {
             });
 
             dispatch({ type: "set-ownerInfo", payload: null });
-            navigate("/owners");
+
+            setTimeout(() => navigate("/owners"), 1200);
 
         } catch (error) {
-            console.error("Error guardando dueño:", error);
+            dispatch({
+                type: "set-message",
+                payload: { type: "error", msg: "Error de conexión con el servidor" }
+            });
+
+            setTimeout(() => dispatch({ type: "set-message", payload: null }), 3000);
         }
     };
+
 
     return (
         <form className="mx-auto p-4" onSubmit={handleSubmit}>
             <div className="row g-3">
-
                 <div className="col-12 col-md-6">
                     <label className="form-label" htmlFor="name">Nombre</label>
                     <input
@@ -127,6 +140,7 @@ export const OwnerForm = () => {
                         type="password"
                         value={data.password}
                         onChange={handleChange}
+                        placeholder={data.id ? "Dejar vacío para no cambiar" : ""}
                     />
                 </div>
 

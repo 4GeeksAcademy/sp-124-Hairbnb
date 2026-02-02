@@ -1,6 +1,9 @@
 export const initialStore = () => {
   return {
-    message: null,
+    message:{
+              type: "",
+              msg: ""
+            },
     users: [],
     userInfo: null,
     barbershops: [],
@@ -18,6 +21,9 @@ export const initialStore = () => {
 
 export default function storeReducer(store, action = {}) {
   switch (action.type) {
+    case "set-message":
+      return { ... store, message: action.payload };
+
     case "set-users":
       return { ...store, users: action.payload };
 
