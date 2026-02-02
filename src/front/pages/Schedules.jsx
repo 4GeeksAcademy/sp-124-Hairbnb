@@ -21,16 +21,17 @@ export const Schedules = () => {
         if (!confirmar) return;
 
         try {
-            const response = await fetch(
-                `${import.meta.env.VITE_BACKEND_URL}/schedules/${id}`,
-                { method: "DELETE" }
-            );
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules/${id}`, {
+                method: "DELETE"
+            });
 
-            if (!response.ok) {
-                const text = await response.text();
-                console.error("Error al eliminar horario:", text);
-                return;
+            const result = await response.json();
+
+            if (result.message) {
+                dispatch({ type: "set-message", payload: result.message });
             }
+
+            if (!response.ok) return;
 
             dispatch({
                 type: "set-schedules",
@@ -38,9 +39,13 @@ export const Schedules = () => {
             });
 
         } catch (error) {
-            console.error("Error al eliminar horario:", error);
+            dispatch({
+                type: "set-message",
+                payload: { type: "error", msg: "Error de conexión con el servidor" }
+            });
         }
     };
+
 
     return (
         <div className="container">
@@ -50,7 +55,6 @@ export const Schedules = () => {
                     <button type="button" className="btn btn-outline-secondary mb-2">Añadir nuevo horario</button>
                 </Link>
             </div>
-
             <div className="row g-3">
                 {store.schedules.map(schedule => (
                     <div className="col-12 col-lg-6" key={schedule.id}>

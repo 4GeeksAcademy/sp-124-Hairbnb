@@ -2,8 +2,8 @@
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-import storeReducer from "../store";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+
 
 export const Barbershops = () => {
     // Access the global state and dispatch function using the useGlobalReducer hook.
@@ -20,30 +20,42 @@ export const Barbershops = () => {
     }, []);
 
     const deleteBarbershop = async (id) => {
-        const confirmar = window.confirm("¿Deseas eliminar esta barberia?");
+        const confirmar = window.confirm("¿Deseas eliminar esta barbería?");
         if (!confirmar) return;
 
         try {
-            const response = await fetch(
+            const resp = await fetch(
                 `${import.meta.env.VITE_BACKEND_URL}/barbershops/${id}`,
                 { method: "DELETE" }
             );
 
-            if (!response.ok) {
-                const text = await response.text();
-                console.error("Error al eliminar barberia:", text);
-                return;
+            const result = await resp.json();
+
+            if (result.message) {
+                dispatch({
+                    type: "set-message",
+                    payload: result.message
+                });
             }
+
+            if (!resp.ok) return;
 
             dispatch({
                 type: "set-barbershops",
-                payload: store.barbershops.filter(barbershop => barbershop.id !== id)
+                payload: store.barbershops.filter(b => b.id !== id)
             });
 
         } catch (error) {
-            console.error("Error al eliminar barberia:", error);
+            dispatch({
+                type: "set-message",
+                payload: {
+                    type: "error",
+                    msg: "Error de conexión con el servidor"
+                }
+            });
         }
     };
+
 
     return (
         <>

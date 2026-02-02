@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 
 export const Services = () => {
     const navigate = useNavigate();
@@ -26,9 +26,13 @@ export const Services = () => {
                 { method: "DELETE" }
             );
 
+            const result = await response.json();
+
             if (!response.ok) {
-                const text = await response.text();
-                console.error("Error al eliminar servicio:", text);
+                dispatch({
+                    type: "set-message",
+                    payload: result.message || { type: "error", msg: "Error al eliminar servicio" }
+                });
                 return;
             }
 
@@ -37,10 +41,19 @@ export const Services = () => {
                 payload: store.services.filter(service => service.id !== id)
             });
 
+            dispatch({
+                type: "set-message",
+                payload: result.message || { type: "success", msg: "Servicio eliminado correctamente" }
+            });
+
         } catch (error) {
-            console.error("Error al eliminar servicio:", error);
+            dispatch({
+                type: "set-message",
+                payload: { type: "error", msg: "Error de conexión con el servidor" }
+            });
         }
     };
+
 
     return (
         <div className="container">
@@ -50,7 +63,6 @@ export const Services = () => {
                     <button type="button" className="btn btn-outline-secondary mb-2">Añadir nuevo servicio</button>
                 </Link>
             </div>
-
             <div className="row g-3">
                 {store.services.map(service => (
                     <div className="col-12 col-lg-6" key={service.id}>

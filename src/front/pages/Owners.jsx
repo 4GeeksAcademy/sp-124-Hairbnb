@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 
 export const Owners = () => {
     const navigate = useNavigate();
@@ -17,30 +17,31 @@ export const Owners = () => {
     }, []);
 
     const deleteOwner = async (id) => {
-        const confirmar = window.confirm("¿Deseas eliminar este dueño?");
-        if (!confirmar) return;
+    const confirmar = window.confirm("¿Deseas eliminar este dueño?");
+    if (!confirmar) return;
 
-        try {
-            const response = await fetch(
-                `${import.meta.env.VITE_BACKEND_URL}/owners/${id}`,
-                { method: "DELETE" }
-            );
+    try {
+        const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/owners/${id}`, { method: "DELETE" });
+        const result = await resp.json();
 
-            if (!response.ok) {
-                const text = await response.text();
-                console.error("Error al eliminar dueño:", text);
-                return;
-            }
-
-            dispatch({
-                type: "set-owners",
-                payload: store.owners.filter(owner => owner.id !== id)
-            });
-
-        } catch (error) {
-            console.error("Error al eliminar dueño:", error);
+        if (result.message) {
+            dispatch({ type: "set-message", payload: result.message });
         }
-    };
+
+        if (!resp.ok) return;
+
+        dispatch({
+            type: "set-owners",
+            payload: store.owners.filter(o => o.id !== id)
+        });
+
+    } catch (error) {
+        dispatch({
+            type: "set-message",
+            payload: { type: "error", msg: "Error de conexión con el servidor" }
+        });
+    }
+};
 
     return (
         <div className="container">
@@ -50,7 +51,6 @@ export const Owners = () => {
                     <button type="button" className="btn btn-outline-secondary mb-2">Añadir nuevo dueño</button>
                 </Link>
             </div>
-
             <div className="row g-3">
                 {store.owners.map(owner => (
                     <div className="col-12 col-lg-6" key={owner.id}>

@@ -14,7 +14,7 @@ class User(db.Model):
     last_name: Mapped[str] = mapped_column(nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
     email: Mapped[str] = mapped_column(nullable=False, unique=True)
-    phone: Mapped[int] = mapped_column(nullable=False, unique=True)
+    phone: Mapped[str] = mapped_column(nullable=False, unique=True)
     notes: Mapped[str] = mapped_column(nullable=True)
 
     def serialize(self):
@@ -32,7 +32,7 @@ class Barbershop(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(nullable=False)
     address: Mapped[str] = mapped_column(nullable=False)
-    phone: Mapped[int] = mapped_column(nullable=False, unique=True)
+    phone: Mapped[str] = mapped_column(nullable=False, unique=True)
 
     owners: Mapped[List["Owner"]] = relationship(back_populates="barbershop")
     services: Mapped[List["Service"]] = relationship(
@@ -52,7 +52,7 @@ class Owner(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(nullable=False)
     email: Mapped[str] = mapped_column(nullable=False, unique=True)
-    phone: Mapped[int] = mapped_column(nullable=False, unique=True)
+    phone: Mapped[str] = mapped_column(nullable=False, unique=True)
     password: Mapped[str] = mapped_column(nullable=False)
     barbershop_id: Mapped[int] = mapped_column(ForeignKey("barbershop.id"))
 
@@ -97,7 +97,10 @@ class Barber(db.Model):
     barbershop_id: Mapped[int] = mapped_column(ForeignKey("barbershop.id"))
 
     barbershop: Mapped["Barbershop"] = relationship(back_populates="barbers")
-    schedules: Mapped[List["Schedule"]] = relationship(back_populates="barber")
+
+    schedules: Mapped[List["Schedule"]] = relationship(
+        "Schedule", back_populates="barber", cascade="all, delete-orphan"
+    )
 
     def serialize(self):
         return {
@@ -108,11 +111,13 @@ class Barber(db.Model):
             "barbershop_name": self.barbershop.name if self.barbershop else None
         }
 
+
 class Schedule(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
-    barber_id: Mapped[int] = mapped_column(ForeignKey("barber.id"))
-    start_time = mapped_column(Time, nullable=False)
-    end_time = mapped_column(Time, nullable=False)
+    barber_id: Mapped[int] = mapped_column(ForeignKey("barber.id"), nullable=False)
+    start_time: Mapped[time] = mapped_column(Time, nullable=False)
+    end_time: Mapped[time] = mapped_column(Time, nullable=False)
+
     barber: Mapped["Barber"] = relationship(back_populates="schedules")
 
     def serialize(self):

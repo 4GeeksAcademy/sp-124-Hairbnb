@@ -36,43 +36,53 @@ export const UserForm = () => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+    e.preventDefault();
 
-        const isEditing = !!data.id;
+    const isEditing = !!data.id;
 
-        const url = isEditing
-            ? `${import.meta.env.VITE_BACKEND_URL}/users/${data.id}`
-            : `${import.meta.env.VITE_BACKEND_URL}/users`;
+    const url = isEditing
+        ? `${import.meta.env.VITE_BACKEND_URL}/users/${data.id}`
+        : `${import.meta.env.VITE_BACKEND_URL}/users`;
 
-        const method = isEditing ? "PUT" : "POST";
+    const method = isEditing ? "PUT" : "POST";
 
-        try {
-            const resp = await fetch(url, {
-                method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            });
+    try {
+        const resp = await fetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
 
-            const result = await resp.json();
+        const result = await resp.json();
 
+        if (result.message) {
             dispatch({
-                type: "set-users",
-                payload: isEditing
-                    ? store.users.map(u => u.id === data.id ? result : u)
-                    : [...store.users, result]
+                type: "set-message",
+                payload: result.message
             });
-
-            dispatch({
-                type: "set-userInfo",
-                payload: null
-            });
-
-            navigate("/users");
-
-        } catch (error) {
-            console.error("Error guardando usuario:", error);
         }
-    };
+
+        if (!resp.ok) return;
+
+        dispatch({
+            type: "set-users",
+            payload: isEditing
+                ? store.users.map(u => u.id === data.id ? result : u)
+                : [...store.users, result]
+        });
+
+        dispatch({ type: "set-userInfo", payload: null });
+
+        setTimeout(() => navigate("/users"), 1200);
+
+    } catch (error) {
+        dispatch({
+            type: "set-message",
+            payload: { type: "error", msg: "Error de conexión con el servidor" }
+        });
+    }
+};
+
 
     return (
         <form className="mx-auto p-4" onSubmit={handleSubmit}>
@@ -86,6 +96,7 @@ export const UserForm = () => {
                         value={data.name}
                         type="text"
                         onChange={handleChange}
+                         required
                     />
                 </div>
 
@@ -98,6 +109,7 @@ export const UserForm = () => {
                         value={data.last_name}
                         type="text"
                         onChange={handleChange}
+                        required
                     />
                 </div>
 
@@ -111,6 +123,7 @@ export const UserForm = () => {
                         value={data.email}
                         type="email"
                         onChange={handleChange}
+                        required
                     />
                 </div>
 
@@ -123,6 +136,7 @@ export const UserForm = () => {
                         type="password"
                         value={data.password}
                         onChange={handleChange}
+                        placeholder="Sólo escribir si se quiere cambiar"
                     />
                 </div>
                 <div className="col-12 col-md-6 col-lg-6">
@@ -134,6 +148,7 @@ export const UserForm = () => {
                         type="number"
                         value={data.phone}
                         onChange={handleChange}
+                        required
                     />
                 </div>
                 <div className="col-12 col-md-6 col-lg-6">

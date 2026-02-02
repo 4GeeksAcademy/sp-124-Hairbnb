@@ -1,7 +1,6 @@
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 
 export const Barbers = () => {
     const navigate = useNavigate();
@@ -10,9 +9,7 @@ export const Barbers = () => {
     useEffect(() => {
         fetch(`${import.meta.env.VITE_BACKEND_URL}/barbers`)
             .then(resp => resp.json())
-            .then(data => {
-                dispatch({ type: "set-barbers", payload: data });
-            })
+            .then(data => dispatch({ type: "set-barbers", payload: data }))
             .catch(err => console.error(err));
     }, []);
 
@@ -21,16 +18,21 @@ export const Barbers = () => {
         if (!confirmar) return;
 
         try {
-            const response = await fetch(
+            const resp = await fetch(
                 `${import.meta.env.VITE_BACKEND_URL}/barbers/${id}`,
                 { method: "DELETE" }
             );
 
-            if (!response.ok) {
-                const text = await response.text();
-                console.error("Error al eliminar barbero:", text);
-                return;
+            const result = await resp.json();
+
+            if (result.message) {
+                dispatch({
+                    type: "set-message",
+                    payload: result.message
+                });
             }
+
+            if (!resp.ok) return;
 
             dispatch({
                 type: "set-barbers",
@@ -38,9 +40,16 @@ export const Barbers = () => {
             });
 
         } catch (error) {
-            console.error("Error al eliminar barbero:", error);
+            dispatch({
+                type: "set-message",
+                payload: {
+                    type: "error",
+                    msg: "Error de conexión con el servidor"
+                }
+            });
         }
     };
+
 
     return (
         <div className="container">
@@ -50,7 +59,6 @@ export const Barbers = () => {
                     <button type="button" className="btn btn-outline-secondary mb-2">Añadir nuevo barbero</button>
                 </Link>
             </div>
-
             <div className="row g-3">
                 {store.barbers.map(barber => (
                     <div className="col-12 col-lg-6" key={barber.id}>

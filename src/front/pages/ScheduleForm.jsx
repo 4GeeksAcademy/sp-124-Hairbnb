@@ -59,6 +59,12 @@ export const ScheduleForm = () => {
 
             const result = await resp.json();
 
+            if (result.message) {
+                dispatch({ type: "set-message", payload: result.message });
+            }
+
+            if (!resp.ok) return;
+
             dispatch({
                 type: "set-schedules",
                 payload: isEditing
@@ -67,12 +73,17 @@ export const ScheduleForm = () => {
             });
 
             dispatch({ type: "set-scheduleInfo", payload: null });
-            navigate("/schedules");
+
+            setTimeout(() => navigate("/schedules"), 1200);
 
         } catch (error) {
-            console.error("Error guardando horario:", error);
+            dispatch({
+                type: "set-message",
+                payload: { type: "error", msg: "Error de conexión con el servidor" }
+            });
         }
     };
+
 
     return (
         <form className="mx-auto p-4" onSubmit={handleSubmit}>
@@ -112,7 +123,7 @@ export const ScheduleForm = () => {
                         id="end_time"
                         name="end_time"
                         type="time"
-                        value={data.email}
+                        value={data.end_time}
                         onChange={handleChange}
                     />
                 </div>

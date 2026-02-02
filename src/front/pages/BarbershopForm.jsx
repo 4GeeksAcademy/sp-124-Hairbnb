@@ -51,6 +51,15 @@ export const BarbershopForm = () => {
 
             const result = await resp.json();
 
+            if (result.message) {
+                dispatch({
+                    type: "set-message",
+                    payload: result.message
+                });
+            }
+
+            if (!resp.ok) return;
+
             dispatch({
                 type: "set-barbershops",
                 payload: isEditing
@@ -58,15 +67,22 @@ export const BarbershopForm = () => {
                     : [...store.barbershops, result]
             });
 
-            dispatch({
-                type: "set-barbershopInfo",
-                payload: null
-            });
+            dispatch({ type: "set-barbershopInfo", payload: null });
+
             navigate("/barbershops");
+
         } catch (error) {
-            console.error("Error guardando barberia:", error);
+            dispatch({
+                type: "set-message",
+                payload: {
+                    type: "error",
+                    msg: "Error de conexión con el servidor"
+                }
+            });
+
         }
     };
+
 
     return (
         <form className="mx-auto p-4" onSubmit={handleSubmit}>
@@ -104,7 +120,7 @@ export const BarbershopForm = () => {
                         type="text"
                         onChange={handleChange}
                     />
-                </div> 
+                </div>
             </div>
 
             <div className="mt-4 d-flex justify-content-around">

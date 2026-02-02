@@ -2,8 +2,7 @@
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-import storeReducer from "../store";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 
 export const Users = () => {
   // Access the global state and dispatch function using the useGlobalReducer hook.
@@ -14,6 +13,7 @@ export const Users = () => {
     fetch(`${import.meta.env.VITE_BACKEND_URL}/users`)
       .then(resp => resp.json())
       .then(data => {
+        console.log(data)
         dispatch({ type: "set-users", payload: data });
       })
       .catch(err => console.error(err));
@@ -29,11 +29,16 @@ export const Users = () => {
         { method: "DELETE" }
       );
 
-      if (!response.ok) {
-        const text = await response.text();
-        console.error("Error al eliminar usuario:", text);
-        return;
+      const result = await response.json();
+
+      if (result.message) {
+        dispatch({
+          type: "set-message",
+          payload: result.message
+        });
       }
+
+      if (!response.ok) return;
 
       dispatch({
         type: "set-users",
@@ -41,9 +46,13 @@ export const Users = () => {
       });
 
     } catch (error) {
-      console.error("Error al eliminar usuario:", error);
+      dispatch({
+        type: "set-message",
+        payload: { type: "error", msg: "Error de conexión con el servidor" }
+      });
     }
   };
+
 
   return (
     <>
@@ -55,6 +64,7 @@ export const Users = () => {
           </Link>
         </div>
         <div className="row g-3">
+
           {store.users.map((el) => (
             <div className="col-12 col-lg-6" key={el.id}>
               <div className="card h-100">
