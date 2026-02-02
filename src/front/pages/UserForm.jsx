@@ -12,8 +12,18 @@ export const UserForm = () => {
         last_name: "",
         name: "",
         notes: "",
+        password:"",
         phone: ""
     });
+
+    const isEditing = !!data.id;
+
+    useEffect(() => {
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`)
+            .then(resp => resp.json())
+            .then(data => setBarbershops(data))
+            .catch(err => console.error(err));
+    }, []);
 
     useEffect(() => {
         if (store.userInfo) {
@@ -23,6 +33,7 @@ export const UserForm = () => {
                 last_name: store.userInfo.last_name || "",
                 name: store.userInfo.name || "",
                 notes: store.userInfo.notes || "",
+                password: "",
                 phone: store.userInfo.phone || ""
             });
         }
@@ -136,7 +147,7 @@ export const UserForm = () => {
                         type="password"
                         value={data.password}
                         onChange={handleChange}
-                        placeholder="Sólo escribir si se quiere cambiar"
+                        placeholder={isEditing ? "Solo rellenar en caso de querer editarla" : ""}
                     />
                 </div>
                 <div className="col-12 col-md-6 col-lg-6">

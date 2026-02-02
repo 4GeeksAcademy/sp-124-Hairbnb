@@ -17,6 +17,8 @@ export const OwnerForm = () => {
 
     const [barbershops, setBarbershops] = useState([]);
 
+    const isEditing = !!data.id;
+
     useEffect(() => {
         fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`)
             .then(resp => resp.json())
@@ -140,7 +142,7 @@ export const OwnerForm = () => {
                         type="password"
                         value={data.password}
                         onChange={handleChange}
-                        placeholder={data.id ? "Dejar vacío para no cambiar" : ""}
+                        placeholder={isEditing ? "Solo rellenar en caso de querer editarla" : ""}
                     />
                 </div>
 
