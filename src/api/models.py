@@ -77,6 +77,7 @@ class Service(db.Model):
     barbershop_id: Mapped[int] = mapped_column(ForeignKey("barbershop.id"))
 
     barbershop: Mapped["Barbershop"] = relationship(back_populates="services")
+    barber_services: Mapped[List["BarberService"]] = relationship(back_populates="service")
 
     def serialize(self):
         return {
@@ -101,6 +102,7 @@ class Barber(db.Model):
     schedules: Mapped[List["Schedule"]] = relationship(
         "Schedule", back_populates="barber", cascade="all, delete-orphan"
     )
+    barber_services: Mapped[List["BarberService"]] = relationship(back_populates="barber")
 
     def serialize(self):
         return {
@@ -128,4 +130,22 @@ class Schedule(db.Model):
             "barber_id": self.barber_id,
             "barber_name": self.barber.name if self.barber else None,
             "barbershop_name": self.barber.barbershop.name if self.barber and self.barber.barbershop else None
+        }
+
+class BarberService(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    barber_id: Mapped[int] = mapped_column(ForeignKey("barber.id"), nullable=False)
+    service_id: Mapped[int] = mapped_column(ForeignKey("service.id"), nullable=False)
+
+    barber: Mapped["Barber"] = relationship(back_populates="barber_services")
+    service: Mapped["Service"] = relationship(back_populates="barber_services")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "barber_id": self.barber_id,
+            "barber_name": self.barber.name if self.barber else None,
+            "service_id": self.service_id,
+            "service_name": self.service.name if self.service else None
         }
