@@ -62,7 +62,7 @@ export const BarberServiceForm = () => {
     const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`);
     const data = await resp.json();
     dispatch({ type: "set-barberservices", payload: data });
-    dispatch({ type: "set-message",payload: { ype: "success",msg: "Datos guardados correctamente"}});
+    dispatch({ type: "set-message",payload: { type: "success",msg: "Datos guardados correctamente"}});
 
 
     navigate("/barber_services");
