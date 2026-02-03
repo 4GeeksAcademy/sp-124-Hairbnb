@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import db, User, Barbershop, Owner, Service, Barber, Schedule
+from api.models import db, User, Barbershop, Owner, Service, Barber, Schedule, BarberService
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
@@ -77,13 +77,10 @@ def new_user():
     phone = data.get("phone")
     notes = data.get("notes")
 
-    existing_user = User.query.filter_by(email=email).first()
-    if existing_user:
-        # 409, o 409 que indica conflicto?
+    if User.query.filter_by(email=email).first():
         return jsonify({"message": {"type": "error", "msg": "Email ya registrado"}}), 409
 
-    existing_user = User.query.filter_by(phone=phone).first()
-    if existing_user:
+    if User.query.filter_by(phone=phone).first():
         return jsonify({"message": {"type": "error", "msg": "Teléfono ya registrado"}}), 409
 
     if not name:
@@ -174,9 +171,7 @@ def new_barbershop():
     address = data.get("address")
     phone = data.get("phone")
 
-    existing_barbershop = Barbershop.query.filter_by(phone=phone).first()
-    if existing_barbershop:
-        # 409, o 409 que indica conflicto?
+    if Barbershop.query.filter_by(phone=phone).first():
         return jsonify({"message": {"type": "error", "msg": "Teléfono ya registrado"}}), 409
 
     if not name:
@@ -186,7 +181,7 @@ def new_barbershop():
     if not phone:
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar un teléfono"}}), 400
 
-    new_barbershop = Barbershop(name=name, address=address, phone=phone,)
+    new_barbershop = Barbershop(name=name, address=address, phone=phone)
     db.session.add(new_barbershop)
     db.session.commit()
 
@@ -266,7 +261,6 @@ def new_owner():
     if not barbershop_id:
         return jsonify({"message": {"type": "error", "msg": "Necesitas asignar una barbería"}}), 400
 
-    # Dos duplicados
     if Owner.query.filter_by(email=email).first():
         return jsonify({"message": {"type": "error", "msg": "Email ya registrado"}}), 409
     if Owner.query.filter_by(phone=phone).first():
@@ -288,7 +282,7 @@ def new_owner():
 
 @app.route("/owners/<int:owner_id>", methods=["GET"])
 def get_single_owner(owner_id):
-    
+
     owner = Owner.query.get(owner_id)
     if not owner:
         return jsonify({"message": {"type": "error", "msg": "Dueño no encontrado"}}), 404
@@ -339,8 +333,8 @@ def delete_owner(owner_id):
 
 @app.route("/services", methods=["GET"])
 def get_services():
-    services = services.query.order_by(services.id).all()
-    data = [service.serialize() for service in services]
+    all_services = Service.query.order_by(Service.id).all()
+    data = [service.serialize() for service in all_services]
     return jsonify(data), 200
 
 
@@ -527,6 +521,9 @@ def new_schedule():
     if end_time_obj <= start_time_obj:
         return jsonify({"message": {"type": "error", "msg": "La hora de fin debe ser mayor que la de inicio"}}), 400
 
+    if Schedule.query.filter_by(barber_id=barber_id).first():
+        return jsonify({"message": {"type": "error", "msg": "Este barbero ya tiene un horario"}}), 409
+    
     new_schedule = Schedule(
         start_time=start_time_obj,
         end_time=end_time_obj,
@@ -575,7 +572,6 @@ def edit_schedule(schedule_id):
 
     return jsonify({"message": {"type": "success", "msg": f"Horario {schedule_id} actualizado correctamente"}}), 200
 
-
 @app.route("/schedules/<int:schedule_id>", methods=["DELETE"])
 def delete_schedule(schedule_id):
     schedule = Schedule.query.get(schedule_id)
@@ -585,6 +581,62 @@ def delete_schedule(schedule_id):
     db.session.delete(schedule)
     db.session.commit()
     return jsonify({"message": {"type": "success", "msg": "Horario eliminado correctamente"}}), 200
+
+
+# ENDPOINTS DE BARBERO Y SUS SERVICIOS
+
+@app.route("/barber_services", methods=["GET"])
+def get_barber_services():
+    barber_services = BarberService.query.order_by(BarberService.id).all()
+    data = [barber_service.serialize() for barber_service in barber_services]
+    return jsonify(data), 200
+
+
+@app.route("/barber_services", methods=["POST"])
+def new_barber_service():
+    data = request.json
+    barber_id = data.get("barber_id")
+    service_id = data.get("service_id")
+
+    if not barber_id:
+        return jsonify({"message": {"type": "error", "msg": "Necesitas indicar un barbero"}}), 400
+    if not service_id:
+        return jsonify({"message": {"type": "error", "msg": "Necesitas indicar un servicio"}}), 400
+    
+    barber_service = BarberService(barber_id=barber_id,service_id=service_id)
+
+    if BarberService.query.filter_by(barber_id=barber_id,service_id=service_id).first():
+        return jsonify({"message": {"type": "error", "msg": "Este barbero ya tiene asignado este servicio"}}), 409
+    
+    db.session.add(barber_service)
+    db.session.commit()
+
+    return jsonify({"message": {"type": "success", "msg": f"Servicio {service_id} vinculado al barbero {barber_id}"}}), 201
+
+@app.route("/barber_services/<int:barber_service_id>", methods=["GET"])
+def get_barber_service(barber_service_id):
+    barber_service = BarberService.query.get(barber_service_id)
+    if not barber_service:
+        return jsonify({"message": {"type": "error", "msg": "No encontrado"}}), 404
+    data = barber_service.serialize()
+
+    return jsonify(data), 200
+
+# Aquí había un endpoint para un método PUT, pero no creo que merezca la pena
+# Al ser un muchos a muchos solo con ver, crear y eliminar valdría, no?
+
+@app.route("/barber_services/<int:barber_service_id>", methods=["DELETE"])
+def delete_barber_service(barber_service_id):
+    barber_service = BarberService.query.get(barber_service_id)
+    if not barber_service:
+        return jsonify({"message": {"type": "error", "msg": "Relación barbero/servicio no encontrada"}}), 404
+
+
+    db.session.delete(barber_service)
+    db.session.commit()
+    return jsonify({"message": {"type": "success", "msg": "Relación barbero/servicio eliminada correctamente"}}), 200
+
+
 
 
 

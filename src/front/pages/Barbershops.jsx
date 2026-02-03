@@ -58,12 +58,16 @@ export const Barbershops = () => {
 
 
     return (
-        <>
-            <div className="container">
-                <div className="d-flex justify-content-between align-items-center my-4">
-                    <h1 className="display-6">Listado de barberías totales</h1>
+
+        <div className="container">
+            <div className="d-flex justify-content-between align-items-center my-4">
+                <h1 className="display-6">Listado de barberías totales</h1>
+                <div>
+                    <Link to="/">
+                        <button type="button" className="mx-2 btn btn-outline-secondary mb-2">Volver</button>
+                    </Link>
                     <Link to="/barbershops_form">
-                        <button type="button" className="btn btn-outline-secondary mb-2">Añadir nueva barbería</button>
+                        <button type="button" className="mx-2 btn btn-outline-secondary mb-2">Añadir nueva barbería</button>
                     </Link>
                 </div>
                 <div className="row g-3">
@@ -102,6 +106,6 @@ export const Barbershops = () => {
                     <button type="button" className="btn btn-outline-secondary my-4 justify-center" onClick={() => navigate("/")}>Volver al inicio</button>
                 </Link>
             </div >
-        </>
+        </div >
     );
 };

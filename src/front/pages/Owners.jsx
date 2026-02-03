@@ -47,9 +47,15 @@ export const Owners = () => {
         <div className="container">
             <div className="d-flex justify-content-between align-items-center my-4">
                 <h1 className="display-6">Listado de dueños</h1>
-                <Link to="/owners_form">
-                    <button type="button" className="btn btn-outline-secondary mb-2">Añadir nuevo dueño</button>
+                <div>
+                <Link to="/">
+                    <button type="button" className="mx-2 btn btn-outline-secondary mb-2">Volver</button>
                 </Link>
+            
+                <Link to="/owners_form">
+                    <button type="button" className="mx-2 btn btn-outline-secondary mb-2">Añadir nuevo dueño</button>
+                </Link>
+            </div>
             </div>
             <div className="row g-3">
                 {store.owners.map(owner => (

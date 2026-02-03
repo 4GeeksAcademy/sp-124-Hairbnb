@@ -19,6 +19,8 @@ import { Barbers } from "./pages/Barbers";
 import { BarberForm } from "./pages/BarberForm";
 import { Schedules } from "./pages/Schedules";
 import { ScheduleForm } from "./pages/ScheduleForm";
+import { BarberServices } from "./pages/BarberServices";
+import { BarberServiceForm } from "./pages/BarberServiceForm";
 
 
 export const router = createBrowserRouter(
@@ -46,6 +48,8 @@ export const router = createBrowserRouter(
         <Route path="/barbers_form" element={<BarberForm />} />
         <Route path="/schedules" element={<Schedules />} />
         <Route path="/schedules_form" element={<ScheduleForm />} />
+        <Route path="/barber_services" element={<BarberServices />} />
+        <Route path="/barber_services_form" element={<BarberServiceForm />} />
       </Route>
     )
 );
