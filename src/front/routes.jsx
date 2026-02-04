@@ -1,9 +1,9 @@
 // Import necessary components and functions from react-router-dom.
 
 import {
-    createBrowserRouter,
-    createRoutesFromElements,
-    Route,
+  createBrowserRouter,
+  createRoutesFromElements,
+  Route,
 } from "react-router-dom";
 import { Layout } from "./pages/Layout";
 import { Home } from "./pages/Home";
@@ -23,38 +23,48 @@ import { BarberServices } from "./pages/BarberServices";
 import { BarberServiceForm } from "./pages/BarberServiceForm";
 import { Appointments } from "./pages/Appointments";
 import { AppointmentForm } from "./pages/AppointmentForm";
+import { Login } from "./pages/Login.jsx";
+import { PrivateOwner } from "./pages/PrivateOwner.jsx";
+import { PrivateBarber } from "./pages/PrivateBarber.jsx";
+import { PrivateClient } from "./pages/PrivateClient.jsx";
 
 
 export const router = createBrowserRouter(
-    createRoutesFromElements(
+  createRoutesFromElements(
     // CreateRoutesFromElements function allows you to build route elements declaratively.
     // Create your routes here, if you want to keep the Navbar and Footer in all views, add your new routes inside the containing Route.
     // Root, on the contrary, create a sister Route, if you have doubts, try it!
     // Note: keep in mind that errorElement will be the default page when you don't get a route, customize that page to make your project more attractive.
     // Note: The child paths of the Layout element replace the Outlet component with the elements contained in the "element" attribute of these child paths.
 
-      // Root Route: All navigation will start from here.
-      <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>} >
+    // Root Route: All navigation will start from here.
+    <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>} >
 
-        {/* Nested Routes: Defines sub-routes within the BaseHome component. */}
-        <Route path= "/" element={<Home />} />
-        <Route path="/users" element={<Users />} />
-        <Route path="/users_form" element={<UserForm />} />
-        <Route path="/barbershops" element={<Barbershops />} />
-        <Route path="/barbershops_form" element={<BarbershopForm />} />
-        <Route path="/owners" element={<Owners />} />
-        <Route path="/owners_form" element={<OwnerForm />} />
-        <Route path="/services" element={<Services />} />
-        <Route path="/services_form" element={<ServiceForm />} />
-        <Route path="/barbers" element={<Barbers />} />
-        <Route path="/barbers_form" element={<BarberForm />} />
-        <Route path="/schedules" element={<Schedules />} />
-        <Route path="/schedules_form" element={<ScheduleForm />} />
-        <Route path="/barber_services" element={<BarberServices />} />
-        <Route path="/barber_services_form" element={<BarberServiceForm />} />
-        <Route path="/appointments" element={<Appointments />} />
-        <Route path="/appointments_form" element={<AppointmentForm />} />
-        
-      </Route>
-    )
+      {/* Nested Routes: Defines sub-routes within the BaseHome component. */}
+      <Route path="/" element={<Home />} />
+      <Route path="/users" element={<Users />} />
+      <Route path="/users_form" element={<UserForm />} />
+      <Route path="/barbershops" element={<Barbershops />} />
+      <Route path="/barbershops_form" element={<BarbershopForm />} />
+      <Route path="/owners" element={<Owners />} />
+      <Route path="/owners_form" element={<OwnerForm />} />
+      <Route path="/services" element={<Services />} />
+      <Route path="/services_form" element={<ServiceForm />} />
+      <Route path="/barbers" element={<Barbers />} />
+      <Route path="/barbers_form" element={<BarberForm />} />
+      <Route path="/schedules" element={<Schedules />} />
+      <Route path="/schedules_form" element={<ScheduleForm />} />
+      <Route path="/barber_services" element={<BarberServices />} />
+      <Route path="/barber_services_form" element={<BarberServiceForm />} />
+      <Route path="/appointments" element={<Appointments />} />
+      <Route path="/appointments_form" element={<AppointmentForm />} />
+      <Route path="/login" element={<Login />} />
+
+      <Route path="/private_owner" element={<PrivateOwner />} />
+      <Route path="/private_barber" element={<PrivateBarber />} />
+      <Route path="/private_client" element={<PrivateClient />} />
+
+
+    </Route>
+  )
 );
