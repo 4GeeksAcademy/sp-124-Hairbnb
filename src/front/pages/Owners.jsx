@@ -17,45 +17,45 @@ export const Owners = () => {
     }, []);
 
     const deleteOwner = async (id) => {
-    const confirmar = window.confirm("¿Deseas eliminar este dueño?");
-    if (!confirmar) return;
+        const confirmar = window.confirm("¿Deseas eliminar este dueño?");
+        if (!confirmar) return;
 
-    try {
-        const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/owners/${id}`, { method: "DELETE" });
-        const result = await resp.json();
+        try {
+            const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/owners/${id}`, { method: "DELETE" });
+            const result = await resp.json();
 
-        if (result.message) {
-            dispatch({ type: "set-message", payload: result.message });
+            if (result.message) {
+                dispatch({ type: "set-message", payload: result.message });
+            }
+
+            if (!resp.ok) return;
+
+            dispatch({
+                type: "set-owners",
+                payload: store.owners.filter(o => o.id !== id)
+            });
+
+        } catch (error) {
+            dispatch({
+                type: "set-message",
+                payload: { type: "error", msg: "Error de conexión con el servidor" }
+            });
         }
-
-        if (!resp.ok) return;
-
-        dispatch({
-            type: "set-owners",
-            payload: store.owners.filter(o => o.id !== id)
-        });
-
-    } catch (error) {
-        dispatch({
-            type: "set-message",
-            payload: { type: "error", msg: "Error de conexión con el servidor" }
-        });
-    }
-};
+    };
 
     return (
         <div className="container">
             <div className="d-flex justify-content-between align-items-center my-4">
                 <h1 className="display-6">Listado de dueños</h1>
                 <div>
-                <Link to="/">
-                    <button type="button" className="mx-2 btn btn-outline-secondary mb-2">Volver</button>
-                </Link>
-            
-                <Link to="/owners_form">
-                    <button type="button" className="mx-2 btn btn-outline-secondary mb-2">Añadir nuevo dueño</button>
-                </Link>
-            </div>
+                    <Link to="/">
+                        <button type="button" className="mx-2 btn btn-outline-secondary mb-2">Volver</button>
+                    </Link>
+
+                    <Link to="/owners_form">
+                        <button type="button" className="mx-2 btn btn-outline-secondary mb-2">Añadir nuevo dueño</button>
+                    </Link>
+                </div>
             </div>
             <div className="row g-3">
                 {store.owners.map(owner => (

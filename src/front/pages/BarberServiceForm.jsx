@@ -13,7 +13,6 @@ export const BarberServiceForm = () => {
   useEffect(() => {
     if (!barber) return;
 
-    // Servicios ya asignados a este barbero
     const assigned = store.barberservice
       .filter(bs => bs.barber_id === barber.id)
       .map(bs => bs.service_id);
@@ -21,7 +20,6 @@ export const BarberServiceForm = () => {
     setSelectedServices(assigned);
   }, [barber, store.barberservice]);
 
-  // Filtrar solo los servicios de la barbería del barbero
   const barberShopServices = store.services.filter(
     s => s.barbershop_id === barber?.barbershop_id
   );

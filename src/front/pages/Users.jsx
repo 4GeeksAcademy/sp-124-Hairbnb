@@ -83,13 +83,20 @@ export const Users = () => {
                   </p>
                   <p className="card-text text-center">
 
-                    {el.notes ? (
-                      <span><span className="fa-regular fa-note-sticky"></span>  <span className="fs-5">{el.notes}</span></span>
-                    ) : (
-                      <small className="text-muted fst-italic">
-                        No hay notas para este cliente
-                      </small>
-                    )}
+                    <p className="card-text">
+    Usuario: {a.user_name}<br/>
+    Barbero: {barbers.find(b => b.id === a.barber_id)?.name}<br/>
+    {a.notes ? (
+        <span>
+            <span className="fa-regular fa-note-sticky"></span>{" "}
+            <span className="fs-5">{a.notes}</span>
+        </span>
+    ) : (
+        <small className="text-muted fst-italic">
+            No hay notas para este cliente
+        </small>
+    )}
+</p>
                   </p>
                 </div>
 

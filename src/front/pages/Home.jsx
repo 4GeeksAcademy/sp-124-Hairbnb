@@ -9,6 +9,7 @@ export const Home = () => {
 	useEffect(() => {
 		dispatch({ type: "set-message", payload: null });
 	}, []);
+	
 	return (
 		<div className="text-center mt-5">
 			<img src="/public/Logo-HBNB-completo.png" width="20%"></img>
@@ -26,13 +27,7 @@ export const Home = () => {
 				<button type="button" className="btn btn-outline-secondary m-2" onClick={() => navigate("/barbers")}>Sección de barberos</button>
 				<button type="button" className="btn btn-outline-secondary m-2" onClick={() => navigate("/schedules")}>Sección de horarios</button>
 				<button type="button" className="btn btn-outline-secondary m-2" onClick={() => navigate("/barber_services")}>Relación barbero - servicio</button>
-			</div>
-
-			<hr className="m-auto w-50" />
-
-			<div className="mx-5 my-5">
-				<i>WIP</i><br />
-				<button type="button" className="btn btn-outline-secondary m-2" disabled onClick={() => navigate("/barbers")}>Reservas</button>
+				<button type="button" className="btn btn-outline-secondary m-2" onClick={() => navigate("/appointments")}>Reservas</button>
 			</div>
 		</div>
 	);
