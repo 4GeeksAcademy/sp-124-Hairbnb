@@ -12,6 +12,11 @@ from api.admin import setup_admin
 from api.commands import setup_commands
 from flask_cors import CORS
 from datetime import datetime, timedelta
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import get_jwt
+from flask_jwt_extended import jwt_required
+from flask_jwt_extended import JWTManager
+from flask_jwt_extended import get_jwt_identity
 
 # from models import Person
 
@@ -59,10 +64,74 @@ def handle_invalid_usage(error):
 # generate sitemap with all your endpoints
 
 
+app.config["JWT_SECRET_KEY"] = "Sup3rUltr4S3cr3t0"
+jwt = JWTManager(app)
+
+# Inicio de sesión y miramos que rol tiene de los tres
+@app.route("/login", methods=["POST"])
+def login():
+    email = request.json.get("email")
+    password = request.json.get("password")
+
+    user = None
+    role = None
+
+    user = User.query.filter_by(email=email, password=password).first()
+    if user:
+        role = "client"
+
+    if not user:
+        user = Barber.query.filter_by(email=email, password=password).first()
+        if user:
+            role = "barber"
+
+    if not user:
+        user = Owner.query.filter_by(email=email, password=password).first()
+        if user:
+            role = "owner"
+
+    if not user:
+        return jsonify({"msg": "Email o contraseña incorrectos"}), 401
+
+    access_token = create_access_token(identity={"id": user.id, "role": role})
+
+    return jsonify({
+        "token": access_token,
+        "user": {
+            "id": user.id,
+            "name": getattr(user, "name", ""),
+            "last_name": getattr(user, "last_name", ""),
+            "role": role
+        }
+    })
+
+#Zonas privadas por rol
+
+@app.route("/private_owner")
+@jwt_required()
+def private_owner():
+    identity = get_jwt_identity()
+    if identity["role"] != "owner":
+        return jsonify({"msg": "No tienes permisos"}), 403
+    return jsonify({"msg": f"Bienvenido dueño {identity['id']}"}), 200
 
 
+@app.route("/private_barber")
+@jwt_required()
+def private_barber():
+    identity = get_jwt_identity()
+    if identity["role"] != "barber":
+        return jsonify({"msg": "No tienes permisos"}), 403
+    return jsonify({"msg": f"Bienvenido barbero {identity['id']}"}), 200
 
 
+@app.route("/private_client")
+@jwt_required()
+def private_client():
+    identity = get_jwt_identity()
+    if identity["role"] != "client":
+        return jsonify({"msg": "No tienes permisos"}), 403
+    return jsonify({"msg": f"Bienvenido cliente {identity['id']}"}), 200
 
 # ENDPOINTS DE USUARIOS
 @app.route("/users", methods=["GET"])
@@ -525,7 +594,7 @@ def new_schedule():
 
     if Schedule.query.filter_by(barber_id=barber_id).first():
         return jsonify({"message": {"type": "error", "msg": "Este barbero ya tiene un horario"}}), 409
-    
+
     new_schedule = Schedule(
         start_time=start_time_obj,
         end_time=end_time_obj,
@@ -574,6 +643,7 @@ def edit_schedule(schedule_id):
 
     return jsonify({"message": {"type": "success", "msg": f"Horario {schedule_id} actualizado correctamente"}}), 200
 
+
 @app.route("/schedules/<int:schedule_id>", methods=["DELETE"])
 def delete_schedule(schedule_id):
     schedule = Schedule.query.get(schedule_id)
@@ -604,16 +674,17 @@ def new_barber_service():
         return jsonify({"message": {"type": "error", "msg": "Necesitas indicar un barbero"}}), 400
     if not service_id:
         return jsonify({"message": {"type": "error", "msg": "Necesitas indicar un servicio"}}), 400
-    
-    barber_service = BarberService(barber_id=barber_id,service_id=service_id)
 
-    if BarberService.query.filter_by(barber_id=barber_id,service_id=service_id).first():
+    barber_service = BarberService(barber_id=barber_id, service_id=service_id)
+
+    if BarberService.query.filter_by(barber_id=barber_id, service_id=service_id).first():
         return jsonify({"message": {"type": "error", "msg": "Este barbero ya tiene asignado este servicio"}}), 409
-    
+
     db.session.add(barber_service)
     db.session.commit()
 
     return jsonify({"message": {"type": "success", "msg": f"Servicio {service_id} vinculado al barbero {barber_id}"}}), 201
+
 
 @app.route("/barber_services/<int:barber_service_id>", methods=["GET"])
 def get_barber_service(barber_service_id):
@@ -627,12 +698,12 @@ def get_barber_service(barber_service_id):
 # Aquí había un endpoint para un método PUT, pero no creo que merezca la pena
 # Al ser un muchos a muchos solo con ver, crear y eliminar valdría, no?
 
+
 @app.route("/barber_services/<int:barber_service_id>", methods=["DELETE"])
 def delete_barber_service(barber_service_id):
     barber_service = BarberService.query.get(barber_service_id)
     if not barber_service:
         return jsonify({"message": {"type": "error", "msg": "Relación barbero/servicio no encontrada"}}), 404
-
 
     db.session.delete(barber_service)
     db.session.commit()
@@ -646,6 +717,7 @@ def get_appointments():
     appointments = Appointment.query.order_by(Appointment.date).all()
     return jsonify([appointment.serialize() for appointment in appointments]), 200
 
+
 @app.route("/barbers/<int:barber_id>/next-available", methods=["GET"])
 def get_next_available(barber_id):
     return jsonify({
@@ -653,22 +725,24 @@ def get_next_available(barber_id):
         "time": "10:00"
     }), 200
 
+
 @app.route("/appointments", methods=["POST"])
 def new_appointment():
     data = request.json
-    
+
     barber_id = data.get("barber_id")
     service_id = data.get("service_id")
-    
+
     try:
-        start_date = datetime.strptime(f"{data['date']} {data['time']}", "%Y-%m-%d %H:%M")
+        start_date = datetime.strptime(
+            f"{data['date']} {data['time']}", "%Y-%m-%d %H:%M")
     except Exception:
         return jsonify({"message": {"type": "error", "msg": "Fecha o hora no válida"}}), 400
 
     service = Service.query.get(service_id)
     if not service:
         return jsonify({"message": {"type": "error", "msg": "Servicio no encontrado"}}), 404
-    
+
     new_end_time = start_date + timedelta(minutes=service.duration)
 
     collision = Appointment.query.filter(
@@ -680,7 +754,7 @@ def new_appointment():
     if collision:
         return jsonify({
             "message": {
-                "type": "error", 
+                "type": "error",
                 "msg": f"El barbero está ocupado hasta las {collision.end_time.strftime('%H:%M')}"
             }
         }), 400
@@ -698,6 +772,7 @@ def new_appointment():
     db.session.commit()
 
     return jsonify({"message": {"type": "success", "msg": "Reserva creada"}}), 201
+
 
 @app.route("/appointments/<int:appointment_id>", methods=["PUT"])
 def edit_appointment(appointment_id):
@@ -723,7 +798,8 @@ def edit_appointment(appointment_id):
 
     service = Service.query.get(appointment.service_id)
     if service:
-        appointment.end_time = appointment.date + timedelta(minutes=service.duration)
+        appointment.end_time = appointment.date + \
+            timedelta(minutes=service.duration)
 
     db.session.commit()
 

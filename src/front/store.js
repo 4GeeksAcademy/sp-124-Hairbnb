@@ -1,5 +1,8 @@
 export const initialStore = () => {
   return {
+    token: null,
+    username: null,
+    role: null,
     message:{
               type: "",
               msg: ""
@@ -75,6 +78,13 @@ export default function storeReducer(store, action = {}) {
 
     case "set-appointmentInfo":
       return { ...store, appointmentInfo: action.payload };
+
+    case "login":
+  return { ...store, 
+          token: action.payload.token,
+          username: action.payload.username,
+          role: action.payload.role
+  };
 
     default:
       return store; 
