@@ -6,12 +6,12 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import db, User, Barbershop, Owner, Service, Barber, Schedule, BarberService
+from api.models import db, User, Barbershop, Owner, Service, Barber, Schedule, BarberService, Appointment
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
 from flask_cors import CORS
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # from models import Person
 
@@ -59,6 +59,11 @@ def handle_invalid_usage(error):
 # generate sitemap with all your endpoints
 
 
+
+
+
+
+
 # ENDPOINTS DE USUARIOS
 @app.route("/users", methods=["GET"])
 def get_users():
@@ -93,8 +98,6 @@ def new_user():
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar un email"}}), 400
     if not phone:
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar un teléfono"}}), 400
-
-    # Añadir excepción si el email ya se encuentra en el sistema
 
     new_user = User(name=name, last_name=last_name,
                     password=password, email=email, phone=phone, notes=notes)
@@ -266,7 +269,6 @@ def new_owner():
     if Owner.query.filter_by(phone=phone).first():
         return jsonify({"message": {"type": "error", "msg": "Teléfono ya registrado"}}), 409
 
-    # Crear owner
     new_owner = Owner(
         name=name,
         email=email,
@@ -637,10 +639,107 @@ def delete_barber_service(barber_service_id):
     return jsonify({"message": {"type": "success", "msg": "Relación barbero/servicio eliminada correctamente"}}), 200
 
 
+# ENDPOINTS PARA LAS RESERVAS DE CITAS
+
+@app.route("/appointments", methods=["GET"])
+def get_appointments():
+    appointments = Appointment.query.order_by(Appointment.date).all()
+    return jsonify([appointment.serialize() for appointment in appointments]), 200
+
+@app.route("/barbers/<int:barber_id>/next-available", methods=["GET"])
+def get_next_available(barber_id):
+    return jsonify({
+        "date": datetime.now().strftime("%Y-%m-%d"),
+        "time": "10:00"
+    }), 200
+
+@app.route("/appointments", methods=["POST"])
+def new_appointment():
+    data = request.json
+    
+    barber_id = data.get("barber_id")
+    service_id = data.get("service_id")
+    
+    try:
+        start_date = datetime.strptime(f"{data['date']} {data['time']}", "%Y-%m-%d %H:%M")
+    except Exception:
+        return jsonify({"message": {"type": "error", "msg": "Fecha o hora no válida"}}), 400
+
+    service = Service.query.get(service_id)
+    if not service:
+        return jsonify({"message": {"type": "error", "msg": "Servicio no encontrado"}}), 404
+    
+    new_end_time = start_date + timedelta(minutes=service.duration)
+
+    collision = Appointment.query.filter(
+        Appointment.barber_id == barber_id,
+        Appointment.date < new_end_time,
+        Appointment.end_time > start_date
+    ).first()
+
+    if collision:
+        return jsonify({
+            "message": {
+                "type": "error", 
+                "msg": f"El barbero está ocupado hasta las {collision.end_time.strftime('%H:%M')}"
+            }
+        }), 400
+
+    new_app = Appointment(
+        date=start_date,
+        user_id=data.get("user_id"),
+        barber_id=barber_id,
+        service_id=service_id,
+        notes=data.get("notes")
+    )
+    new_app.end_time = new_end_time
+
+    db.session.add(new_app)
+    db.session.commit()
+
+    return jsonify({"message": {"type": "success", "msg": "Reserva creada"}}), 201
+
+@app.route("/appointments/<int:appointment_id>", methods=["PUT"])
+def edit_appointment(appointment_id):
+    appointment = Appointment.query.get(appointment_id)
+    if not appointment:
+        return jsonify({"message": {"type": "error", "msg": "Reserva no encontrada"}}), 404
+
+    data = request.json
+
+    if "date" in data:
+        appointment.date = datetime.fromisoformat(data["date"])
+
+    appointment.user_id = data.get("user_id", appointment.user_id)
+    appointment.barber_id = data.get("barber_id", appointment.barber_id)
+    appointment.service_id = data.get("service_id", appointment.service_id)
+    appointment.notes = data.get("notes", appointment.notes)
+
+    if "date" in data:
+        try:
+            appointment.date = datetime.fromisoformat(data["date"])
+        except Exception:
+            return jsonify({"message": {"type": "error", "msg": "Fecha no válida"}}), 400
+
+    service = Service.query.get(appointment.service_id)
+    if service:
+        appointment.end_time = appointment.date + timedelta(minutes=service.duration)
+
+    db.session.commit()
+
+    return jsonify({"message": {"type": "success", "msg": "Reserva actualizada"}}), 200
 
 
+@app.route("/appointments/<int:appointment_id>", methods=["DELETE"])
+def delete_appointment(appointment_id):
+    appointment = Appointment.query.get(appointment_id)
+    if not appointment:
+        return jsonify({"message": {"type": "error", "msg": "Reserva no encontrada"}}), 404
 
+    db.session.delete(appointment)
+    db.session.commit()
 
+    return jsonify({"message": {"type": "success", "msg": "Reserva eliminada correctamente"}}), 200
 
 
 # NO TOCAR

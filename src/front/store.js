@@ -17,7 +17,9 @@ export const initialStore = () => {
     schedules: [],
     scheduleInfo: null,
     barberservice: [],
-    barberserviceInfo: null
+    barberserviceInfo: null,
+    appointments: [],
+    appointmentInfo: null,
   };
 };
 
@@ -67,6 +69,12 @@ export default function storeReducer(store, action = {}) {
 
     case "set-barberserviceInfo":
       return { ...store, barberserviceInfo: action.payload };  
+
+    case "set-appointments":
+      return { ...store, appointments: action.payload };
+
+    case "set-appointmentInfo":
+      return { ...store, appointmentInfo: action.payload };
 
     default:
       return store; 
