@@ -13,7 +13,6 @@ export const Users = () => {
     fetch(`${import.meta.env.VITE_BACKEND_URL}/users`)
       .then(resp => resp.json())
       .then(data => {
-        console.log(data)
         dispatch({ type: "set-users", payload: data });
       })
       .catch(err => console.error(err));

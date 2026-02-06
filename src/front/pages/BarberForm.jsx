@@ -15,6 +15,7 @@ export const BarberForm = () => {
     });
 
     const [barbershops, setBarbershops] = useState([]);
+    const barbershop = store.barbershopInfo;
 
     const isEditing = !!data.id;
 
@@ -58,7 +59,9 @@ export const BarberForm = () => {
         try {
             const resp = await fetch(url, {
                 method,
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json",
+                "Authorization": `Bearer ${store.token}`
+                 },
                 body: JSON.stringify(data)
             });
 
@@ -136,23 +139,6 @@ export const BarberForm = () => {
                         value={data.password}
                         onChange={handleChange}
                     />
-                </div>
-
-                <div className="col-12 col-md-6 mx-auto">
-                    <label className="form-label text-center" htmlFor="barbershop_id">Barbería</label>
-                    <select
-                        className="form-select"
-                        id="barbershop_id"
-                        name="barbershop_id"
-                        value={data.barbershop_id}
-                        onChange={handleChange}
-                        required
-                    >
-                        <option value="">Selecciona una barbería</option>
-                        {barbershops.map(b => (
-                            <option key={b.id} value={b.id}>{b.name}</option>
-                        ))}
-                    </select>
                 </div>
             </div>
 

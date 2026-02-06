@@ -1,147 +1,150 @@
 import { useState, useEffect } from "react";
-import useGlobalReducer from "../hooks/useGlobalReducer";
 import { Link, useNavigate } from "react-router-dom";
+import useGlobalReducer from "../hooks/useGlobalReducer";
 
 export const BarbershopForm = () => {
-    const { store, dispatch } = useGlobalReducer();
-    const navigate = useNavigate();
+  const { store, dispatch } = useGlobalReducer();
+  const navigate = useNavigate();
 
-    const [data, setData] = useState({
-        id: null,
-        name: "",
-        address: "",
-        phone: ""
-    });
+  const [data, setData] = useState({
+    id: null,
+    name: "",
+    address: "",
+    phone: ""
+  });
 
-    useEffect(() => {
-        if (store.barbershopInfo) {
-            setData({
-                id: store.barbershopInfo.id,
-                name: store.barbershopInfo.name || "",
-                address: store.barbershopInfo.address || "",
-                phone: store.barbershopInfo.phone || ""
-            });
-        }
-    }, [store.barbershopInfo]);
+  useEffect(() => {
+    if (store.barbershopInfo) {
+      setData({
+        id: store.barbershopInfo.id || null,
+        name: store.barbershopInfo.name || "",
+        address: store.barbershopInfo.address || "",
+        phone: store.barbershopInfo.phone || ""
+      });
+    }
+  }, [store.barbershopInfo]);
 
-    const handleChange = (e) => {
-        setData(prev => ({
-            ...prev,
-            [e.target.name]: e.target.value
-        }));
-    };
+  const handleChange = (e) => {
+    setData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        const isEditing = !!data.id;
-
-        const url = isEditing
-            ? `${import.meta.env.VITE_BACKEND_URL}/barbershops/${data.id}`
-            : `${import.meta.env.VITE_BACKEND_URL}/barbershops`;
-
-        const method = isEditing ? "PUT" : "POST";
-
-        try {
-            const resp = await fetch(url, {
-                method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            });
-
-            const result = await resp.json();
-
-            if (result.message) {
-                dispatch({
-                    type: "set-message",
-                    payload: result.message
-                });
-            }
-
-            if (!resp.ok) return;
-
-            dispatch({
-                type: "set-barbershops",
-                payload: isEditing
-                    ? store.barbershops.map(b => b.id === data.id ? result : b)
-                    : [...store.barbershops, result]
-            });
-
-            dispatch({ type: "set-barbershopInfo", payload: null });
-
-            navigate("/barbershops");
-
-        } catch (error) {
-            dispatch({
-                type: "set-message",
-                payload: {
-                    type: "error",
-                    msg: "Error de conexión con el servidor"
-                }
-            });
-
-        }
-    };
+    if (!data.name) {
+      dispatch({ type: "set-message", payload: { type: "error", msg: "Es necesario un nombre" } });
+      return
+    }
+    if (!data.address) {
+      dispatch({ type: "set-message", payload: { type: "error", msg: "Es necesario una dirección" } });
+      return
+    }
+    if (!data.phone) {
+      dispatch({ type: "set-message", payload: { type: "error", msg: "Es necesario un teléfono" } });
+      return
+    }
 
 
-    return (
-        <div className="container">
-            <div className="d-flex justify-content-between align-items-center my-4">
-                <h1 className="display-6">Listado de barberos</h1>
+    const isEditing = !!data.id;
+    const url = isEditing
+      ? `${import.meta.env.VITE_BACKEND_URL}/barbershops/${data.id}`
+      : `${import.meta.env.VITE_BACKEND_URL}/barbershops`;
+    const method = isEditing ? "PUT" : "POST";
 
-                <Link to="/">
-                    <button type="button" className="mx-2 btn btn-outline-secondary mb-2">Volver</button>
-                </Link>
+    try {
+      const resp = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${store.token}`
+        },
+        body: JSON.stringify({
+          name: data.name,
+          address: data.address,
+          phone: data.phone
+        })
+      });
 
-            </div>
-            <form className="mx-auto p-4" onSubmit={handleSubmit}>
-                <div className="row g-3">
-                    <div className="col-12 col-md-6 col-lg-6">
-                        <label className="form-label" htmlFor="name">Nombre</label>
-                        <input
-                            className="form-control"
-                            id="name"
-                            name="name"
-                            value={data.name}
-                            type="text"
-                            onChange={handleChange}
-                        />
-                    </div>
-                    <div className="col-12 col-md-6 col-lg-6">
-                        <label className="form-label" htmlFor="phone">Teléfono</label>
-                        <input
-                            className="form-control"
-                            id="phone"
-                            name="phone"
-                            type="number"
-                            value={data.phone}
-                            onChange={handleChange}
-                        />
-                    </div>
+      const result = await resp.json();
 
-                    <div className="col-12 col-md-6 mx-auto">
-                        <label className="form-label" htmlFor="address">Dirección</label>
-                        <input
-                            className="form-control"
-                            id="address"
-                            name="address"
-                            value={data.address}
-                            type="text"
-                            onChange={handleChange}
-                        />
-                    </div>
-                </div>
+      if (!resp.ok) {
+        dispatch({
+          type: "set-message",
+          payload: { type: "error", "msg": "Error desconocido" }
+        });
+        return;
+      }
 
-                <div className="mt-4 d-flex justify-content-around">
-                    <button
-                        type="submit"
-                        className="btn btn-outline-secondary mx-3 w-25"
-                    >
-                        {data.id ? "Actualizar" : "Crear"}
-                    </button>
-                    <Link to="/" className="btn btn-secondary mx-3 w-25">Volver</Link>
-                </div>
-            </form>
+      dispatch({ type: "set-message", payload: { type: "success", "msg": "Guardado" } });
+      navigate("/private/owner");
+
+    } catch (err) {
+      console.error("Error en fetch:", err);
+      dispatch({ type: "set-message", payload: { type: "error", "msg": "Error de conexión con el servidor" } });
+    }
+  };
+
+  return (
+    <div className="container">
+      <div className="d-flex justify-content-between align-items-center my-4">
+        <h1 className="display-6">{data.id ? "Editar barbería" : "Añadir barbería"}</h1>
+        <Link to="/private/owner">
+          <button type="button" className="mx-2 btn btn-outline-secondary mb-2">Volver</button>
+        </Link>
+      </div>
+
+      <form className="mx-auto p-4" onSubmit={handleSubmit}>
+        <div className="row g-3">
+          <div className="col-12 col-md-6">
+            <label className="form-label" htmlFor="name">Nombre</label>
+            <input
+              className="form-control"
+              id="name"
+              name="name"
+              type="text"
+              value={data.name}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="col-12 col-md-6">
+            <label className="form-label" htmlFor="phone">Teléfono</label>
+            <input
+              className="form-control"
+              id="phone"
+              name="phone"
+              type="text"
+              value={data.phone}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="col-12">
+            <label className="form-label" htmlFor="address">Dirección</label>
+            <input
+              className="form-control"
+              id="address"
+              name="address"
+              type="text"
+              value={data.address}
+              onChange={handleChange}
+            />
+          </div>
         </div>
-    );
+
+        <div className="mt-4 d-flex justify-content-around">
+          <button type="submit" className="btn btn-outline-secondary mx-3 w-25">
+            {data.id ? "Actualizar" : "Crear"}
+          </button>
+          <Link
+            to="/private/owner"
+            className="btn btn-secondary mx-3 w-25"
+            onClick={() => dispatch({ type: "set-barbershopInfo", payload: null })}
+          >
+            Volver
+          </Link>
+        </div>
+      </form>
+    </div>
+  );
 };

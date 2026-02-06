@@ -24,10 +24,15 @@ export const Barbershops = () => {
 
         try {
             const resp = await fetch(
-                `${import.meta.env.VITE_BACKEND_URL}/barbershops/${id}`,
-                { method: "DELETE" }
-            );
-
+        `${import.meta.env.VITE_BACKEND_URL}/barbershops/${el.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${store.token}`,
+          },
+        }
+      );
             const result = await resp.json();
 
             if (result.message) {
