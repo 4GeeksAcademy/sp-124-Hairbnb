@@ -80,10 +80,17 @@ export default function storeReducer(store, action = {}) {
       return { ...store, appointmentInfo: action.payload };
 
     case "login":
-  return { ...store, 
-          token: action.payload.token,
-          username: action.payload.username,
-          role: action.payload.role
+      return { ...store, 
+        token: action.payload.token,
+        username: action.payload.username,
+        role: action.payload.role
+      };
+    case "logout":
+      return { 
+        ...store, 
+        token: null, 
+        username: null, 
+        role: null 
   };
 
     default:

@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import db, User, Barbershop, Owner, Service, Barber, Schedule, BarberService, Appointment
+from api.models import db, User, Barbershop, Owner, Service, Barber, Schedule, BarberService, Appointment, AdminUser, BarberBarbershop
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
@@ -64,56 +64,88 @@ def handle_invalid_usage(error):
 # generate sitemap with all your endpoints
 
 
-app.config["JWT_SECRET_KEY"] = "Sup3rUltr4S3cr3t0"
+app.config["JWT_SECRET_KEY"] = "Sup3rUltr4S3cr3t0"  # MOVER A .ENV!!!
 jwt = JWTManager(app)
 
-# Inicio de sesión y miramos que rol tiene de los tres
-@app.route("/login", methods=["POST"])
-def login():
+
+@app.route("/login/admin", methods=["POST"])
+def login_admin():
     email = request.json.get("email")
     password = request.json.get("password")
 
-    user = None
-    role = None
-
-    user = User.query.filter_by(email=email, password=password).first()
-    if user:
-        role = "client"
-
-    if not user:
-        user = Barber.query.filter_by(email=email, password=password).first()
-        if user:
-            role = "barber"
-
-    if not user:
-        user = Owner.query.filter_by(email=email, password=password).first()
-        if user:
-            role = "owner"
+    user = AdminUser.query.filter_by(email=email, password=password).first()
 
     if not user:
         return jsonify({"msg": "Email o contraseña incorrectos"}), 401
 
-    access_token = create_access_token(identity={"id": user.id, "role": role})
+    access_token = create_access_token(identity=str(
+        user.id), additional_claims={"role": "admin"})
+    return jsonify({"token": access_token, "user": {"id": user.id, "name": user.name, "role": "admin"}}), 200
 
-    return jsonify({
-        "token": access_token,
-        "user": {
-            "id": user.id,
-            "name": getattr(user, "name", ""),
-            "last_name": getattr(user, "last_name", ""),
-            "role": role
-        }
-    })
 
-#Zonas privadas por rol
+@app.route("/login/client", methods=["POST"])
+def login_client():
+    email = request.json.get("email")
+    password = request.json.get("password")
+
+    user = User.query.filter_by(email=email, password=password).first()
+
+    if not user:
+        return jsonify({"msg": "Email o contraseña incorrectos"}), 401
+
+    access_token = create_access_token(identity=str(
+        user.id), additional_claims={"role": "client"})
+    return jsonify({"token": access_token, "user": {"id": user.id, "name": user.name, "role": "client"}}), 200
+
+
+@app.route("/login/barber", methods=["POST"])
+def login_barber():
+    email = request.json.get("email")
+    password = request.json.get("password")
+
+    barber = Barber.query.filter_by(email=email, password=password).first()
+
+    if not barber:
+        return jsonify({"msg": "Email o contraseña incorrectos"}), 401
+
+    access_token = create_access_token(identity=str(
+        barber.id), additional_claims={"role": "barber"})
+    return jsonify({"token": access_token, "user": {"id": barber.id, "name": barber.name, "role": "barber"}}), 200
+
+
+@app.route("/login/owner", methods=["POST"])
+def login_owner():
+    email = request.json.get("email")
+    password = request.json.get("password")
+
+    owner = Owner.query.filter_by(email=email, password=password).first()
+
+    if not owner:
+        return jsonify({"msg": "Email o contraseña incorrectos"}), 401
+
+    access_token = create_access_token(identity=str(
+        owner.id), additional_claims={"role": "owner"})
+    return jsonify({"token": access_token, "user": {"id": owner.id, "name": owner.name, "role": "owner"}}), 200
+
+
+# Zonas privadas por rol
+@app.route("/4dm1n1str4c10n")
+@jwt_required()
+def private_admin():
+    identity = get_jwt_identity()
+    if identity["role"] != "admin":
+        return jsonify({"msg": "No tienes permisos"}), 403
+    return jsonify({"msg": f"Bienvenido admin {identity['id']}"}), 200
+
 
 @app.route("/private_owner")
 @jwt_required()
 def private_owner():
-    identity = get_jwt_identity()
-    if identity["role"] != "owner":
+    owner_id = get_jwt_identity()
+    claims = get_jwt()
+    if claims.get("role") != "owner":
         return jsonify({"msg": "No tienes permisos"}), 403
-    return jsonify({"msg": f"Bienvenido dueño {identity['id']}"}), 200
+    return jsonify({"msg": f"Bienvenido dueño {owner_id}"}), 200
 
 
 @app.route("/private_barber")
@@ -132,6 +164,7 @@ def private_client():
     if identity["role"] != "client":
         return jsonify({"msg": "No tienes permisos"}), 403
     return jsonify({"msg": f"Bienvenido cliente {identity['id']}"}), 200
+
 
 # ENDPOINTS DE USUARIOS
 @app.route("/users", methods=["GET"])
@@ -229,6 +262,19 @@ def delete_user(user_id):
 
 
 # ENDPOINTS DE BARBERIAS
+@app.route("/owners/barbershops")
+@jwt_required()
+def get_my_barbershops():
+    owner_id = get_jwt_identity()
+    claims = get_jwt()
+
+    if claims.get("role") != "owner":
+        return jsonify({"msg": "Acceso denegado: No eres Owner"}), 403
+
+    barbershops = Barbershop.query.filter_by(owner_id=int(owner_id)).all()
+    return jsonify([barb.serialize() for barb in barbershops]), 200
+
+
 @app.route("/barbershops", methods=["GET"])
 def get_barbershops():
     barbershops = Barbershop.query.order_by(Barbershop.id).all()
@@ -237,27 +283,24 @@ def get_barbershops():
 
 
 @app.route("/barbershops", methods=["POST"])
+@jwt_required()
 def new_barbershop():
+    owner_id = get_jwt_identity()
+    claims = get_jwt()
+
+    if claims.get("role") != "owner":
+        return jsonify({"message": {"type": "error", "msg": "No tienes permiso"}}), 403
+
     data = request.json
-    name = data.get("name")
-    address = data.get("address")
-    phone = data.get("phone")
-
-    if Barbershop.query.filter_by(phone=phone).first():
-        return jsonify({"message": {"type": "error", "msg": "Teléfono ya registrado"}}), 409
-
-    if not name:
-        return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar un nombre"}}), 400
-    if not address:
-        return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar una dirección"}}), 400
-    if not phone:
-        return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar un teléfono"}}), 400
-
-    new_barbershop = Barbershop(name=name, address=address, phone=phone)
-    db.session.add(new_barbershop)
+    new_barbsh = Barbershop(
+        name=data.get("name"),
+        address=data.get("address"),
+        phone=data.get("phone"),
+        owner_id=int(owner_id)
+    )
+    db.session.add(new_barbsh)
     db.session.commit()
-
-    return jsonify({"message": {"type": "success", "msg": f"Barbería {name} creada"}}), 201
+    return jsonify({"message": {"type": "success", "msg": f"Barbería {new_barbsh.name} creada"}}), 201
 
 
 @app.route("/barbershops/<int:barbershop_id>", methods=["GET"])
@@ -271,26 +314,82 @@ def get_single_barbershop(barbershop_id):
 
 
 @app.route("/barbershops/<int:barbershop_id>", methods=["PUT"])
-def edit_barbershop(barbershop_id):
+@jwt_required()
+def update_barbershop(barbershop_id):
+    owner_id = get_jwt_identity()
     barbershop = Barbershop.query.get(barbershop_id)
-    if not barbershop:
-        return jsonify({"message": {"type": "error", "msg": "No encontrada"}}), 404
+
+    if not barbershop or str(barbershop.owner_id) != str(owner_id):
+        return jsonify({"message": {"type": "error", "msg": "No encontrada o no te pertenece"}}), 404
 
     data = request.json
-
-    if "phone" in data:
-        existing_phone = Barbershop.query.filter(
-            Barbershop.phone == data["phone"], Barbershop.id != barbershop_id
-        ).first()
-        if existing_phone:
-            return jsonify({"message": {"type": "error", "msg": "Teléfono ya registrado"}}), 409
-        barbershop.phone = data["phone"]
-
     barbershop.name = data.get("name", barbershop.name)
     barbershop.address = data.get("address", barbershop.address)
+    barbershop.phone = data.get("phone", barbershop.phone)
 
     db.session.commit()
     return jsonify({"message": {"type": "success", "msg": f"Barberia {barbershop.name} actualizada"}}), 200
+
+
+@app.route("/barbershops/<int:shop_id>/barbers", methods=["GET"])
+@jwt_required()
+def get_barbers_linked(shop_id):
+    owner_id = get_jwt_identity()
+    claims = get_jwt()
+
+    if claims.get("role") != "owner":
+        return jsonify({"message": {"type": "error", "msg": "No tienes permiso"}}), 403
+
+    links = BarberBarbershop.query.filter_by(barbershop_id=shop_id).all()
+
+    return jsonify([
+        {
+            "id": link.id,
+            "barber": {
+                "id": link.barber.id,
+                "name": link.barber.name,
+                "email": link.barber.email
+            },
+            "status": link.status
+        } for link in links
+    ]), 200
+
+
+@app.route("/barbershops/<int:barbershop_id>/services", methods=["GET"])
+@jwt_required()
+def services_of_barbershop(barbershop_id):
+    owner_id = get_jwt_identity()
+    claims = get_jwt()
+
+    if claims.get("role") != "owner":
+        return jsonify({"message": {"type": "error", "msg": "No tienes permiso"}}), 403
+
+    barbershop = Barbershop.query.get(barbershop_id)
+    if not barbershop or barbershop.owner_id != int(owner_id):
+        return jsonify({"message": {"type": "error", "msg": "Barbería no encontrada o no te pertenece"}}), 404
+
+    services = Service.query.filter_by(barbershop_id=barbershop_id).all()
+    return jsonify([s.serialize() for s in services]), 200
+
+
+@app.route("/barbershops/<int:barbershop_id>/appointments", methods=["GET"])
+@jwt_required()
+def appointments_of_barbershop(barbershop_id):
+    owner_id = get_jwt_identity()
+    claims = get_jwt()
+
+    if claims.get("role") != "owner":
+        return jsonify({"message": {"type": "error", "msg": "No tienes permiso"}}), 403
+
+    barbershop = Barbershop.query.get(barbershop_id)
+    if not barbershop or barbershop.owner_id != int(owner_id):
+        return jsonify({"message": {"type": "error", "msg": "Barbería no encontrada o no te pertenece"}}), 404
+
+    barber_ids = [b.id for b in Barber.query.filter_by(
+        barbershop_id=barbershop_id).all()]
+    appointments = Appointment.query.filter(
+        Appointment.barber_id.in_(barber_ids)).all()
+    return jsonify([a.serialize() for a in appointments]), 200
 
 
 @app.route("/barbershops/<int:barbershop_id>", methods=["DELETE"])
@@ -320,7 +419,6 @@ def new_owner():
     email = data.get("email")
     phone = data.get("phone")
     password = data.get("password")
-    barbershop_id = data.get("barbershop_id")
 
     if not name:
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar un nombre"}}), 400
@@ -330,8 +428,6 @@ def new_owner():
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar un teléfono"}}), 400
     if not password:
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar una contraseña"}}), 400
-    if not barbershop_id:
-        return jsonify({"message": {"type": "error", "msg": "Necesitas asignar una barbería"}}), 400
 
     if Owner.query.filter_by(email=email).first():
         return jsonify({"message": {"type": "error", "msg": "Email ya registrado"}}), 409
@@ -343,7 +439,7 @@ def new_owner():
         email=email,
         phone=phone,
         password=password,
-        barbershop_id=barbershop_id
+
     )
     db.session.add(new_owner)
     db.session.commit()
@@ -499,7 +595,6 @@ def new_barber():
     name = data.get("name")
     email = data.get("email")
     password = data.get("password")
-    barbershop_id = data.get("barbershop_id")
 
     if not name:
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar un nombre"}}), 400
@@ -507,14 +602,12 @@ def new_barber():
         return jsonify({"message": {"type": "error", "msg": "Necesitas añadir un email"}}), 400
     if not password:
         return jsonify({"message": {"type": "error", "msg": "Necesitas indicar una contraseña"}}), 400
-    if not barbershop_id:
-        return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar una barbería"}}), 400
 
     if Barber.query.filter_by(email=email).first():
         return jsonify({"message": {"type": "error", "msg": "Email ya registrado"}}), 409
 
     new_barber = Barber(name=name, email=email,
-                        password=password, barbershop_id=barbershop_id)
+                        password=password)
     db.session.add(new_barber)
     db.session.commit()
 
@@ -562,6 +655,85 @@ def delete_barber(barber_id):
     db.session.delete(barber)
     db.session.commit()
     return jsonify({"message": {"type": "success", "msg": "Barbero eliminado correctamente"}}), 200
+
+
+@app.route("/barbershops/<int:shop_id>/barbers", methods=["GET"])
+@jwt_required()
+def get_barbers(shop_id):
+    # Opcional: comprobar que la barbería existe
+    barbershop = Barbershop.query.get(shop_id)
+    if not barbershop:
+        return jsonify({"message": {"type": "error", "msg": "Barbería no encontrada"}}), 404
+
+    # Traer todas las relaciones BarberBarbershop de esa barbería
+    links = BarberBarbershop.query.filter_by(barbershop_id=shop_id).all()
+
+    return jsonify([{
+        "id": link.id,
+        "barber": {
+            "id": link.barber.id,
+            "name": link.barber.name,
+            "email": link.barber.email
+        },
+        "status": link.status
+    } for link in links]), 200
+
+
+@app.route("/barbershops/<int:shop_id>/invite", methods=["POST"])
+@jwt_required()
+def invite_barber(shop_id):
+    owner_id = get_jwt_identity()
+    claims = get_jwt()
+
+    if claims.get("role") != "owner":
+        return jsonify({"message": {"type": "error", "msg": "No tienes permiso"}}), 403
+
+    data = request.get_json()
+    email = data.get("email")
+    if not email:
+        return jsonify({"message": {"type":"error", "msg":"Es necesario un email"}}), 400
+
+    barbershop = Barbershop.query.filter_by(
+        id=shop_id,
+        owner_id=owner_id
+    ).first()
+
+
+    if not barbershop:
+        return jsonify({"message": {"type":"error", "msg":"Hay un error con tus barberías"}}), 404
+
+    barber = Barber.query.filter_by(email=email).first()
+    if not barber:
+        return jsonify({"message": {"type":"error", "msg":"No existe ningún barbero con ese email"}}), 404
+
+    pending = BarberBarbershop.query.filter_by(
+        barber_id=barber.id,
+        barbershop_id=shop_id, status="pending"
+    ).first()
+
+    if pending:
+        return jsonify({"message": {"type":"error", "msg":"Ya hay una solicitud pendiente"}}), 400
+    
+    existing = BarberBarbershop.query.filter_by(
+        barber_id=barber.id,
+        barbershop_id=shop_id
+    ).first()
+
+    if existing:
+        return jsonify({"message": {"type":"error", "msg":"Este barbero ya forma parte de la barbería"}}), 400
+
+    invite = BarberBarbershop(
+        barber_id=barber.id,
+        barbershop_id=shop_id,
+        status="pending"
+    )
+
+
+    db.session.add(invite)
+    db.session.commit()
+
+    return jsonify({"message": {"type": "success", "msg": "Solicitud enviada correctamente"}}), 201
+
 
 
 # ENDPOINTS DE HORARIOS
@@ -694,9 +866,6 @@ def get_barber_service(barber_service_id):
     data = barber_service.serialize()
 
     return jsonify(data), 200
-
-# Aquí había un endpoint para un método PUT, pero no creo que merezca la pena
-# Al ser un muchos a muchos solo con ver, crear y eliminar valdría, no?
 
 
 @app.route("/barber_services/<int:barber_service_id>", methods=["DELETE"])

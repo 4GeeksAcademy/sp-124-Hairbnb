@@ -23,10 +23,19 @@ import { BarberServices } from "./pages/BarberServices";
 import { BarberServiceForm } from "./pages/BarberServiceForm";
 import { Appointments } from "./pages/Appointments";
 import { AppointmentForm } from "./pages/AppointmentForm";
-import { Login } from "./pages/Login.jsx";
 import { PrivateOwner } from "./pages/PrivateOwner.jsx";
 import { PrivateBarber } from "./pages/PrivateBarber.jsx";
 import { PrivateClient } from "./pages/PrivateClient.jsx";
+import { ClientLogin } from "./pages/ClientLogin.jsx";
+import { BarberLogin } from "./pages/BarberLogin.jsx";
+import { OwnerLogin } from "./pages/OwnerLogin.jsx";
+import { ClientRegister } from "./pages/ClientRegister.jsx";
+import { BarberRegister } from "./pages/BarberRegister.jsx";
+import { OwnerRegister } from "./pages/OwnerRegister.jsx";
+import { Administration } from "./pages/Administration.jsx";
+import { AdminLogin } from "./pages/AdminLogin.jsx";
+import { OwnerGestion } from "./pages/OwnerGestion.jsx";
+import { Asociates } from "./pages/Asociates.jsx";
 
 
 export const router = createBrowserRouter(
@@ -42,6 +51,7 @@ export const router = createBrowserRouter(
 
       {/* Nested Routes: Defines sub-routes within the BaseHome component. */}
       <Route path="/" element={<Home />} />
+      <Route path="/asociates" element={<Asociates />} />
       <Route path="/users" element={<Users />} />
       <Route path="/users_form" element={<UserForm />} />
       <Route path="/barbershops" element={<Barbershops />} />
@@ -58,12 +68,24 @@ export const router = createBrowserRouter(
       <Route path="/barber_services_form" element={<BarberServiceForm />} />
       <Route path="/appointments" element={<Appointments />} />
       <Route path="/appointments_form" element={<AppointmentForm />} />
-      <Route path="/login" element={<Login />} />
 
-      <Route path="/private_owner" element={<PrivateOwner />} />
-      <Route path="/private_barber" element={<PrivateBarber />} />
-      <Route path="/private_client" element={<PrivateClient />} />
+      <Route path="/singup/client" element={<ClientRegister />} />
+      <Route path="/singup/barber" element={<BarberRegister />} />
+      <Route path="/singup/owner" element={<OwnerRegister />} />
+      
+      <Route path="/login/client" element={<ClientLogin />} />
+      <Route path="/login/barber" element={<BarberLogin />} />
+      <Route path="/login/owner" element={<OwnerLogin />} />
+      <Route path="/login/admin" element={<AdminLogin />} />
 
+
+      <Route path="/4dm1n1str4c10n" element={<Administration />} />
+      
+      <Route path="/private/owner" element={<PrivateOwner />} />
+      <Route path="/private/barber" element={<PrivateBarber />} />
+      <Route path="/private/client" element={<PrivateClient />} />
+
+      <Route path="/private/owner/gestion" element={<OwnerGestion />} />
 
     </Route>
   )
