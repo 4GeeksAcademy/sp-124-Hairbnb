@@ -52,6 +52,7 @@ class Barbershop(db.Model):
 
     barbers: Mapped[List["Barber"]] = relationship(back_populates="barbershop")
     owner: Mapped["Owner"] = relationship(back_populates="barbershops")
+    appointments: Mapped[List["Appointment"]] = relationship(back_populates="barbershop")
     local = relationship("BarberBarbershop", back_populates="barbershop")
 
     def serialize(self):
@@ -175,6 +176,7 @@ class Appointment(db.Model):
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
     barber_id: Mapped[int] = mapped_column(ForeignKey("barber.id"), nullable=False)
     barber_service_id: Mapped[int] = mapped_column(ForeignKey("barber_service.id"), nullable=False)
+    barbershop_id: Mapped[int] = mapped_column(ForeignKey("barbershop.id"), nullable=True)
 
     status: Mapped[str] = mapped_column(nullable=False, default="pending")
     notes: Mapped[str] = mapped_column(nullable=True)
@@ -182,12 +184,14 @@ class Appointment(db.Model):
     user: Mapped["User"] = relationship(back_populates="appointments")
     barber: Mapped["Barber"] = relationship(back_populates="appointments")
     selected_service: Mapped["BarberService"] = relationship(back_populates="appointments")
+    barbershop: Mapped["Barbershop"] = relationship(back_populates="appointments")
 
-    def __init__(self, date, user_id, barber_id, barber_service_id, notes=None):
+    def __init__(self, date, user_id, end_time, barber_id, barber_service_id, barbershop_id, notes=None):
         self.date = date
         self.user_id = user_id
         self.barber_id = barber_id
         self.barber_service_id = barber_service_id
+        self.barbershop_id = barbershop_id
         self.notes = notes
         
     def serialize(self):
@@ -201,6 +205,8 @@ class Appointment(db.Model):
             "end_time": actual_end_time.isoformat() if actual_end_time else None,
             "user_id": self.user_id,
             "user_name": f"{self.user.name} {self.user.last_name}" if self.user else "Usuario no asignado",
+            "barbershop_id": self.barbershop_id,
+            "barbershop_name": self.barbershop.name if self.barbershop else "Sede desconocida",
             "barber_id": self.barber_id,
             "barber_name": self.barber.name if self.barber else "Barbero no asignado",
             "barber_service_id": self.barber_service_id,

@@ -8,7 +8,9 @@ export const Services = () => {
     const { store, dispatch } = useGlobalReducer();
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/services`)
+        fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`, {
+            headers: { "Authorization": `Bearer ${store.token}` }
+        })
             .then(resp => resp.json())
             .then(data => {
                 dispatch({ type: "set-services", payload: data });

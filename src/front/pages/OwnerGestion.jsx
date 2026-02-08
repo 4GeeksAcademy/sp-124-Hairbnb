@@ -197,7 +197,7 @@ import { useNavigate } from "react-router-dom";
                   className="btn btn-primary d-flex align-items-center gap-2"
                   onClick={() => {
                     dispatch({ type: "set-appointmentInfo", payload: null });
-                    navigate("/appointments_form");
+                    navigate("/owner_appointment_form");
                   }}
                 >
                   <i className="fas fa-plus-circle"></i> Nueva Cita

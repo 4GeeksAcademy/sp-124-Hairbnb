@@ -1,104 +1,132 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 
 export const BarberServiceForm = () => {
   const { store, dispatch } = useGlobalReducer();
   const navigate = useNavigate();
 
-  const barber = store.barberInfo;
+  // Estado inicial del formulario
+  const [formData, setFormData] = useState({
+    name: "",
+    price: "",
+    duration: ""
+  });
 
-  const [selectedServices, setSelectedServices] = useState([]);
-
+  // Si venimos de "Editar", cargamos los datos
   useEffect(() => {
-    if (!barber) return;
-
-    const assigned = store.barberservice
-      .filter(bs => bs.barber_id === barber.id)
-      .map(bs => bs.service_id);
-
-    setSelectedServices(assigned);
-  }, [barber, store.barberservice]);
-
-  const barberShopServices = store.services.filter(
-    s => s.barbershop_id === barber?.barbershop_id
-  );
-
-  const handleChange = (serviceId) => {
-    if (selectedServices.includes(serviceId)) {
-      setSelectedServices(selectedServices.filter(id => id !== serviceId));
-    } else {
-      setSelectedServices([...selectedServices, serviceId]);
+    if (store.barber_serviceInfo) {
+      setFormData({
+        name: store.barber_serviceInfo.name || "",
+        price: store.barber_serviceInfo.price || "",
+        duration: store.barber_serviceInfo.duration || ""
+      });
     }
-  };
+  }, [store.barber_serviceInfo]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!barber) return;
 
-    const toRemove = store.barberservice
-      .filter(barbser => barbser.barber_id === barber.id && !selectedServices.includes(barbser.service_id));
+    // Intentamos pillar el token del store, y si no, del localStorage (el plan B)
+    const token = store.token || localStorage.getItem("token"); 
 
-    for (let barbser of toRemove) {
-      await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services/${barbser.id}`, {
-        method: "DELETE",
-      });
+    if (!token) {
+        alert("Tu sesión ha caducado. Por favor, vuelve a iniciar sesión.");
+        navigate("/login");
+        return;
     }
 
-    const toAdd = selectedServices.filter(
-      id => !store.barberservice.some(bs => bs.barber_id === barber.id && bs.service_id === id)
-    );
+    const isEditing = !!store.barber_serviceInfo;
+    const url = isEditing 
+        ? `${import.meta.env.VITE_BACKEND_URL}/barber_services/${store.barber_serviceInfo.id}`
+        : `${import.meta.env.VITE_BACKEND_URL}/barber_services`;
 
-    for (let serviceId of toAdd) {
-      await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ barber_id: barber.id, service_id: serviceId })
-      });
+    try {
+        const resp = await fetch(url, {
+            method: isEditing ? "PUT" : "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}` // <--- Usamos nuestra variable segura
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (resp.ok) {
+            dispatch({ type: "set-barber_serviceInfo", payload: null });
+            dispatch({ type: "set-message", payload: { type: "success", msg: `Servicio ${isEditing ? "actualizado" : "creado"} correctamente` } });
+            navigate("/private/barber");
+        } else {
+            const errorData = await resp.json();
+            console.error("Error del servidor:", errorData);
+        }
+    } catch (error) {
+        console.error("Error en la petición:", error);
     }
-
-    const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`);
-    const data = await resp.json();
-    dispatch({ type: "set-barberservices", payload: data });
-    dispatch({ type: "set-message",payload: { type: "success",msg: "Datos guardados correctamente"}});
-
-
-    navigate("/barber_services");
-  };
-
-  if (!barber) return <p className="text-center mt-4">No hay barbero seleccionado</p>;
+};
 
   return (
-    <form className="mx-auto p-4" onSubmit={handleSubmit}>
-      <h3 className="mb-4 text-center">Servicios de {barber.name}</h3>
-      <p className="text-center">Barbería: {barber.barbershop_name}</p>
-
-      <div className="row g-3 w-75 mx-auto">
-        {barberShopServices.map(service => (
-          <div className="col-sm-12 col-md-6 col-lg-4" key={service.id}>
-            <div className="form-check">
+    <div className="container mt-5">
+      <div className="card shadow-sm mx-auto" style={{ maxWidth: "500px" }}>
+        <div className="card-header bg-dark text-white">
+          <h4 className="mb-0">{store.barber_serviceInfo ? "Editar Servicio" : "Nuevo Servicio"}</h4>
+        </div>
+        <div className="card-body">
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label className="form-label">Nombre del Servicio</label>
               <input
-                className="form-check-input"
-                type="checkbox"
-                id={`service-${service.id}`}
-                checked={selectedServices.includes(service.id)}
-                onChange={() => handleChange(service.id)}
+                type="text"
+                className="form-control"
+                placeholder="Ej: Corte Degradado, Arreglo de Barba..."
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
               />
-              <label className="form-check-label" htmlFor={`service-${service.id}`}>
-                {service.name} • {service.duration} min • {service.price}€
-              </label>
             </div>
-          </div>
-        ))}
-        {barberShopServices.length === 0 && (
-          <p className="fst-italic mt-3">No hay servicios disponibles en esta barbería.</p>
-        )}
-      </div>
 
-      <div className="mt-5 d-flex justify-content-around">
-        <Link to="/barber_services" className="btn btn-outline-secondary w-25">Volver</Link>
-        <button type="submit" className="btn btn-outline-primary w-25">Guardar cambios</button>
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Precio (€)</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="0"
+                  value={formData.price}
+                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Duración (min)</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  placeholder="30"
+                  value={formData.duration}
+                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="d-flex justify-content-between mt-4">
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={() => {
+                  dispatch({ type: "set-barber_serviceInfo", payload: null });
+                  navigate(-1);
+                }}
+              >
+                Cancelar
+              </button>
+              <button type="submit" className="btn btn-primary">
+                {store.barber_serviceInfo ? "Guardar Cambios" : "Añadir a mi lista"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </form>
+    </div>
   );
 };
