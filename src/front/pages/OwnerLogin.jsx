@@ -45,7 +45,8 @@ export const OwnerLogin = () => {
                 payload: {
                     token: data.token,
                     username: data.user.name,
-                    role: "owner"
+                    role: "owner",
+                    userInfo: data.user
                 }
             });
 
@@ -98,7 +99,7 @@ export const OwnerLogin = () => {
                             Crear una cuenta de dueño
                         </span>
                     </p>
-                    <button type="submit" className="btn btn-secondary">
+                    <button type="submit" className="btn btn-outline-primary">
                         Entrar como dueño
                     </button>
                 </div>

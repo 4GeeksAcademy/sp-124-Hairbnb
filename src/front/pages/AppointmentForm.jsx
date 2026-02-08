@@ -1,230 +1,275 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 
 export const AppointmentForm = () => {
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
 
+    const preData = store.appointmentInfo || {};
+
+    const isoDate = preData.date ? preData.date.split("T")[0] : "";
+    const isoTime = preData.date ? preData.date.split("T")[1].slice(0, 5) : "";
+
     const [data, setData] = useState({
-        id: null,
-        user_id: "",
-        barbershop_id: "",
-        barber_id: "",
-        service_id: "",
-        date: "",
-        time: "",
-        notes: ""
+        user_id: preData.user_id || "",
+        barbershop_id: store.barbershopInfo?.id || preData.barbershop_id || "",
+        barber_id: preData.barber_id || "",
+        barber_service_id: preData.barber_service_id || "",
+        date: isoDate,
+        time: isoTime,
+        notes: preData.notes || ""
     });
 
-    const isEditing = !!data.id;
+    useEffect(() => {
+        const fetchBarberServices = async () => {
+            if (!data.barber_id) return;
+
+            try {
+                const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbers/${data.barber_id}/services`);
+                if (resp.ok) {
+                    const services = await resp.json();
+                    dispatch({ type: "set-services", payload: services });
+                }
+            } catch (error) {
+            }
+        };
+
+        fetchBarberServices();
+    }, [data.barber_id]);
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/services`)
-            .then(r => r.json())
-            .then(data => dispatch({ type: "set-services", payload: data }));
-    }, []);
-
-    useEffect(() => {
-        if (store.appointmentInfo) {
-            const appt = store.appointmentInfo;
-
-            setData({
-                id: appt.id || null,
-                user_id: appt.user_id ? Number(appt.user_id) : "",
-                barbershop_id: appt.barber?.barbershop_id ? Number(appt.barber.barbershop_id) : "",
-                barber_id: appt.barber_id ? Number(appt.barber_id) : "",
-                service_id: appt.service_id ? Number(appt.service_id) : "",
-                date: appt.date?.split("T")[0] || "",
-                time: appt.date?.split("T")[1]?.slice(0, 5) || "",
-                notes: appt.notes || ""
-            });
+        if (store.role === "client" && store.userInfo) {
+            setData(prev => ({ ...prev, user_id: store.userInfo.id }));
         }
-    }, [store.appointmentInfo]);
+    }, [store.role, store.userInfo]);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
+    useEffect(() => {
+        if (store.role === "client") {
+            setData(prev => ({ ...prev, user_id: store.userInfo.id }));
+        }
 
-        setData(prev => ({
-            ...prev,
-            [name]: ["user_id", "barbershop_id", "barber_id", "service_id"].includes(name)
-                ? Number(value)
-                : value
-        }));
+        if (store.role === "barber") {
+            setData(prev => ({
+                ...prev,
+                barber_id: store.user.barber_id,
+                barbershop_id: store.user.barbershop_id
+            }));
+        }
+
+        if (store.role === "owner" && store.barbershopInfo) {
+            setData(prev => ({ ...prev, barbershop_id: store.barbershopInfo.id }));
+        }
+    }, [store.role, store.barbershopInfo, store.userInfo]);
+
+    const [phoneSearch, setPhoneSearch] = useState("");
+    const [foundUser, setFoundUser] = useState(null);
+
+    const handleSearchUser = async () => {
+        try {
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/search?phone=${phoneSearch}`);
+            if (res.ok) {
+                const user = await res.json();
+                setFoundUser(user);
+                setData(prev => ({ ...prev, user_id: user.id }));
+            } else {
+                alert("Cliente no encontrado. ¿Deseas crearlo?");
+            }
+        } catch (error) { }
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+    e.preventDefault();
 
-        const payload = {
-            user_id: data.user_id,
-            barber_id: data.barber_id,
-            service_id: data.service_id,
-            notes: data.notes,
-            date: `${data.date}T${data.time}:00`
-        };
+    const isEditing = !!preData.id;
+    const url = isEditing 
+        ? `${import.meta.env.VITE_BACKEND_URL}/appointments/${preData.id}` 
+        : `${import.meta.env.VITE_BACKEND_URL}/appointments`;
+    
+    const method = isEditing ? "PUT" : "POST";
 
-        const url = isEditing
-            ? `${import.meta.env.VITE_BACKEND_URL}/appointments/${data.id}`
-            : `${import.meta.env.VITE_BACKEND_URL}/appointments`;
+    try {
+        const res = await fetch(url, {
+            method: method,
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${store.token}`
+            },
+            body: JSON.stringify({
+                ...data,
+                date: `${data.date}T${data.time}:00` 
+            })
+        });
 
-        try {
-            const resp = await fetch(url, {
-                method: isEditing ? "PUT" : "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
+        const result = await res.json();
+
+        if (res.ok) {
+            dispatch({ 
+                type: "set-message", 
+                payload: { type: "success", msg: isEditing ? "Cita actualizada" : "Cita creada" } 
             });
 
-            const result = await resp.json();
+            dispatch({ type: "set-appointmentInfo", payload: null });
+            navigate("/private/owner/gestion");
+        } else {
 
-            if (resp.ok) {
-                dispatch({ type: "set-message", payload: { type: "success", msg: isEditing ? "Cita actualizada" : "Cita agendada" } });
-                dispatch({ type: "set-appointmentInfo", payload: null });
-                navigate("/appointments");
-            } else {
-                dispatch({ type: "set-message", payload: { type: "danger", msg: result.message || "Error al guardar" } });
-            }
-        } catch (error) {
-            dispatch({ type: "set-message", payload: { type: "danger", msg: "Error de conexión" } });
+            dispatch({ 
+                type: "set-message", 
+                payload: { type: "error", msg: result.message?.msg || "Error en la reserva" } 
+            });
         }
-    };
+    } catch (error) {
+        dispatch({ 
+            type: "set-message", 
+            payload: { type: "error", msg: "Error de conexión con el servidor" } 
+        });
+    }
+};
 
-    const filteredBarbers = (store.barbers || []).filter(b => !data.barbershop_id || b.barbershop_id === parseInt(data.barbershop_id));
-    const filteredServices = (store.services || []).filter(s => !data.barber_id || (store.barberservice || []).some(bs => bs.service_id === s.id && bs.barber_id === parseInt(data.barber_id)));
-    const servicesToShow = isEditing ? store.services : filteredServices;
-    const userName = store.users.find(u => u.id === parseInt(data.user_id))?.name + " " + store.users.find(u => u.id === parseInt(data.user_id))?.last_name;
-    const barbershopName = store.barbershops.find(b => b.id === parseInt(data.barbershop_id))?.name;
+    if (store.role === null) {
+        return (
+            <div className="container mt-5 text-center">
+                <h2>Necesitas iniciar sesión para solicitar citas</h2>
+            </div>
+        );
+    }
+
+    useEffect(() => {
+    if (preData.id && preData.user_id) {
+        setFoundUser({
+            id: preData.user_id,
+            name: preData.user_name?.split(" ")[0] || "Cliente",
+            last_name: preData.user_name?.split(" ")[1] || "",
+        });
+    }
+}, [preData.id]);
 
     return (
-        <form className="mx-auto p-4 card shadow-sm" onSubmit={handleSubmit} style={{ maxWidth: "800px" }}>
-            <h2 className="text-center mb-4">{isEditing ? "Editar Cita" : "Agendar Nueva Cita"}</h2>
+        <div className="container mt-5" style={{ maxWidth: "600px" }}>
+            <div className="cardp-4 border-0">
+                <h2 className="text-center mb-4">{preData.id ? "Editar Cita" : "Nueva Reserva"}</h2>
 
-            {store.message?.msg && (
-                <div className={`alert alert-${store.message.type} text-center`}>{store.message.msg}</div>
-            )}
-
-            <div className="row g-3">
-                <div className="col-md-6">
-                    <label className="form-label">Cliente</label>
-                    {isEditing ? (
-                        <input type="text" className="form-control" value={"No editable"} disabled />
+                <form onSubmit={handleSubmit}>
+                    {store.role !== "client" ? (
+                        <div className="mb-4 p-3">
+                            {foundUser ? (
+                                <div className="alert">
+                                    <div className="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 className="mb-0 fw-bold">
+                                            {foundUser.name} {foundUser.last_name}
+                                        </h6>
+                                        <button
+                                            type="button"
+                                            className="btn text-danger"
+                                            onClick={() => { setFoundUser(null); setData(prev => ({ ...prev, user_id: "" })) }}
+                                        >
+                                            Cambiar
+                                        </button>
+                                    </div>
+                                    {foundUser.notes ? (
+                                        <div className="bp-2 mt-2">
+                                            <strong className="text-muted d-block small">Notas del cliente:</strong>
+                                            {foundUser.notes}
+                                        </div>
+                                    ) : (
+                                        <p className="text-muted small mb-0 mt-1 fst-italic">Sin notas previas.</p>
+                                    )}
+                                </div>
+                            ) : (
+                                <>
+                                    <label className="form-label fw-bold">Buscar cliente por teléfono</label>
+                                    <div className="input-group">
+                                        <input
+                                            type="text" className="form-control"
+                                            placeholder="Ej: 600123456"
+                                            value={phoneSearch}
+                                            onChange={e => setPhoneSearch(e.target.value)}
+                                        />
+                                        <button type="button" className="btn btn-dark" onClick={handleSearchUser}>
+                                            <i className="fas fa-search me-1"></i> Buscar
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     ) : (
+                        <div className="alert alert-secondary mb-4">
+                            <i className="fas fa-user me-2"></i>
+                            Reserva para: <strong>{store.userInfo?.name} {store.userInfo?.last_name}</strong>
+                        </div>
+                    )}
+
+
+                    <div className="row g-3 mb-3">
+                        <div className="col-md-6">
+                            <label className="form-label">Barbería</label>
+                            <select
+                                className="form-select"
+                                value={data.barbershop_id}
+                                onChange={e => setData({ ...data, barbershop_id: e.target.value })}
+                                disabled={store.role === "owner" || store.role === "barber"}
+                            >
+                                <option value="">Selecciona Barbería...</option>
+                                {store.barbershops?.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                            </select>
+                        </div>
+                        <div className="col-md-6">
+                            <label className="form-label">Barbero</label>
+                            <select
+                                className="form-select"
+                                value={data.barber_id}
+                                onChange={e => setData({ ...data, barber_id: e.target.value })}
+                                required
+                                disabled={store.role === "barber" || !!preData.barber_id}
+                            >
+                                <option value="">Selecciona Barbero...</option>
+                                {store.barbers?.map((item) => {
+                                    if (item.status === 'accepted') {
+                                        return (
+                                            <option key={item.barber.id} value={item.barber.id}>
+                                                {item.barber.name}
+                                            </option>
+                                        );
+                                    }
+                                    return null;
+                                })}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="mb-3">
+                        <label className="form-label">Servicio</label>
                         <select
                             className="form-select"
-                            name="user_id"
-                            value={data.user_id}
-                            onChange={handleChange}
                             required
+                            value={data.barber_service_id}
+                            onChange={e => setData({ ...data, barber_service_id: e.target.value })}
                         >
-                            <option value="">Selecciona cliente</option>
-                            {store.users.map(u => (
-                                <option key={u.id} value={u.id}>{u.name} {u.last_name}</option>
+                            <option value="">¿Qué vamos a hacer?</option>
+                            {store.services?.map(s => (
+                                <option key={s.id} value={s.id}>
+                                    {s.name} ({s.price}€ - {s.duration} min)
+                                </option>
                             ))}
                         </select>
-                    )}
-                </div>
+                    </div>
 
-                <div className="col-md-6">
-                    <label className="form-label">Barbería</label>
-                    {isEditing ? (
-                        <input type="text" className="form-control" value={"No editable"} disabled />
-                    ) : (
-                        <select
-                            className="form-select"
-                            name="barbershop_id"
-                            value={data.barbershop_id}
-                            onChange={handleChange}
-                            required
-                        >
-                            <option value="">Selecciona barbería</option>
-                            {store.barbershops.map(b => (
-                                <option key={b.id} value={b.id}>{b.name}</option>
-                            ))}
-                        </select>
-                    )}
-                </div>
+                    <div className="row g-3 mb-4">
+                        <div className="col-6">
+                            <label className="form-label">Fecha</label>
+                            <input type="date" className="form-control" value={data.date} onChange={e => setData({ ...data, date: e.target.value })} required />
+                        </div>
+                        <div className="col-6">
+                            <label className="form-label">Hora</label>
+                            <input type="time" className="form-control" onChange={e => setData({ ...data, time: e.target.value })} required />
+                        </div>
+                    </div>
 
-                <div className="col-md-6">
-                    <label className="form-label">Barbero</label>
-                    <select
-                        className="form-select"
-                        name="barber_id"
-                        value={data.barber_id}
-                        onChange={handleChange}
-                        disabled={!data.barbershop_id}
-                        required
-                    >
-                        <option value="">Selecciona barbero</option>
-                        {filteredBarbers.map(b => (
-                            <option key={b.id} value={b.id}>{b.name}</option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="col-md-6">
-                    <label className="form-label">Servicio</label>
-                    {servicesToShow.length > 0 && (
-                        <select
-                            className="form-select"
-                            name="service_id"
-                            value={data.service_id}
-                            onChange={handleChange}
-                            disabled={isEditing}
-                            required
-                        >
-                            <option value="">Selecciona servicio</option>
-                            {servicesToShow.map(s => (
-                                <option key={s.id} value={s.id}>{s.name}</option>
-                            ))}
-                        </select>
-                    )}
-                </div>
-
-                <div className="col-md-6">
-                    <label className="form-label">Fecha</label>
-                    <input
-                        type="date"
-                        className="form-control"
-                        name="date"
-                        value={data.date}
-                        onChange={handleChange}
-
-                        required
-                    />
-                </div>
-
-                <div className="col-md-6">
-                    <label className="form-label">Hora</label>
-                    <input
-                        type="time"
-                        className="form-control"
-                        name="time"
-                        value={data.time}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
-                <div className="col-md-6">
-                    <label className="form-label">Notas</label>
-                    <textarea
-                        className="form-control"
-                        name="notes"
-                        value={data.notes}
-                        onChange={handleChange}
-                    />
-                </div>
-
-
-                <div className="mt-5 d-flex justify-content-around">
-                    <button
-                        type="submit"
-                        className="btn btn-outline-secondary mx-3 w-25"
-                    >
-                        {data.id ? "Actualizar cita" : "Crear cita"}
+                    <button type="submit" className="btn btn-primary w-100 py-2 fw-bold">
+                        Confirmar Cita
                     </button>
-                    <Link to="/appointments" className="btn btn-secondary mx-3 w-25">Volver</Link>
-                </div>
+                </form>
             </div>
-        </form>
+        </div>
     );
 };

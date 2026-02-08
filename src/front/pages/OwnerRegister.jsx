@@ -64,7 +64,7 @@ export const OwnerRegister = () => {
                 <input className="form-control mb-2" name="email" placeholder="Email" onChange={handleChange} />
                 <input className="form-control mb-2" name="phone" placeholder="Teléfono" onChange={handleChange} />
                 <input className="form-control mb-2" type="password" name="password" placeholder="Contraseña" onChange={handleChange} />
-                <button className="btn btn-secondary">Crear cuenta</button>
+                <button className="btn btn-outline-primary">Crear cuenta</button>
             </form>
         </div>
     );

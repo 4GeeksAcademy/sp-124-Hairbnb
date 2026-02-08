@@ -175,13 +175,13 @@ export const UserForm = () => {
             </div>
 
             <div className="mt-4 d-flex justify-content-around">
+                <Link to="/" className="btn btn-outline-secondary mx-3 w-25">Volver</Link>
                 <button
                     type="submit"
-                    className="btn btn-outline-secondary mx-3 w-25"
+                    className="btn btn-outline-primary mx-3 w-25"
                 >
                     {data.id ? "Actualizar" : "Crear"}
                 </button>
-                <Link to="/" className="btn btn-secondary mx-3 w-25">Volver</Link>
             </div>
         </form>
 

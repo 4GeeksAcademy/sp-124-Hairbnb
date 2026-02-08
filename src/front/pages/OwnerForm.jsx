@@ -164,13 +164,13 @@ export const OwnerForm = () => {
             </div>
 
             <div className="mt-5 d-flex justify-content-around">
+                <Link to="/owners" className="btn btn-outline-secondary mx-3 w-25">Volver</Link>
                 <button
                     type="submit"
-                    className="btn btn-outline-secondary mx-3 w-25"
+                    className="btn btn-outline-primary mx-3 w-25"
                 >
                     {data.id ? "Actualizar" : "Crear"}
                 </button>
-                <Link to="/owners" className="btn btn-secondary mx-3 w-25">Volver</Link>
             </div>
         </form>
     );

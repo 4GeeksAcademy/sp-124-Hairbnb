@@ -27,7 +27,6 @@ export const PrivateOwner = () => {
         const data = await res.json();
         setBarbershops(data);
       } catch (error) {
-        console.error("Error al cargar barberías:", error);
         setBarbershops([]);
       }
     };
@@ -62,7 +61,6 @@ export const PrivateOwner = () => {
 
       if (!resp.ok) return;
 
-      // 🔹 Actualizamos el estado local
       setBarbershops(barbershops.filter((b) => b.id !== id));
     } catch (error) {
       dispatch({
@@ -125,23 +123,25 @@ export const PrivateOwner = () => {
 
               <div className="d-flex justify-content-around m-3">
                 <Link
-                  to="/private/owner/gestion"
-                  className="btn btn-outline-secondary"
-                  onClick={() =>
-                    dispatch({ type: "set-barbershopInfo", payload: el })
-                  }
-                ><i className="fa-regular fa-compass"></i> Gestionar
-                </Link>
+  to="/private/owner/gestion"
+  className="btn btn-outline-secondary"
+  onClick={() => {
+    dispatch({ type: "set-barbershopInfo", payload: el });
+    dispatch({ type: "set-barbershops", payload: barbershops });
+  }}
+>
+  <i className="fa-regular fa-compass"></i> Gestionar
+</Link>
                 <Link
                   to="/barbershops_form"
-                  className="btn btn-outline-secondary"
+                  className="btn btn-outline-warning"
                   onClick={() =>
                     dispatch({ type: "set-barbershopInfo", payload: el })
                   }
                 ><i className="fa-regular fa-pen-to-square"></i> Editar datos
                 </Link>
                 <button
-                  className="btn btn-outline-secondary"
+                  className="btn btn-outline-danger"
                   onClick={() => handleDelete(el.id)}
                 >
                   <i className="fa-solid fa-xmark"></i>Borrar

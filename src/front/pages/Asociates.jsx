@@ -51,7 +51,7 @@ export const Asociates = () => {
               <div className="d-flex justify-content-betwee mb-3 mx-auto">
                 <Link
                   to={`/barbershops/${barb.id}`}
-                  className="btn btn-outline-secondary disabled"
+                  className="btn btn-outline-primary disabled"
                 >
                   Ver detalles
                 </Link>

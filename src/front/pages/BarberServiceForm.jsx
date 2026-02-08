@@ -96,8 +96,8 @@ export const BarberServiceForm = () => {
       </div>
 
       <div className="mt-5 d-flex justify-content-around">
-        <button type="submit" className="btn btn-outline-secondary w-25">Guardar cambios</button>
-        <Link to="/barber_services" className="btn btn-secondary w-25">Volver</Link>
+        <Link to="/barber_services" className="btn btn-outline-secondary w-25">Volver</Link>
+        <button type="submit" className="btn btn-outline-primary w-25">Guardar cambios</button>
       </div>
     </form>
   );

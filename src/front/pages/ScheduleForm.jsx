@@ -1,143 +1,146 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import { useNavigate } from "react-router-dom";
 
 export const ScheduleForm = () => {
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
+    
+    const editItem = store.scheduleInfo;
 
-    const [data, setData] = useState({
-        id: null,
-        start_time: "",
-        end_time: "",
-        barber_id: ""
+    const [formData, setFormData] = useState({
+        invitation_id: editItem?.barber_barbershop_id || "",
+        day_of_week: editItem?.day_of_week || "Monday", // Valor por defecto para que no vaya vacío
+        start_time: editItem?.start_time || "09:00",
+        end_time: editItem?.end_time || "14:00"
     });
 
-    const [barbers, setBarbers] = useState([]);
+    const days = [
+        { val: "Monday", lab: "Lunes" },
+        { val: "Tuesday", lab: "Martes" },
+        { val: "Wednesday", lab: "Miércoles" },
+        { val: "Thursday", lab: "Jueves" },
+        { val: "Friday", lab: "Viernes" },
+        { val: "Saturday", lab: "Sábado" },
+        { val: "Sunday", lab: "Domingo" }
+    ];
 
-    useEffect(() => {
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/barbers`)
-            .then(resp => resp.json())
-            .then(data => setBarbers(data))
-            .catch(err => console.error(err));
-    }, []);
-
-    useEffect(() => {
-        if (store.scheduleInfo) {
-            setData({
-                id: store.scheduleInfo.id,
-                start_time: store.scheduleInfo.start_time || "",
-                end_time: store.scheduleInfo.end_time || "",
-                barber_id: store.scheduleInfo.barber_id || ""
-            });
-        }
-    }, [store.scheduleInfo]);
-
-    const handleChange = (e) => {
-        setData(prev => ({
-            ...prev,
-            [e.target.name]: e.target.value
-        }));
-    };
+    const myBarbershops = store.invitations?.filter(inv => inv.status === "accepted") || [];
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const isEditing = !!data.id;
+        
+        if (!formData.invitation_id || !formData.day_of_week) {
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Selecciona barbería y día" } });
+            return;
+        }
 
-        const url = isEditing
-            ? `${import.meta.env.VITE_BACKEND_URL}/schedules/${data.id}`
+        const method = editItem ? "PUT" : "POST";
+        const url = editItem 
+            ? `${import.meta.env.VITE_BACKEND_URL}/schedules/${editItem.id}`
             : `${import.meta.env.VITE_BACKEND_URL}/schedules`;
 
-        const method = isEditing ? "PUT" : "POST";
+        const resp = await fetch(url, {
+            method: method,
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${store.token}`
+            },
+            body: JSON.stringify(formData)
+        });
 
-        try {
-            const resp = await fetch(url, {
-                method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            });
+        const data = await resp.json();
 
-            const result = await resp.json();
-
-            if (result.message) {
-                dispatch({ type: "set-message", payload: result.message });
-            }
-
-            if (!resp.ok) return;
-
-            dispatch({
-                type: "set-schedules",
-                payload: isEditing
-                    ? store.schedules.map(s => s.id === data.id ? result : s)
-                    : [...store.schedules, result]
-            });
-
-            dispatch({ type: "set-scheduleInfo", payload: null });
-
-            setTimeout(() => navigate("/schedules"), 1200);
-
-        } catch (error) {
-            dispatch({
-                type: "set-message",
-                payload: { type: "error", msg: "Error de conexión con el servidor" }
-            });
+        if (resp.ok) {
+            dispatch({ type: "set-message", payload: { type: "success", msg: "Horario guardado correctamente" } });
+            navigate("/private/barber");
+        } else {
+            dispatch({ type: "set-message", payload: data.message });
         }
     };
-
+    
+    if (store.role !== "barber") {
+    return (
+      <div className="container mt-5 text-center">
+        <h2>No tienes permisos de barbero</h2>
+      </div>
+    );
+  }
 
     return (
-        <form className="mx-auto p-4" onSubmit={handleSubmit}>
-            <div className="row g-3">
-                <div className="col-12 col-md-6 mx-auto">
-                    <label className="form-label text-center" htmlFor="barbershop_id">Barbero</label>
-                    <select
-                        className="form-select"
-                        id="barber_id"
-                        name="barber_id"
-                        value={data.barber_id}
-                        onChange={handleChange}
-                    >
-                        <option value="">Selecciona un barbero</option>
-                        {barbers.map(b => (
-                            <option key={b.id} value={b.id}>{b.name}</option>
-                        ))}
-                    </select>
-                </div>
+        <div className="container mt-5">
+            <div className="card border border-0">
+                <h3 className="mb-4 text-center">
+                    {editItem ? "Editar Horario" : "Nuevo Horario"}
+                </h3>
+                
+                <form onSubmit={handleSubmit}>
+                    <div className="mb-3">
+                        <label className="form-label">Barbería</label>
+                        <select 
+                            className="form-select" 
+                            value={formData.invitation_id}
+                            onChange={(e) => setFormData({...formData, invitation_id: e.target.value})}
+                            required
+                        >
+                            <option value="">¿Dónde trabajarás?</option>
+                            {myBarbershops.map(inv => (
+                                <option key={inv.id} value={inv.id}>{inv.barbershop?.name}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                <div className="col-12 col-md-6">
-                    <label className="form-label" htmlFor="start_time">Hora de inicio</label>
-                    <input
-                        className="form-control"
-                        id="start_time"
-                        name="start_time"
-                        type="time"
-                        value={data.start_time}
-                        onChange={handleChange}
-                    />
-                </div>
+                    <div className="mb-3">
+                        <label className="form-label">Día de la semana</label>
+                        <select 
+                            className="form-select" 
+                            value={formData.day_of_week}
+                            onChange={(e) => setFormData({...formData, day_of_week: e.target.value})}
+                            required
+                        >
+                            {days.map(d => (
+                                <option key={d.val} value={d.val}>{d.lab}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                <div className="col-12 col-md-6">
-                    <label className="form-label" htmlFor="end_time">Hora de fin</label>
-                    <input
-                        className="form-control"
-                        id="end_time"
-                        name="end_time"
-                        type="time"
-                        value={data.end_time}
-                        onChange={handleChange}
-                    />
-                </div>
+                    <div className="row">
+                        <div className="col-6 mb-4">
+                            <label className="form-label">Entrada</label>
+                            <input 
+                                type="time" 
+                                className="form-control" 
+                                value={formData.start_time}
+                                onChange={(e) => setFormData({...formData, start_time: e.target.value})}
+                                required
+                            />
+                        </div>
+                        <div className="col-6 mb-4">
+                            <label className="form-label">Salida</label>
+                            <input 
+                                type="time" 
+                                className="form-control" 
+                                value={formData.end_time}
+                                onChange={(e) => setFormData({...formData, end_time: e.target.value})}
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div className="d-flex justify-content-center gap-3">
+                        <button 
+                            type="button" 
+                            className="btn btn-outline-secondary text-decoration-none" 
+                            onClick={() => navigate("/private/barber")}
+                        >
+                            Cancelar
+                        </button>
+                        <button type="submit" className="btn btn-primary">
+                            {editItem ? "Actualizar Horario" : "Guardar Horario"}
+                        </button>
+                    </div>
+                </form>
             </div>
-
-            <div className="mt-5 d-flex justify-content-around">
-                <button
-                    type="submit"
-                    className="btn btn-outline-secondary mx-3 w-25"
-                >
-                    {data.id ? "Actualizar" : "Crear"}
-                </button>
-                <Link to="/schedules" className="btn btn-secondary mx-3 w-25">Volver</Link>
-            </div>
-        </form>
+        </div>
     );
 };

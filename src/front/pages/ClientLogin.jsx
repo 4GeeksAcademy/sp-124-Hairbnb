@@ -45,7 +45,8 @@ export const ClientLogin = () => {
                 payload: {
                     token: data.token,
                     username: data.user.name,
-                    role: "client"
+                    role: "barber",
+                    clientInfo: data.user
                 }
             });
 
@@ -97,7 +98,7 @@ export const ClientLogin = () => {
                             Crear una cuenta de cliente
                         </span>
                     </p>
-                    <button type="submit" className="btn btn-secondary">
+                    <button type="submit" className="btn btn-outline-primary">
                         Entrar como cliente
                     </button>
                 </div>
