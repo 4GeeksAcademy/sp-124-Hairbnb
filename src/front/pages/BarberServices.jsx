@@ -61,7 +61,7 @@ export const BarberServices = () => {
                                 <div className="d-flex m-3 justify-content-around">
                                     <Link
                                         to="/barber_services_form"
-                                        className="btn btn-outline-secondary"
+                                        className="btn btn-outline-primary"
                                         onClick={() => dispatch({ type: "set-barberInfo", payload: barber })}
                                     >
                                         <i className="fa-regular fa-pen-to-square"></i> Editar servicios

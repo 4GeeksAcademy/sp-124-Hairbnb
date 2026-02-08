@@ -77,12 +77,12 @@ export const Schedules = () => {
                             <div className="d-flex m-3 justify-content-around">
                                 <Link
                                     to="/schedules_form"
-                                    className="btn btn-outline-secondary"
+                                    className="btn btn-outline-warning"
                                     onClick={() => dispatch({ type: "set-scheduleInfo", payload: schedule })}
                                 >
                                     <i className="fa-regular fa-pen-to-square"></i> Editar
                                 </Link>
-                                <button className="btn btn-outline-secondary" onClick={() => deleteSchedule(schedule.id)}>
+                                <button className="btn btn-outline-danger" onClick={() => deleteSchedule(schedule.id)}>
                                     <i className="fa-solid fa-xmark"></i> Borrar
                                 </button>
                             </div>

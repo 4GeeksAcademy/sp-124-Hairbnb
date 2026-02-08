@@ -89,12 +89,12 @@ export const Services = () => {
                             <div className="d-flex m-3 justify-content-around">
                                 <Link
                                     to="/services_form"
-                                    className="btn btn-outline-secondary"
+                                    className="btn btn-outline-warning"
                                     onClick={() => dispatch({ type: "set-serviceInfo", payload: service })}
                                 >
                                     <i className="fa-regular fa-pen-to-square"></i> Editar
                                 </Link>
-                                <button className="btn btn-outline-secondary" onClick={() => deleteService(service.id)}>
+                                <button className="btn btn-outline-danger" onClick={() => deleteService(service.id)}>
                                     <i className="fa-solid fa-xmark"></i> Borrar
                                 </button>
                             </div>

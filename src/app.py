@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import db, User, Barbershop, Owner, Service, Barber, Schedule, BarberService, Appointment, AdminUser, BarberBarbershop
+from api.models import db, User, Barbershop, Owner, Barber, Schedule, BarberService, Appointment, AdminUser, BarberBarbershop
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
@@ -217,6 +217,15 @@ def get_single_user(user_id):
     data = user.serialize()
 
     return jsonify(data), 200
+
+
+@app.route("/users/search", methods=["GET"])
+def search_user():
+    phone = request.args.get("phone")
+    user = User.query.filter_by(phone=phone).first()
+    if user:
+        return jsonify(user.serialize()), 200
+    return jsonify({"msg": "No encontrado"}), 404
 
 
 @app.route("/users/<int:user_id>", methods=["PUT"])
@@ -660,12 +669,10 @@ def delete_barber(barber_id):
 @app.route("/barbershops/<int:shop_id>/barbers", methods=["GET"])
 @jwt_required()
 def get_barbers(shop_id):
-    # Opcional: comprobar que la barbería existe
     barbershop = Barbershop.query.get(shop_id)
     if not barbershop:
         return jsonify({"message": {"type": "error", "msg": "Barbería no encontrada"}}), 404
 
-    # Traer todas las relaciones BarberBarbershop de esa barbería
     links = BarberBarbershop.query.filter_by(barbershop_id=shop_id).all()
 
     return jsonify([{
@@ -679,9 +686,11 @@ def get_barbers(shop_id):
     } for link in links]), 200
 
 
-@app.route("/barbershops/<int:shop_id>/invite", methods=["POST"])
+# ENDPOINTS DE INVITACIONES DE BARBEROS A BARBERIAS
+
+@app.route("/invitations", methods=["POST"])
 @jwt_required()
-def invite_barber(shop_id):
+def invite_barber():
     owner_id = get_jwt_identity()
     claims = get_jwt()
 
@@ -690,21 +699,22 @@ def invite_barber(shop_id):
 
     data = request.get_json()
     email = data.get("email")
+    shop_id = data.get("barbershop_id")
+
     if not email:
-        return jsonify({"message": {"type":"error", "msg":"Es necesario un email"}}), 400
+        return jsonify({"message": {"type": "error", "msg": "Es necesario un email"}}), 400
 
     barbershop = Barbershop.query.filter_by(
         id=shop_id,
         owner_id=owner_id
     ).first()
 
-
     if not barbershop:
-        return jsonify({"message": {"type":"error", "msg":"Hay un error con tus barberías"}}), 404
+        return jsonify({"message": {"type": "error", "msg": "Hay un error con tus barberías"}}), 404
 
     barber = Barber.query.filter_by(email=email).first()
     if not barber:
-        return jsonify({"message": {"type":"error", "msg":"No existe ningún barbero con ese email"}}), 404
+        return jsonify({"message": {"type": "error", "msg": "No existe ningún barbero con ese email"}}), 404
 
     pending = BarberBarbershop.query.filter_by(
         barber_id=barber.id,
@@ -712,15 +722,15 @@ def invite_barber(shop_id):
     ).first()
 
     if pending:
-        return jsonify({"message": {"type":"error", "msg":"Ya hay una solicitud pendiente"}}), 400
-    
+        return jsonify({"message": {"type": "error", "msg": "Ya hay una solicitud pendiente"}}), 400
+
     existing = BarberBarbershop.query.filter_by(
         barber_id=barber.id,
         barbershop_id=shop_id
     ).first()
 
     if existing:
-        return jsonify({"message": {"type":"error", "msg":"Este barbero ya forma parte de la barbería"}}), 400
+        return jsonify({"message": {"type": "error", "msg": "Este barbero ya forma parte de la barbería"}}), 400
 
     invite = BarberBarbershop(
         barber_id=barber.id,
@@ -728,55 +738,155 @@ def invite_barber(shop_id):
         status="pending"
     )
 
-
     db.session.add(invite)
     db.session.commit()
 
     return jsonify({"message": {"type": "success", "msg": "Solicitud enviada correctamente"}}), 201
 
 
+@app.route("/invitations", methods=["GET"])
+@jwt_required()
+def get_barber_invitations():
+    current_user = get_jwt_identity()
+    claims = get_jwt()
+
+    if claims.get("role") != "barber":
+        return jsonify({"message": "No tienes permiso"}), 403
+
+    invitations = BarberBarbershop.query.filter(
+        BarberBarbershop.barber_id == current_user,
+        BarberBarbershop.status.in_(["pending", "accepted"])
+    ).all()
+
+    return jsonify([
+        {
+            "id": invite.id,
+            "barbershop": {
+                "id": invite.barbershop.id,
+                "name": invite.barbershop.name
+            },
+            "status": invite.status
+        }
+        for invite in invitations
+    ]), 200
+
+
+@app.route("/invitations/<int:invitation_id>", methods=["PUT"])
+@jwt_required()
+def accept_barber_invitations(invitation_id):
+    current_user = get_jwt_identity()
+    claims = get_jwt()
+
+    if claims.get("role") != "barber":
+        return jsonify({"message": "No tienes permiso"}), 403
+
+    invite = BarberBarbershop.query.filter_by(
+        id=invitation_id,
+        barber_id=current_user,
+        status="pending"
+    ).first()
+
+    if not invite:
+        return jsonify({"message": "No existe"}), 404
+
+    invite.status = "accepted"
+    db.session.commit()
+
+    return jsonify({"message": "Invitación aceptada"}), 200
+
+
+@app.route("/invitations/<int:invitation_id>", methods=["DELETE"])
+@jwt_required()
+def delete_barber_invitations(invitation_id):
+    user_id = get_jwt_identity()
+    claims = get_jwt()
+
+    if claims.get("role") != "barber":
+        return jsonify({"message": "No tienes permiso"}), 403
+
+    invite = BarberBarbershop.query.filter_by(
+        id=invitation_id,
+        barber_id=user_id,
+    ).first()
+
+    if not invite:
+        return jsonify({"message": "No autorizado o no existe"}), 404
+
+    db.session.delete(invite)
+    db.session.commit()
+
+    return jsonify({"message": "Invitación eliminada correctamente"}), 200
+
 
 # ENDPOINTS DE HORARIOS
 
 @app.route("/schedules", methods=["GET"])
-def get_schedule():
-    schedules = Schedule.query.order_by(Schedule.id).all()
-    data = [schedule.serialize() for schedule in schedules]
+@jwt_required()
+def get_barber_schedules():
+    current_barber_id = get_jwt_identity()
+
+    schedules = db.session.query(Schedule).join(BarberBarbershop).filter(
+        BarberBarbershop.barber_id == current_barber_id
+    ).all()
+
+    data = [s.serialize() for s in schedules]
     return jsonify(data), 200
 
 
 @app.route("/schedules", methods=["POST"])
+@jwt_required()
 def new_schedule():
     data = request.json
-    barber_id = data.get("barber_id")
-    start_time = data.get("start_time")
-    end_time = data.get("end_time")
+    invitation_id = data.get("invitation_id")
+    day_of_week = data.get("day_of_week")
+    start_time_str = data.get("start_time")
+    end_time_str = data.get("end_time")
 
-    if not start_time:
-        return jsonify({"message": {"type": "error", "msg": "Necesitas indicar la hora de inicio"}}), 400
-    if not end_time:
-        return jsonify({"message": {"type": "error", "msg": "Necesitas indicar la hora de fin"}}), 400
-    if not barber_id:
-        return jsonify({"message": {"type": "error", "msg": "Necesitas indicar el barbero"}}), 400
+    if not all([invitation_id, day_of_week, start_time_str, end_time_str]):
+        return jsonify({"message": {"type": "error", "msg": "Faltan datos obligatorios"}}), 400
 
-    start_time_obj = datetime.strptime(start_time, "%H:%M").time()
-    end_time_obj = datetime.strptime(end_time, "%H:%M").time()
-    if end_time_obj <= start_time_obj:
-        return jsonify({"message": {"type": "error", "msg": "La hora de fin debe ser mayor que la de inicio"}}), 400
+    try:
+        new_start = datetime.strptime(start_time_str, "%H:%M").time()
+        new_end = datetime.strptime(end_time_str, "%H:%M").time()
+    except ValueError:
+        return jsonify({"message": {"type": "error", "msg": "Formato de hora inválido (HH:MM)"}}), 400
 
-    if Schedule.query.filter_by(barber_id=barber_id).first():
-        return jsonify({"message": {"type": "error", "msg": "Este barbero ya tiene un horario"}}), 409
+    if new_end <= new_start:
+        return jsonify({"message": {"type": "error", "msg": "La hora de fin debe ser mayor a la de inicio"}}), 400
 
-    new_schedule = Schedule(
-        start_time=start_time_obj,
-        end_time=end_time_obj,
-        barber_id=barber_id
+    current_barber_id = get_jwt_identity()
+
+    overlapping = db.session.query(Schedule).join(BarberBarbershop).filter(
+        BarberBarbershop.barber_id == current_barber_id,
+        Schedule.day_of_week == day_of_week
+    ).all()
+
+    for s in overlapping:
+        if new_start < s.end_time and new_end > s.start_time:
+            return jsonify({
+                "message": {
+                    "type": "error",
+                    "msg": f"Ya tienes un turno el {day_of_week} de {s.start_time.strftime('%H:%M')} a {s.end_time.strftime('%H:%M')}."
+                }
+            }), 409
+
+    new_s = Schedule(
+        start_time=new_start,
+        end_time=new_end,
+        day_of_week=day_of_week,
+        barber_barbershop_id=invitation_id
     )
-    db.session.add(new_schedule)
-    db.session.commit()
 
-    return jsonify({"message": {"type": "success", "msg": f"Horario creado para el barbero {barber_id}"}}), 201
-
+    try:
+        db.session.add(new_s)
+        db.session.commit()
+        return jsonify({
+            "message": {"type": "success", "msg": "Horario guardado correctamente"},
+            "schedule": new_s.serialize()
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": {"type": "error", "msg": "Error al guardar"}}), 500
 
 @app.route("/schedules/<int:schedule_id>", methods=["GET"])
 def get_single_schedule(schedule_id):
@@ -789,32 +899,56 @@ def get_single_schedule(schedule_id):
 
 
 @app.route("/schedules/<int:schedule_id>", methods=["PUT"])
+@jwt_required()
 def edit_schedule(schedule_id):
+    current_barber_id = get_jwt_identity()
     schedule = Schedule.query.get(schedule_id)
+    
     if not schedule:
         return jsonify({"message": {"type": "error", "msg": "Horario no encontrado"}}), 404
 
+    if str(schedule.invitations.barber_id) != str(current_barber_id):
+        return jsonify({"message": {"type": "error", "msg": "No tienes permiso para editar este horario"}}), 403
+
     data = request.json
-    barber_id = data.get("barber_id", schedule.barber_id)
-    start_time = data.get("start_time")
-    end_time = data.get("end_time")
+    
+    new_day = data.get("day_of_week", schedule.day_of_week)
+    
+    try:
+        new_start = datetime.strptime(data["start_time"], "%H:%M").time() if "start_time" in data else schedule.start_time
+        new_end = datetime.strptime(data["end_time"], "%H:%M").time() if "end_time" in data else schedule.end_time
+    except ValueError:
+        return jsonify({"message": {"type": "error", "msg": "Formato de hora inválido"}}), 400
 
-    if start_time and end_time:
-        start_obj = datetime.strptime(start_time, "%H:%M").time()
-        end_obj = datetime.strptime(end_time, "%H:%M").time()
-        if end_obj <= start_obj:
-            return jsonify({"message": {"type": "error", "msg": "La hora de fin debe ser mayor que la de inicio"}}), 400
+    if new_end <= new_start:
+        return jsonify({"message": {"type": "error", "msg": "La hora de fin debe ser mayor que la de inicio"}}), 400
 
-    if start_time:
-        schedule.start_time = datetime.strptime(start_time, "%H:%M").time()
-    if end_time:
-        schedule.end_time = datetime.strptime(end_time, "%H:%M").time()
+    
+    overlapping = db.session.query(Schedule).join(BarberBarbershop).filter(
+        BarberBarbershop.barber_id == current_barber_id,
+        Schedule.day_of_week == new_day,
+        Schedule.id != schedule_id 
+    ).all()
 
-    schedule.barber_id = barber_id
-    db.session.commit()
+    for s in overlapping:
+        if new_start < s.end_time and new_end > s.start_time:
+            return jsonify({
+                "message": {
+                    "type": "error",
+                    "msg": f"Conflicto: Ya tienes un turno el {new_day} de {s.start_time.strftime('%H:%M')} a {s.end_time.strftime('%H:%M')}"
+                }
+            }), 409
 
-    return jsonify({"message": {"type": "success", "msg": f"Horario {schedule_id} actualizado correctamente"}}), 200
+    schedule.day_of_week = new_day
+    schedule.start_time = new_start
+    schedule.end_time = new_end
 
+    try:
+        db.session.commit()
+        return jsonify({"message": {"type": "success", "msg": "Horario actualizado correctamente"}}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": {"type": "error", "msg": "Error al guardar cambios"}}), 500
 
 @app.route("/schedules/<int:schedule_id>", methods=["DELETE"])
 def delete_schedule(schedule_id):
@@ -829,11 +963,10 @@ def delete_schedule(schedule_id):
 
 # ENDPOINTS DE BARBERO Y SUS SERVICIOS
 
-@app.route("/barber_services", methods=["GET"])
-def get_barber_services():
-    barber_services = BarberService.query.order_by(BarberService.id).all()
-    data = [barber_service.serialize() for barber_service in barber_services]
-    return jsonify(data), 200
+@app.route("/barbers/<int:barber_id>/services", methods=["GET"])
+def get_services_of_barber(barber_id):
+    services = BarberService.query.filter_by(barber_id=barber_id).all()
+    return jsonify([s.serialize() for s in services]), 200
 
 
 @app.route("/barber_services", methods=["POST"])
@@ -841,21 +974,40 @@ def new_barber_service():
     data = request.json
     barber_id = data.get("barber_id")
     service_id = data.get("service_id")
+    price = data.get("price")
+    duration = data.get("duration")
 
-    if not barber_id:
-        return jsonify({"message": {"type": "error", "msg": "Necesitas indicar un barbero"}}), 400
-    if not service_id:
-        return jsonify({"message": {"type": "error", "msg": "Necesitas indicar un servicio"}}), 400
-
-    barber_service = BarberService(barber_id=barber_id, service_id=service_id)
+    if not all([barber_id, service_id, price, duration]):
+        return jsonify({"message": {"type": "error", "msg": "Faltan datos (barbero, servicio, precio o duración)"}}), 400
 
     if BarberService.query.filter_by(barber_id=barber_id, service_id=service_id).first():
         return jsonify({"message": {"type": "error", "msg": "Este barbero ya tiene asignado este servicio"}}), 409
 
-    db.session.add(barber_service)
+    new_bs = BarberService(
+        barber_id=barber_id,
+        service_id=service_id,
+        price=price,
+        duration=duration
+    )
+
+    db.session.add(new_bs)
     db.session.commit()
 
-    return jsonify({"message": {"type": "success", "msg": f"Servicio {service_id} vinculado al barbero {barber_id}"}}), 201
+    return jsonify({"message": {"type": "success", "msg": "Servicio personalizado creado"}}), 201
+
+
+@app.route("/barber_services/<int:barber_service_id>", methods=["PUT"])
+def edit_barber_service(barber_service_id):
+    bs = BarberService.query.get(barber_service_id)
+    if not bs:
+        return jsonify({"message": {"type": "error", "msg": "No encontrado"}}), 404
+
+    data = request.json
+    bs.price = data.get("price", bs.price)
+    bs.duration = data.get("duration", bs.duration)
+
+    db.session.commit()
+    return jsonify({"message": {"type": "success", "msg": "Servicio actualizado"}}), 200
 
 
 @app.route("/barber_services/<int:barber_service_id>", methods=["GET"])
@@ -883,39 +1035,43 @@ def delete_barber_service(barber_service_id):
 
 @app.route("/appointments", methods=["GET"])
 def get_appointments():
-    appointments = Appointment.query.order_by(Appointment.date).all()
+    barbershop_id = request.args.get("barbershop_id")
+    date_str = request.args.get("date")
+
+    query = Appointment.query
+
+    if barbershop_id:
+        query = query.join(Barber).filter(Barber.barbershop_id == barbershop_id)
+
+    if date_str:
+        query = query.filter(Appointment.date.contains(date_str))
+
+    appointments = query.order_by(Appointment.date).all()
     return jsonify([appointment.serialize() for appointment in appointments]), 200
-
-
-@app.route("/barbers/<int:barber_id>/next-available", methods=["GET"])
-def get_next_available(barber_id):
-    return jsonify({
-        "date": datetime.now().strftime("%Y-%m-%d"),
-        "time": "10:00"
-    }), 200
 
 
 @app.route("/appointments", methods=["POST"])
 def new_appointment():
     data = request.json
 
-    barber_id = data.get("barber_id")
-    service_id = data.get("service_id")
+    barber_service_id = data.get("barber_service_id")
+    barber_service = BarberService.query.get(barber_service_id)
+
+    if not barber_service:
+        return jsonify({"message": {"type": "error", "msg": "El servicio seleccionado no existe"}}), 404
 
     try:
-        start_date = datetime.strptime(
-            f"{data['date']} {data['time']}", "%Y-%m-%d %H:%M")
-    except Exception:
-        return jsonify({"message": {"type": "error", "msg": "Fecha o hora no válida"}}), 400
+        if 'T' in data.get('date', ''):
+            start_date = datetime.fromisoformat(data['date'])
+        else:
+            start_date = datetime.strptime(f"{data['date']} {data['time']}", "%Y-%m-%d %H:%M")
+    except Exception as e:
+        return jsonify({"message": {"type": "error", "msg": f"Formato de fecha inválido: {str(e)}"}}), 400
 
-    service = Service.query.get(service_id)
-    if not service:
-        return jsonify({"message": {"type": "error", "msg": "Servicio no encontrado"}}), 404
-
-    new_end_time = start_date + timedelta(minutes=service.duration)
+    new_end_time = start_date + timedelta(minutes=barber_service.duration)
 
     collision = Appointment.query.filter(
-        Appointment.barber_id == barber_id,
+        Appointment.barber_id == barber_service.barber_id,
         Appointment.date < new_end_time,
         Appointment.end_time > start_date
     ).first()
@@ -931,16 +1087,36 @@ def new_appointment():
     new_app = Appointment(
         date=start_date,
         user_id=data.get("user_id"),
-        barber_id=barber_id,
-        service_id=service_id,
-        notes=data.get("notes")
+        barber_id=barber_service.barber_id,
+        barber_service_id=barber_service.id
     )
+
+    new_app.notes = data.get("notes")
+    new_app.end_time = new_end_time 
+
+    try:
+        db.session.add(new_app)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": {"type": "error", "msg": f"Error al guardar: {str(e)}"}}), 500
+
     new_app.end_time = new_end_time
+    new_app.barber_service_id = barber_service.id
 
-    db.session.add(new_app)
-    db.session.commit()
+    try:
+        db.session.add(new_app)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": {"type": "error", "msg": f"Error al guardar: {str(e)}"}}), 500
 
-    return jsonify({"message": {"type": "success", "msg": "Reserva creada"}}), 201
+    return jsonify({
+        "message": {
+            "type": "success",
+            "msg": f"Reserva creada con éxito para las {start_date.strftime('%H:%M')}"
+        }
+    }), 201
 
 
 @app.route("/appointments/<int:appointment_id>", methods=["PUT"])
@@ -950,29 +1126,51 @@ def edit_appointment(appointment_id):
         return jsonify({"message": {"type": "error", "msg": "Reserva no encontrada"}}), 404
 
     data = request.json
+    
+    bs_id = data.get("barber_service_id", appointment.barber_service_id)
+    barber_service = BarberService.query.get(bs_id)
+    
+    if not barber_service:
+        return jsonify({"message": {"type": "error", "msg": "El servicio no existe"}}), 404
 
-    if "date" in data:
-        appointment.date = datetime.fromisoformat(data["date"])
+    try:
+        if 'T' in data.get('date', ''):
+            new_start_date = datetime.fromisoformat(data['date'])
+        else:
+            new_start_date = datetime.strptime(f"{data['date']} {data['time']}", "%Y-%m-%d %H:%M")
+    except Exception:
+        new_start_date = appointment.date
 
+    new_end_time = new_start_date + timedelta(minutes=barber_service.duration)
+
+    collision = Appointment.query.filter(
+        Appointment.id != appointment_id,
+        Appointment.barber_id == barber_service.barber_id,
+        Appointment.date < new_end_time,
+        Appointment.end_time > new_start_date
+    ).first()
+
+    if collision:
+        return jsonify({
+            "message": {
+                "type": "error",
+                "msg": f"El barbero está ocupado hasta las {collision.end_time.strftime('%H:%M')}"
+            }
+        }), 400
+
+    appointment.date = new_start_date
+    appointment.end_time = new_end_time
     appointment.user_id = data.get("user_id", appointment.user_id)
-    appointment.barber_id = data.get("barber_id", appointment.barber_id)
-    appointment.service_id = data.get("service_id", appointment.service_id)
+    appointment.barber_id = barber_service.barber_id
+    appointment.barber_service_id = barber_service.id
     appointment.notes = data.get("notes", appointment.notes)
 
-    if "date" in data:
-        try:
-            appointment.date = datetime.fromisoformat(data["date"])
-        except Exception:
-            return jsonify({"message": {"type": "error", "msg": "Fecha no válida"}}), 400
-
-    service = Service.query.get(appointment.service_id)
-    if service:
-        appointment.end_time = appointment.date + \
-            timedelta(minutes=service.duration)
-
-    db.session.commit()
-
-    return jsonify({"message": {"type": "success", "msg": "Reserva actualizada"}}), 200
+    try:
+        db.session.commit()
+        return jsonify({"message": {"type": "success", "msg": "Reserva actualizada"}}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": {"type": "error", "msg": str(e)}}), 500
 
 
 @app.route("/appointments/<int:appointment_id>", methods=["DELETE"])

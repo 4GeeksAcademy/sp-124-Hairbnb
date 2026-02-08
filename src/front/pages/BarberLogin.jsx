@@ -45,7 +45,8 @@ export const BarberLogin = () => {
                 payload: {
                     token: data.token,
                     username: data.user.name,
-                    role: "barber"
+                    role: "barber",
+                    userInfo: data.user
                 }
             });
 
@@ -96,7 +97,7 @@ export const BarberLogin = () => {
                                 Crear una cuenta de barbero
                             </span>
                         </p>
-                        <button type="submit" className="btn btn-secondary">
+                        <button type="submit" className="btn btn-primary">
                             Entrar como barbero
                         </button>
                     </div>

@@ -133,16 +133,16 @@ export const BarbershopForm = () => {
         </div>
 
         <div className="mt-4 d-flex justify-content-around">
-          <button type="submit" className="btn btn-outline-secondary mx-3 w-25">
-            {data.id ? "Actualizar" : "Crear"}
-          </button>
           <Link
             to="/private/owner"
-            className="btn btn-secondary mx-3 w-25"
+            className="btn btn-outline-secondary mx-3 w-25"
             onClick={() => dispatch({ type: "set-barbershopInfo", payload: null })}
           >
             Volver
           </Link>
+          <button type="submit" className="btn btn-outline-primary mx-3 w-25">
+            {data.id ? "Actualizar" : "Crear"}
+          </button>
         </div>
       </form>
     </div>

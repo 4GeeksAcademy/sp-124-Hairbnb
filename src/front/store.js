@@ -23,6 +23,7 @@ export const initialStore = () => {
     barberserviceInfo: null,
     appointments: [],
     appointmentInfo: null,
+    invitations: []
   };
 };
 
@@ -80,18 +81,13 @@ export default function storeReducer(store, action = {}) {
       return { ...store, appointmentInfo: action.payload };
 
     case "login":
-      return { ...store, 
-        token: action.payload.token,
-        username: action.payload.username,
-        role: action.payload.role
-      };
+      return {...store, token: action.payload.token, username: action.payload.username, role: action.payload.role, userInfo: action.payload.userInfo };
+  
     case "logout":
-      return { 
-        ...store, 
-        token: null, 
-        username: null, 
-        role: null 
-  };
+      return {...store, token: null, username: null, role: null, userInfo: null};
+
+    case "set-invitations":
+      return { ...store, invitations: action.payload };
 
     default:
       return store; 
