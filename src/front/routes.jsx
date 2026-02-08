@@ -22,7 +22,6 @@ import { ScheduleForm } from "./pages/ScheduleForm";
 import { BarberServices } from "./pages/BarberServices";
 import { BarberServiceForm } from "./pages/BarberServiceForm";
 import { Appointments } from "./pages/Appointments";
-import { AppointmentForm } from "./pages/AppointmentForm";
 import { PrivateOwner } from "./pages/PrivateOwner.jsx";
 import { PrivateBarber } from "./pages/PrivateBarber.jsx";
 import { PrivateClient } from "./pages/PrivateClient.jsx";
@@ -36,7 +35,11 @@ import { Administration } from "./pages/Administration.jsx";
 import { AdminLogin } from "./pages/AdminLogin.jsx";
 import { OwnerGestion } from "./pages/OwnerGestion.jsx";
 import { Asociates } from "./pages/Asociates.jsx";
+import { ApptFormBarber } from "./pages/ApptFormBarber.jsx";
+import { ApptFormClient } from "./pages/ApptFormClient.jsx";
+import { ApptFormOwner } from "./pages/ApptFormOwner.jsx";
 
+import { AppointmentForm } from "./pages/AppointmentForm";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -67,8 +70,11 @@ export const router = createBrowserRouter(
       <Route path="/barber_services" element={<BarberServices />} />
       <Route path="/barber_services_form" element={<BarberServiceForm />} />
       <Route path="/appointments" element={<Appointments />} />
-      <Route path="/appointments_form" element={<AppointmentForm />} />
 
+      <Route path="/barber_appointment_form" element={<ApptFormBarber />} />
+      <Route path="/client_appointment_form" element={<ApptFormClient />} />
+      <Route path="/owner_appointment_form" element={<ApptFormOwner />} />
+      
       <Route path="/singup/client" element={<ClientRegister />} />
       <Route path="/singup/barber" element={<BarberRegister />} />
       <Route path="/singup/owner" element={<OwnerRegister />} />

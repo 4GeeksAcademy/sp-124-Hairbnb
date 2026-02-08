@@ -18,21 +18,150 @@ export const PrivateBarber = () => {
     if (!store.token) return;
     const headers = { "Authorization": `Bearer ${store.token}` };
     try {
-      const [resApp, resSch, resInv, resSer] = await Promise.all([
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments`, { headers }),
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules`, { headers }),
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/invitations`, { headers }),
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`, { headers })
-      ]);
+      const endpoints = ["appointments", "schedules", "invitations", "barber_services"];
 
-      if (resApp.ok) dispatch({ type: "set-appointments", payload: await resApp.json() });
-      if (resSch.ok) dispatch({ type: "set-schedules", payload: await resSch.json() });
-      if (resInv.ok) dispatch({ type: "set-invitations", payload: await resInv.json() });
-      if (resSer.ok) dispatch({ type: "set-barber_services", payload: await resSer.json() });
-    } catch (err) { console.error(err); }
+      const responses = await Promise.all(
+        endpoints.map(e => fetch(`${import.meta.env.VITE_BACKEND_URL}/${e}`, { headers }))
+      );
+
+      // Verificamos una por una antes de convertirlas a JSON
+      for (let i = 0; i < responses.length; i++) {
+        const res = responses[i];
+        const name = endpoints[i];
+
+        if (!res.ok) {
+          console.error(`Error en ${name}: Código ${res.status}`);
+          continue;
+        }
+
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+          const data = await res.json();
+          dispatch({ type: `set-${name}`, payload: data });
+        } else {
+          // AQUÍ ESTÁ EL CULPABLE: Si entra aquí, es que te están mandando HTML
+          const text = await res.text();
+          console.error(`¡OJO! El endpoint '${name}' ha devuelto HTML en lugar de JSON. Empieza por: ${text.slice(0, 50)}`);
+        }
+      }
+      if (name === "barber_services") {
+        console.log("Servicios recibidos del server:", data);
+      }
+    } catch (err) {
+      console.error("Error crítico en loadAll:", err);
+    }
   };
 
   useEffect(() => { loadAll(); }, [store.token]);
+
+  const updateAppointmentStatus = async (appointmentId, newStatus) => {
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments/${appointmentId}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${store.token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      if (resp.ok) {
+        const updatedAppointments = store.appointments.map(appt =>
+          appt.id === appointmentId ? { ...appt, status: newStatus } : appt
+        );
+        dispatch({ type: "set-appointments", payload: updatedAppointments });
+        dispatch({ type: "set-message", payload: { type: "success", msg: `Cita ${newStatus}` } });
+      }
+    } catch (error) { console.error(error); }
+  };
+
+  const deleteSchedule = async (id) => {
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${store.token}` }
+      });
+      if (resp.ok) loadAll();
+    } catch (error) { console.error(error); }
+  };
+
+  const handleEditSchedule = (schedule) => {
+    dispatch({ type: "set-scheduleInfo", payload: schedule });
+    navigate("/schedules_form");
+  };
+
+  const handleDelete = async (appointmentId) => {
+    if (!window.confirm("¿Estás seguro de que deseas eliminar esta cita?")) return;
+
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments/${appointmentId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${store.token}`
+        }
+      });
+
+      const data = await resp.json();
+
+      if (resp.ok) {
+        // EN LUGAR DE loadAll(), FILTRAMOS LOCALMENTE:
+        const updatedAppointments = store.appointments.filter(appt => appt.id !== appointmentId);
+
+        // Actualizamos el store con la lista nueva (donde ya no está la cita borrada)
+        dispatch({ type: "set-appointments", payload: updatedAppointments });
+
+        // Mostramos el mensaje de éxito
+        dispatch({ type: "set-message", payload: data.message });
+      } else {
+        dispatch({ type: "set-message", payload: data.message });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const handleDeleteService = async (serviceId) => {
+    // 1. Pedimos confirmación
+    if (!window.confirm("¿Estás seguro de que quieres eliminar este servicio?")) return;
+
+    try {
+        // Usamos el token del store o del localStorage como plan B
+        const token = store.token || localStorage.getItem("token");
+
+        const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services/${serviceId}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
+
+        if (resp.ok) {
+            // 2. Si el servidor responde OK, actualizamos el store manualmente
+            // Filtramos la lista: dejamos todos menos el que tiene el ID que acabamos de borrar
+            const updatedServices = store.barber_services.filter(s => s.id !== serviceId);
+            
+            // 3. Enviamos la nueva lista al reducer (asegúrate de que el type coincida con tu reducer)
+            dispatch({ 
+                type: "set-barber_services", 
+                payload: updatedServices 
+            });
+
+            // 4. Mensaje de éxito opcional
+            dispatch({ 
+                type: "set-message", 
+                payload: { type: "success", msg: "Servicio eliminado correctamente" } 
+            });
+        } else {
+            const data = await resp.json();
+            alert(data.message?.msg || "No se pudo eliminar el servicio");
+        }
+    } catch (error) {
+        console.error("Error eliminando servicio:", error);
+        alert("Error de conexión al intentar eliminar");
+    }
+};
 
   const approvedInvitations = store.invitations?.filter(inv => inv.status === "accepted") || [];
   const pendingInvitations = store.invitations?.filter(inv => inv.status === "pending") || [];
@@ -44,6 +173,8 @@ export const PrivateBarber = () => {
       </div>
     );
   }
+
+  const dayNameEn = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
 
   return (
     <div className="container mt-5">
@@ -66,51 +197,126 @@ export const PrivateBarber = () => {
 
       <div className="tab-content">
         {activeTab === "appointments" && (
-          <div className="appointments-wrapper bg-light p-3 rounded shadow-inner">
+          <div className="appointments-wrapper p-3">
             <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-              <div className="d-flex align-items-center gap-2 bg-white p-2 rounded shadow-sm">
-                <input type="date" className="form-control border-0 fw-bold" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
-                <button className="btn btn-primary d-flex align-items-center gap-2" onClick={() => { dispatch({ type: "set-appointmentInfo", payload: null }); navigate("/appointments_form"); }}>
-                  Nueva Cita
+              <div className="d-flex align-items-center gap-2">
+                <input
+                  type="date"
+                  className="form-control"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                />
+                <button
+                  className="btn btn-primary d-flex align-items-center gap-2"
+                  onClick={() => { dispatch({ type: "set-appointmentInfo", payload: null }); navigate("/barber_appointment_form"); }}
+                >
+                  <i className="fas fa-plus"></i> Nueva Cita
                 </button>
               </div>
             </div>
 
-            <div className="d-flex gap-3 overflow-auto pb-4" style={{ minHeight: "500px" }}>
-              {approvedInvitations.length === 0 ? <p className="p-4 text-muted">Acepta una invitación para ver tu agenda.</p> :
-                approvedInvitations.map(inv => {
-                  const dayApps = store.appointments?.filter(a =>
-                    a.date.split("T")[0] === selectedDate &&
-                    Number(a.barbershop_id) === Number(inv.barbershop?.id)
-                  ).sort((a, b) => a.date.localeCompare(b.date));
+            <div className="mx-auto">
+              <div className="card border-0">
+                <div className="card-header">
+                  <h6 className="mb-0">
+                    Citas programadas
+                  </h6>
+                </div>
 
-                  return (
-                    <div key={inv.id} className="appointment-column" style={{ minWidth: "280px", flex: "1" }}>
-                      <div className="card h-100 border-0 shadow-sm">
-                        <div className="card-header bg-white border-bottom-0 pt-3 pb-0 text-center">
-                          <h6 className="fw-bold text-uppercase mb-0 text-primary">{inv.barbershop?.name}</h6>
-                          <hr className="mb-0 mt-2" />
+                <div className="card-body p-3">
+                  {(() => {
+                    const allDayApps = store.appointments?.filter(a =>
+                      a.date.split("T")[0] === selectedDate &&
+                      Number(a.barber_id) === Number(store.userInfo?.id)
+                    ).sort((a, b) => a.date.localeCompare(b.date));
+
+                    if (!allDayApps || allDayApps.length === 0) {
+                      return (
+                        <div className="text-center py-5">
+                          <p className="text-muted italic">No tienes citas para este día</p>
                         </div>
-                        <div className="card-body p-2">
-                          {dayApps.length === 0 ? <div className="text-center py-5"><p className="text-muted small">Sin citas</p></div> :
-                            dayApps.map(a => (
-                              <div key={a.id} className="card mb-2 border-0 shadow-sm bg-white hover-shadow p-2">
-                                <div className="d-flex justify-content-between align-items-start">
-                                  <span className="fw-bold" style={{ fontSize: "0.85rem" }}>{a.date.split("T")[1].slice(0, 5)}</span>
-                                  <div className="d-flex gap-1">
-                                    <button className="btn btn-sm p-0 text-secondary" onClick={() => { dispatch({ type: "set-appointmentInfo", payload: a }); navigate("/appointments_form"); }}><i className="fas fa-edit fs-6"></i></button>
-                                  </div>
-                                </div>
-                                <div className="small fw-bold mt-1 text-truncate">{a.user_name}</div>
-                                <div className="text-muted text-truncate" style={{ fontSize: "0.75rem" }}>{a.service_name}</div>
+                      );
+                    }
+
+                    return allDayApps.map((a) => {
+                      const apptTime = a.date.split("T")[1].slice(0, 5);
+
+                      const isCovered = store.schedules?.some((s) => {
+                        const padTime = (t) => t && t.length === 4 ? "0" + t : t;
+                        const appTime = padTime(apptTime);
+                        const sStart = padTime(s.start_time?.trim());
+                        const sEnd = padTime(s.end_time?.trim());
+
+                        const dayMatch = s.day_of_week?.trim().toLowerCase() === dayNameEn.toLowerCase();
+                        const shopMatch = Number(s.barbershop_id) === Number(a.barbershop_id);
+                        const timeMatch = appTime >= sStart && appTime < sEnd;
+
+                        return dayMatch && shopMatch && timeMatch;
+                      });
+
+                      const hasConflict = !isCovered && a.status !== "completed" && a.status !== "rejected";
+
+                      return (
+                        <div
+                          key={a.id}
+                          className={`card mb-3 ${hasConflict ? "border-danger border-2" : ""}`}
+
+                        >
+                          <div className="d-flex justify-content-between align-items-start">
+                            <div>
+                              <div className="d-flex align-items-center gap-2 mb-1">
+                                <span>
+                                  {apptTime}
+                                </span>
+                                <span className="px-2 py-1">
+                                  {a.barbershop_name ||
+                                    approvedInvitations.find(inv => Number(inv.barbershop?.id) === Number(a.barbershop_id))?.barbershop?.name ||
+                                    "Cargando nombre..."}
+                                </span>
                               </div>
-                            ))
-                          }
+
+                              <div>{a.user_name}</div>
+                              <div>{a.service_name}</div>
+                            </div>
+
+                            <div className="d-flex flex-column gap-2">
+                              <div className="d-flex gap-2">
+                                {a.status === 'pending' && (
+                                  <>
+                                    <button className="btn" onClick={() => updateAppointmentStatus(a.id, 'confirmed')}><i className="fas fa-check"></i></button>
+                                    <button
+                                      className="btn btn-outline-danger btn-sm ms-2"
+                                      onClick={() => handleDelete(a.id)}
+                                      title="Eliminar permanentemente"
+                                    >
+                                      <i className="fas fa-trash-alt"></i>
+                                    </button>
+                                  </>
+                                )}
+                                {a.status === 'confirmed' && (
+                                  <button className="btn" onClick={() => updateAppointmentStatus(a.id, 'completed')}><i className="fas fa-flag-checkered"></i></button>
+                                )}
+                                <button className="btn" onClick={() => { dispatch({ type: "set-appointmentInfo", payload: a }); navigate("/barber_appointment_form"); }}>
+                                  <i className="fas fa-edit"></i>
+                                </button>
+                              </div>
+                              <div className="text-end">
+                                <span>{a.status}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {hasConflict && (
+                            <div className="mt-2 pt-2">
+                              ESTA CITA ESTÁ FUERA DE TU HORARIO
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -120,7 +326,7 @@ export const PrivateBarber = () => {
             <button className="btn btn-secondary mb-3" onClick={() => navigate("/schedules_form")}>Añadir nuevo horario</button>
             <div className="d-flex gap-3 overflow-auto pb-4">
               {daysOfWeek.map(day => (
-                <div key={day} style={{ minWidth: "200px", flex: "1" }}>
+                <div key={day}>
                   <div className="card">
                     <div className="card-header text-center">{dayNamesES[day]}</div>
                     <div className="card-body p-2 border-0">
@@ -139,13 +345,12 @@ export const PrivateBarber = () => {
                               </button>
                             </div>
                           </div>
-                          <div className="mt-1">
-                            En -{s.barbershop_name}-
+                          <div className="mt-1 small">
+                            En <strong>{s.barbershop_name}</strong>
                           </div>
-                          <hr />
+                          <hr className="my-2" />
                         </div>
                       ))}
-
                     </div>
                   </div>
                 </div>
@@ -155,17 +360,60 @@ export const PrivateBarber = () => {
         )}
 
         {activeTab === "services" && (
-          <div className="bg-light p-3 rounded shadow-inner">
-            <button className="btn btn-secondary mb-3" onClick={() => navigate("/barber_services_form")}>Gestionar mis servicios</button>
-            <ul className="list-group shadow-sm">
-              {store.barber_services?.length === 0 ? <li className="list-group-item">No tienes servicios configurados.</li> :
+          <div className="p-4">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h5 className="mb-0">Mis servicios</h5>
+              <button
+                className="btn btn-primary d-flex align-items-center gap-2"
+                onClick={() => {
+                  dispatch({ type: "set-barber_serviceInfo", payload: null });
+                  navigate("/barber_services_form");
+                }}
+              >
+                Añadir Servicio
+              </button>
+            </div>
+
+            <div className="row g-3">
+              {store.barber_services?.length === 0 ? (
+                <div className="col-12 text-center py-5">
+                  <p>No tienes servicios configurados todavía.</p>
+                </div>
+              ) : (
                 store.barber_services?.map(s => (
-                  <li key={s.id} className="list-group-item d-flex justify-content-between align-items-center">
-                    <span>{s.service?.name}</span>
-                    <span className="badge bg-primary rounded-pill">{s.service?.price}€</span>
-                  </li>
-                ))}
-            </ul>
+                  <div key={s.id} className="col-md-6 col-lg-4">
+                    <div className="card">
+                      <div className="card-body">
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                          <h6 className="card-titlemb-0">{s.name}</h6>
+                          <span>{s.price}€</span>
+                        </div>
+                        <p className="mb-3">
+                          {s.duration} minutos
+                        </p>
+                        <div className="d-flex justify-content-end gap-2 border-top pt-3">
+                          <button
+                            className="btn btn-outline-secondary btn-sm"
+                            onClick={() => {
+                              dispatch({ type: "set-barber_serviceInfo", payload: s });
+                              navigate("/barber_services_form");
+                            }}
+                          >
+                            <i className="fas fa-edit"></i>
+                          </button>
+                          <button
+                            className="btn btn-outline-danger btn-sm"
+                            onClick={() => handleDeleteService(s.id)}
+                          >
+                            <i className="fas fa-trash-alt"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         )}
 

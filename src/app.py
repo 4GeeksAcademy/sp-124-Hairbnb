@@ -963,37 +963,45 @@ def delete_schedule(schedule_id):
 
 # ENDPOINTS DE BARBERO Y SUS SERVICIOS
 
-@app.route("/barbers/<int:barber_id>/services", methods=["GET"])
-def get_services_of_barber(barber_id):
-    services = BarberService.query.filter_by(barber_id=barber_id).all()
+@app.route("/barber_services", methods=["GET"])
+@jwt_required()
+def get_services_of_barber():
+    current_barber_id = get_jwt_identity()
+    print(f"DEBUG: Buscando servicios para el barbero ID: {current_barber_id}")
+    services = BarberService.query.filter_by(barber_id=current_barber_id).all()
     return jsonify([s.serialize() for s in services]), 200
 
 
 @app.route("/barber_services", methods=["POST"])
+@jwt_required()
 def new_barber_service():
     data = request.json
-    barber_id = data.get("barber_id")
-    service_id = data.get("service_id")
+    # Usamos el ID del token por seguridad, así nadie crea servicios para otros
+    current_barber_id = get_jwt_identity() 
+    
+    name = data.get("name")
     price = data.get("price")
     duration = data.get("duration")
 
-    if not all([barber_id, service_id, price, duration]):
-        return jsonify({"message": {"type": "error", "msg": "Faltan datos (barbero, servicio, precio o duración)"}}), 400
+    # Validación limpia: solo lo que realmente usamos
+    if not all([name, price, duration]):
+        return jsonify({"message": {"type": "error", "msg": "Faltan datos: nombre, precio y duración son obligatorios"}}), 400
 
-    if BarberService.query.filter_by(barber_id=barber_id, service_id=service_id).first():
-        return jsonify({"message": {"type": "error", "msg": "Este barbero ya tiene asignado este servicio"}}), 409
+    try:
+        new_bs = BarberService(
+            barber_id=current_barber_id,
+            name=name,
+            price=price,
+            duration=duration
+        )
 
-    new_bs = BarberService(
-        barber_id=barber_id,
-        service_id=service_id,
-        price=price,
-        duration=duration
-    )
+        db.session.add(new_bs)
+        db.session.commit()
 
-    db.session.add(new_bs)
-    db.session.commit()
-
-    return jsonify({"message": {"type": "success", "msg": "Servicio personalizado creado"}}), 201
+        return jsonify({"message": {"type": "success", "msg": "Servicio creado con éxito"}}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": {"type": "error", "msg": str(e)}}), 500
 
 
 @app.route("/barber_services/<int:barber_service_id>", methods=["PUT"])
@@ -1054,22 +1062,58 @@ def get_appointments():
 def new_appointment():
     data = request.json
 
-    barber_service_id = data.get("barber_service_id")
-    barber_service = BarberService.query.get(barber_service_id)
-
+    barber_service = BarberService.query.get(data.get("barber_service_id"))
     if not barber_service:
         return jsonify({"message": {"type": "error", "msg": "El servicio seleccionado no existe"}}), 404
 
+    # 1. Procesar fechas
     try:
         if 'T' in data.get('date', ''):
             start_date = datetime.fromisoformat(data['date'])
         else:
             start_date = datetime.strptime(f"{data['date']} {data['time']}", "%Y-%m-%d %H:%M")
     except Exception as e:
-        return jsonify({"message": {"type": "error", "msg": f"Formato de fecha inválido: {str(e)}"}}), 400
+        return jsonify({"message": {"type": "error", "msg": "Formato de fecha inválido"}}), 400
 
     new_end_time = start_date + timedelta(minutes=barber_service.duration)
+    day_name_en = start_date.strftime('%A')
+    barbershop_id = data.get("barbershop_id")
 
+    # 2. Validar Relación con la Sede (Madre o Nona)
+    relation = BarberBarbershop.query.filter_by(
+        barber_id=barber_service.barber_id,
+        barbershop_id=barbershop_id,
+        status="accepted"
+    ).first()
+
+    if not relation:
+        return jsonify({"message": {"type": "error", "msg": "No hay relación activa con esta sede."}}), 400
+
+    # 3. Validar Horario Laboral
+    work_schedule = Schedule.query.filter_by(
+        barber_barbershop_id=relation.id,
+        day_of_week=day_name_en
+    ).first()
+
+    if not work_schedule:
+        return jsonify({"message": {"type": "error", "msg": f"El barbero no trabaja los {day_name_en}."}}), 400
+
+    # Comprobación de hora con Debug
+    appt_time = start_date.time()
+    start = work_schedule.start_time
+    end = work_schedule.end_time
+
+    print(f"DEBUG: Cita {appt_time} | Turno {start} a {end}")
+
+    if not (start <= appt_time < end):
+        return jsonify({
+            "message": {
+                "type": "error", 
+                "msg": f"Fuera de horario. El turno es de {start.strftime('%H:%M')} a {end.strftime('%H:%M')}."
+            }
+        }), 400
+
+    # 4. Validar Colisiones (Ocupado con otro cliente)
     collision = Appointment.query.filter(
         Appointment.barber_id == barber_service.barber_id,
         Appointment.date < new_end_time,
@@ -1077,46 +1121,26 @@ def new_appointment():
     ).first()
 
     if collision:
-        return jsonify({
-            "message": {
-                "type": "error",
-                "msg": f"El barbero está ocupado hasta las {collision.end_time.strftime('%H:%M')}"
-            }
-        }), 400
+        return jsonify({"message": {"type": "error", "msg": f"El barbero está ocupado hasta las {collision.end_time.strftime('%H:%M')}"}}), 400
 
+    # 5. Crear la cita (Usando tu nuevo __init__)
     new_app = Appointment(
         date=start_date,
+        end_time=new_end_time,
         user_id=data.get("user_id"),
         barber_id=barber_service.barber_id,
-        barber_service_id=barber_service.id
+        barber_service_id=barber_service.id,
+        barbershop_id=barbershop_id,
+        notes=data.get("notes")
     )
 
-    new_app.notes = data.get("notes")
-    new_app.end_time = new_end_time 
-
     try:
         db.session.add(new_app)
         db.session.commit()
+        return jsonify({"message": {"type": "success", "msg": "Reserva creada con éxito"}}), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({"message": {"type": "error", "msg": f"Error al guardar: {str(e)}"}}), 500
-
-    new_app.end_time = new_end_time
-    new_app.barber_service_id = barber_service.id
-
-    try:
-        db.session.add(new_app)
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"message": {"type": "error", "msg": f"Error al guardar: {str(e)}"}}), 500
-
-    return jsonify({
-        "message": {
-            "type": "success",
-            "msg": f"Reserva creada con éxito para las {start_date.strftime('%H:%M')}"
-        }
-    }), 201
+        return jsonify({"message": {"type": "error", "msg": str(e)}}), 500
 
 
 @app.route("/appointments/<int:appointment_id>", methods=["PUT"])
@@ -1126,7 +1150,6 @@ def edit_appointment(appointment_id):
         return jsonify({"message": {"type": "error", "msg": "Reserva no encontrada"}}), 404
 
     data = request.json
-    
     bs_id = data.get("barber_service_id", appointment.barber_service_id)
     barber_service = BarberService.query.get(bs_id)
     
@@ -1142,6 +1165,28 @@ def edit_appointment(appointment_id):
         new_start_date = appointment.date
 
     new_end_time = new_start_date + timedelta(minutes=barber_service.duration)
+    day_name_en = new_start_date.strftime('%A')
+    shop_id = data.get("barbershop_id", appointment.barbershop_id)
+
+    relation = BarberBarbershop.query.filter_by(
+        barber_id=barber_service.barber_id,
+        barbershop_id=shop_id,
+        status="accepted"
+    ).first()
+
+    if not relation:
+        return jsonify({"message": {"type": "error", "msg": "Sin relación activa con la sede."}}), 400
+
+    work_schedule = Schedule.query.filter_by(
+        barber_barbershop_id=relation.id,
+        day_of_week=day_name_en
+    ).first()
+
+    if not work_schedule:
+        return jsonify({"message": {"type": "error", "msg": f"No hay turno para el {day_name_en}."}}), 400
+
+    if not (work_schedule.start_time <= new_start_date.time() < work_schedule.end_time):
+        return jsonify({"message": {"type": "error", "msg": "La nueva hora está fuera de turno."}}), 400
 
     collision = Appointment.query.filter(
         Appointment.id != appointment_id,
@@ -1151,16 +1196,12 @@ def edit_appointment(appointment_id):
     ).first()
 
     if collision:
-        return jsonify({
-            "message": {
-                "type": "error",
-                "msg": f"El barbero está ocupado hasta las {collision.end_time.strftime('%H:%M')}"
-            }
-        }), 400
+        return jsonify({"message": {"type": "error", "msg": f"Ocupado hasta las {collision.end_time.strftime('%H:%M')}"}}), 400
 
     appointment.date = new_start_date
     appointment.end_time = new_end_time
     appointment.user_id = data.get("user_id", appointment.user_id)
+    appointment.barbershop_id = shop_id
     appointment.barber_id = barber_service.barber_id
     appointment.barber_service_id = barber_service.id
     appointment.notes = data.get("notes", appointment.notes)
@@ -1184,7 +1225,36 @@ def delete_appointment(appointment_id):
 
     return jsonify({"message": {"type": "success", "msg": "Reserva eliminada correctamente"}}), 200
 
+@app.route("/appointments/<int:appointment_id>/status", methods=["PUT"])
+@jwt_required()
+def change_appointment_status(appointment_id):
+    current_user_id = get_jwt_identity()
+    data = request.json
+    new_status = data.get("status")
+    
+    valid_statuses = ['pending', 'confirmed', 'completed', 'cancelled', 'no_show']
+    if new_status not in valid_statuses:
+        return jsonify({"message": {"type": "error", "msg": "Estado no válido"}}), 400
 
+    appointment = Appointment.query.get(appointment_id)
+    if not appointment:
+        return jsonify({"message": {"type": "error", "msg": "Cita no encontrada"}}), 404
+
+    if appointment.barber_id != current_user_id:
+        return jsonify({"message": {"type": "error", "msg": "No tienes permiso para cambiar el estado de esta cita"}}), 403
+    
+    appointment.status = new_status
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            "message": {"type": "success", "msg": f"Cita marcada como {new_status}"},
+            "appointment": appointment.serialize()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": {"type": "error", "msg": "Error al actualizar estado"}}), 500
+    
 # NO TOCAR
 @app.route('/')
 def sitemap():
