@@ -10,7 +10,7 @@ export const ScheduleForm = () => {
 
     const [formData, setFormData] = useState({
         invitation_id: editItem?.barber_barbershop_id || "",
-        day_of_week: editItem?.day_of_week || "Monday", // Valor por defecto para que no vaya vacío
+        day_of_week: editItem?.day_of_week || "Monday",
         start_time: editItem?.start_time || "09:00",
         end_time: editItem?.end_time || "14:00"
     });
