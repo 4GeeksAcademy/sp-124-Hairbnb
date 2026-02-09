@@ -25,7 +25,6 @@ export const AppointmentForm = () => {
         notes: preData.notes || ""
     });
 
-    // 1. Cargar servicios del barbero seleccionado
     useEffect(() => {
         const fetchBarberServices = async () => {
             if (!data.barber_id) return;
@@ -40,7 +39,6 @@ export const AppointmentForm = () => {
         fetchBarberServices();
     }, [data.barber_id]);
 
-    // 2. Inicialización por Roles e Invitaciones
     useEffect(() => {
         if (isBarber && store.userInfo) {
             const myInvitations = store.invitations?.filter(inv => inv.status === "accepted") || [];
@@ -53,7 +51,6 @@ export const AppointmentForm = () => {
         if (isClient && store.userInfo) {
             setData(prev => ({ ...prev, user_id: store.userInfo.id }));
         }
-        // Si estamos editando y hay un user_id, intentamos reconstruir el nombre del cliente
         if (isEditing && preData.user_name) {
             setFoundUser({
                 id: preData.user_id,
@@ -64,13 +61,11 @@ export const AppointmentForm = () => {
 
     useEffect(() => {
     const fetchBarberServices = async () => {
-        // Obtenemos el ID del barbero: o el del select o el del usuario logueado
         const targetBarberId = data.barber_id || (isBarber ? store.userInfo?.id : null);
         
         if (!targetBarberId) return;
 
         try {
-            // USAMOS LA RUTA QUE SÍ EXISTE
             const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`, {
                 headers: { 
                     "Content-Type": "application/json",
@@ -81,7 +76,6 @@ export const AppointmentForm = () => {
             if (resp.ok) {
                 const allServices = await resp.json();
                 
-                // FILTRADO: Solo queremos los servicios que pertenecen a ESTE barbero
                 const myServices = allServices.filter(s => 
                     Number(s.barber_id) === Number(targetBarberId)
                 );
@@ -96,7 +90,6 @@ export const AppointmentForm = () => {
     fetchBarberServices();
 }, [data.barber_id, store.userInfo?.id]);
 
-    // 3. Buscador de Clientes por Teléfono
     const handleSearchUser = async () => {
         if (!phoneSearch) return;
         try {
@@ -115,8 +108,6 @@ export const AppointmentForm = () => {
     const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 1. Construimos el objeto EXACTO que espera el modelo de Python
-    // Forzamos a Number para evitar que se envíen strings vacíos o raros
     const appointmentData = {
         user_id: Number(data.user_id),
         barbershop_id: Number(data.barbershop_id),
@@ -126,8 +117,6 @@ export const AppointmentForm = () => {
         notes: data.notes || ""
     };
 
-    // 2. LOG de control: Abre la consola del navegador y mira si 'barbershop_id' tiene número
-    console.log("DATOS ENVIADOS AL BACKEND:", appointmentData);
 
     const url = isEditing
         ? `${import.meta.env.VITE_BACKEND_URL}/appointments/${preData.id}`
@@ -140,14 +129,13 @@ export const AppointmentForm = () => {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${store.token}`
             },
-            body: JSON.stringify(appointmentData) // Enviamos el objeto limpio
+            body: JSON.stringify(appointmentData)
         });
 
         if (res.ok) {
             dispatch({ type: "set-appointmentInfo", payload: null });
             navigate(isBarber ? "/private/barber" : "/private/owner/gestion");
         } else {
-            // Si hay error, intentamos ver qué dice el backend
             const errorText = await res.text();
             console.error("Error del servidor:", errorText);
         }
@@ -161,7 +149,6 @@ export const AppointmentForm = () => {
             <h2 className="text-center mb-4">{isEditing ? "Editar Cita" : "Nueva Reserva"}</h2>
             <form onSubmit={handleSubmit} className="card p-4 shadow-sm border-0">
 
-                {/* SECCIÓN CLIENTE (Solo para Barbero/Dueño) */}
                 {!isClient && (
                     <div className="mb-4 p-3 bg-light rounded">
                         {foundUser ? (
@@ -191,7 +178,6 @@ export const AppointmentForm = () => {
                     </div>
                 )}
 
-                {/* SELECTOR DE BARBERÍA */}
                 <div className="mb-3">
                     <label className="form-label">Barbería</label>
                     <select
@@ -213,7 +199,6 @@ export const AppointmentForm = () => {
                     </select>
                 </div>
 
-                {/* SELECTOR DE BARBERO */}
                 <div className="mb-3">
                     <label className="form-label">Barbero</label>
                     <select
@@ -239,7 +224,6 @@ export const AppointmentForm = () => {
                     </select>
                 </div>
 
-                {/* SELECTOR DE SERVICIO */}
                 <div className="mb-3">
                     <label className="form-label">Servicio</label>
                     <select

@@ -24,7 +24,6 @@ export const PrivateBarber = () => {
         endpoints.map(e => fetch(`${import.meta.env.VITE_BACKEND_URL}/${e}`, { headers }))
       );
 
-      // Verificamos una por una antes de convertirlas a JSON
       for (let i = 0; i < responses.length; i++) {
         const res = responses[i];
         const name = endpoints[i];
@@ -39,13 +38,11 @@ export const PrivateBarber = () => {
           const data = await res.json();
           dispatch({ type: `set-${name}`, payload: data });
         } else {
-          // AQUÍ ESTÁ EL CULPABLE: Si entra aquí, es que te están mandando HTML
           const text = await res.text();
           console.error(`¡OJO! El endpoint '${name}' ha devuelto HTML en lugar de JSON. Empieza por: ${text.slice(0, 50)}`);
         }
       }
       if (name === "barber_services") {
-        console.log("Servicios recibidos del server:", data);
       }
     } catch (err) {
       console.error("Error crítico en loadAll:", err);
@@ -105,13 +102,10 @@ export const PrivateBarber = () => {
       const data = await resp.json();
 
       if (resp.ok) {
-        // EN LUGAR DE loadAll(), FILTRAMOS LOCALMENTE:
         const updatedAppointments = store.appointments.filter(appt => appt.id !== appointmentId);
 
-        // Actualizamos el store con la lista nueva (donde ya no está la cita borrada)
         dispatch({ type: "set-appointments", payload: updatedAppointments });
 
-        // Mostramos el mensaje de éxito
         dispatch({ type: "set-message", payload: data.message });
       } else {
         dispatch({ type: "set-message", payload: data.message });
@@ -122,11 +116,9 @@ export const PrivateBarber = () => {
   };
 
   const handleDeleteService = async (serviceId) => {
-    // 1. Pedimos confirmación
     if (!window.confirm("¿Estás seguro de que quieres eliminar este servicio?")) return;
 
     try {
-        // Usamos el token del store o del localStorage como plan B
         const token = store.token || localStorage.getItem("token");
 
         const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services/${serviceId}`, {
@@ -138,17 +130,13 @@ export const PrivateBarber = () => {
         });
 
         if (resp.ok) {
-            // 2. Si el servidor responde OK, actualizamos el store manualmente
-            // Filtramos la lista: dejamos todos menos el que tiene el ID que acabamos de borrar
             const updatedServices = store.barber_services.filter(s => s.id !== serviceId);
             
-            // 3. Enviamos la nueva lista al reducer (asegúrate de que el type coincida con tu reducer)
             dispatch({ 
                 type: "set-barber_services", 
                 payload: updatedServices 
             });
 
-            // 4. Mensaje de éxito opcional
             dispatch({ 
                 type: "set-message", 
                 payload: { type: "success", msg: "Servicio eliminado correctamente" } 

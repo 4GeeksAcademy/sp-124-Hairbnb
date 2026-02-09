@@ -6,14 +6,12 @@ export const BarberServiceForm = () => {
   const { store, dispatch } = useGlobalReducer();
   const navigate = useNavigate();
 
-  // Estado inicial del formulario
   const [formData, setFormData] = useState({
     name: "",
     price: "",
     duration: ""
   });
 
-  // Si venimos de "Editar", cargamos los datos
   useEffect(() => {
     if (store.barber_serviceInfo) {
       setFormData({
@@ -27,7 +25,6 @@ export const BarberServiceForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Intentamos pillar el token del store, y si no, del localStorage (el plan B)
     const token = store.token || localStorage.getItem("token"); 
 
     if (!token) {
@@ -46,7 +43,7 @@ export const BarberServiceForm = () => {
             method: isEditing ? "PUT" : "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}` // <--- Usamos nuestra variable segura
+                "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify(formData)
         });
