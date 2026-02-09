@@ -591,11 +591,10 @@ def delete_service(service_id):
 
 # ENDPOINTS DE BARBEROS
 
-@app.route("/barbers", methods=["GET"])
-def get_barber():
-    barbers = Barber.query.order_by(Barber.id).all()
-    data = [barber.serialize() for barber in barbers]
-    return jsonify(data), 200
+@app.route('/barbers', methods=['GET'])
+def get_all_barbers():
+    result = BarberBarbershop.query.all()
+    return jsonify([barber_union.serialize() for barber_union in result]), 200
 
 
 @app.route("/barbers", methods=["POST"])
@@ -965,10 +964,8 @@ def delete_schedule(schedule_id):
 
 @app.route("/barber_services", methods=["GET"])
 @jwt_required()
-def get_services_of_barber():
-    current_barber_id = get_jwt_identity()
-    print(f"DEBUG: Buscando servicios para el barbero ID: {current_barber_id}")
-    services = BarberService.query.filter_by(barber_id=current_barber_id).all()
+def get_all_services():
+    services = BarberService.query.all() 
     return jsonify([s.serialize() for s in services]), 200
 
 
@@ -976,14 +973,12 @@ def get_services_of_barber():
 @jwt_required()
 def new_barber_service():
     data = request.json
-    # Usamos el ID del token por seguridad, así nadie crea servicios para otros
     current_barber_id = get_jwt_identity() 
     
     name = data.get("name")
     price = data.get("price")
     duration = data.get("duration")
 
-    # Validación limpia: solo lo que realmente usamos
     if not all([name, price, duration]):
         return jsonify({"message": {"type": "error", "msg": "Faltan datos: nombre, precio y duración son obligatorios"}}), 400
 
@@ -1066,7 +1061,6 @@ def new_appointment():
     if not barber_service:
         return jsonify({"message": {"type": "error", "msg": "El servicio seleccionado no existe"}}), 404
 
-    # 1. Procesar fechas
     try:
         if 'T' in data.get('date', ''):
             start_date = datetime.fromisoformat(data['date'])
@@ -1079,7 +1073,6 @@ def new_appointment():
     day_name_en = start_date.strftime('%A')
     barbershop_id = data.get("barbershop_id")
 
-    # 2. Validar Relación con la Sede (Madre o Nona)
     relation = BarberBarbershop.query.filter_by(
         barber_id=barber_service.barber_id,
         barbershop_id=barbershop_id,
@@ -1087,9 +1080,8 @@ def new_appointment():
     ).first()
 
     if not relation:
-        return jsonify({"message": {"type": "error", "msg": "No hay relación activa con esta sede."}}), 400
+        return jsonify({"message": {"type": "error", "msg": "No hay relación activa con esta barberia."}}), 400
 
-    # 3. Validar Horario Laboral
     work_schedule = Schedule.query.filter_by(
         barber_barbershop_id=relation.id,
         day_of_week=day_name_en
@@ -1098,7 +1090,6 @@ def new_appointment():
     if not work_schedule:
         return jsonify({"message": {"type": "error", "msg": f"El barbero no trabaja los {day_name_en}."}}), 400
 
-    # Comprobación de hora con Debug
     appt_time = start_date.time()
     start = work_schedule.start_time
     end = work_schedule.end_time
@@ -1113,7 +1104,6 @@ def new_appointment():
             }
         }), 400
 
-    # 4. Validar Colisiones (Ocupado con otro cliente)
     collision = Appointment.query.filter(
         Appointment.barber_id == barber_service.barber_id,
         Appointment.date < new_end_time,
@@ -1123,7 +1113,6 @@ def new_appointment():
     if collision:
         return jsonify({"message": {"type": "error", "msg": f"El barbero está ocupado hasta las {collision.end_time.strftime('%H:%M')}"}}), 400
 
-    # 5. Crear la cita (Usando tu nuevo __init__)
     new_app = Appointment(
         date=start_date,
         end_time=new_end_time,
@@ -1254,7 +1243,18 @@ def change_appointment_status(appointment_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"message": {"type": "error", "msg": "Error al actualizar estado"}}), 500
-    
+
+
+
+@app.route("/my-appointments", methods=["GET"])
+@jwt_required()
+def get_my_appointments():
+    user_id = get_jwt_identity()
+    my_appts = Appointment.query.filter_by(user_id=user_id).all()
+    return jsonify([appt.serialize() for appt in my_appts]), 200 
+
+
+
 # NO TOCAR
 @app.route('/')
 def sitemap():

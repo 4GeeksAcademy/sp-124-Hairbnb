@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 
+
 export const Navbar = () => {
 
     const { store, dispatch } = useGlobalReducer();
@@ -12,7 +13,6 @@ export const Navbar = () => {
         dispatch({ type: "login", payload: { token: null, username: null, role: null } });
         navigate("/");
     }
-
     return (
         <nav className="navbar navbar-expand-lg navbar-light bg-light px-3">
             <div className="container-fluid">
@@ -77,22 +77,16 @@ export const Navbar = () => {
                             </>)
                             :
                             (<>
-                                <li className="nav-item">
-                                    <Link
-                                        className="nav-link"
-                                        to={
-                                            store.role === "owner"
-                                                ? "/private/owner"
-                                                : store.role === "barber"
-                                                    ? "/private/barber"
-                                                    : store.role === "client"
-                                                        ? "/private/client"
-                                                        : "/"
-                                        }
-                                    >
-                                        Tu perfil
-                                    </Link>
-                                </li>
+                                <Link
+                                    className="nav-link"
+                                    to={
+                                        store.role === "owner" ? "/private/owner" :
+                                            store.role === "barber" ? "/private/barber" :
+                                                store.role === "client" ? "/private/client" : "/"
+                                    }
+                                >
+                                    Tu perfil
+                                </Link>
                                 <li className="nav-item">
                                     <Link className="nav-link" onClick={handleLogout}>Cerrar sesión</Link>
                                 </li>
@@ -102,6 +96,6 @@ export const Navbar = () => {
                 </div>
 
             </div>
-        </nav>
+        </nav >
     )
 }

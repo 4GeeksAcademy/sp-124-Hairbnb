@@ -228,3 +228,15 @@ class BarberBarbershop(db.Model):
     barber: Mapped["Barber"] = relationship(back_populates="professional")
     barbershop: Mapped["Barbershop"] = relationship(back_populates="local")
     schedule: Mapped[List["Schedule"]] = relationship(back_populates="invitations", cascade="all, delete-orphan")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "status": self.status,
+            "barbershop_id": self.barbershop_id,
+            "barber": self.barber.serialize() if hasattr(self.barber, 'serialize') else {
+                "id": self.barber.id,
+                "name": self.barber.name,
+                "email": self.barber.email
+            }
+        }

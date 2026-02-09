@@ -75,9 +75,9 @@ export const router = createBrowserRouter(
       <Route path="/client_appointment_form" element={<ApptFormClient />} />
       <Route path="/owner_appointment_form" element={<ApptFormOwner />} />
       
-      <Route path="/singup/client" element={<ClientRegister />} />
-      <Route path="/singup/barber" element={<BarberRegister />} />
-      <Route path="/singup/owner" element={<OwnerRegister />} />
+      <Route path="/signup/client" element={<ClientRegister />} />
+      <Route path="/signup/barber" element={<BarberRegister />} />
+      <Route path="/signup/owner" element={<OwnerRegister />} />
       
       <Route path="/login/client" element={<ClientLogin />} />
       <Route path="/login/barber" element={<BarberLogin />} />

@@ -45,8 +45,8 @@ export const ClientLogin = () => {
                 payload: {
                     token: data.token,
                     username: data.user.name,
-                    role: "barber",
-                    clientInfo: data.user
+                    role: "client",
+                    userInfo: data.user
                 }
             });
 

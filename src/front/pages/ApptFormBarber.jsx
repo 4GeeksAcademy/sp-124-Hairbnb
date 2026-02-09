@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 
 export const ApptFormBarber = () => {
-    // ESTO SIEMPRE DENTRO DEL COMPONENTE
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
 
@@ -30,7 +29,6 @@ export const ApptFormBarber = () => {
         });
     }
 }, [isEditing, preData]);
-    // Cargar servicios e invitaciones
     useEffect(() => {
         if (store.userInfo?.id) {
             const loadServices = async () => {

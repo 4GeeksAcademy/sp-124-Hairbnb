@@ -6,137 +6,143 @@ export const ApptFormClient = () => {
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
 
-    const preData = store.appointmentInfo || {};
-    const isEditing = !!preData.id;
+    // Recuperamos a Mario del store o del disco duro (localStorage)
+    const currentUser = store.userInfo || JSON.parse(localStorage.getItem("userInfo"));
 
-    // Estado simplificado para el Barbero
-    const [phoneSearch, setPhoneSearch] = useState("");
-    const [foundUser, setFoundUser] = useState(null);
     const [data, setData] = useState({
-        user_id: preData.user_id || "",
-        barber_id: store.userInfo?.id || "",
-        barbershop_id: preData.barbershop_id || "",
-        barber_service_id: preData.barber_service_id || "",
-        date: preData.date ? preData.date.split("T")[0] : "",
-        time: preData.date ? preData.date.split("T")[1].slice(0, 5) : "",
-        notes: preData.notes || ""
+        barbershop_id: "",
+        barber_id: "",
+        barber_service_id: "",
+        date: "",
+        time: "",
+        notes: ""
     });
 
-    // 1. Efecto inicial: Cargar sedes del barbero y servicios
+    // 1. Carga inicial de datos (Sedes, Barberos y Servicios)
     useEffect(() => {
-        if (store.userInfo?.id) {
-            // Cargar servicios automáticamente para este barbero
-            fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`, {
-                headers: { "Authorization": `Bearer ${store.token}` }
-            })
-            .then(res => res.json())
-            .then(services => {
-                const myServices = services.filter(s => Number(s.barber_id) === Number(store.userInfo.id));
-                dispatch({ type: "set-services", payload: myServices });
-            });
+        const loadInitialData = async () => {
+            const token = store.token || localStorage.getItem("token");
+            const headers = { "Authorization": `Bearer ${token}` };
+            
+            try {
+                const resShops = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`, { headers });
+                if (resShops.ok) dispatch({ type: "set-barbershops", payload: await resShops.json() });
 
-            // Auto-seleccionar barbería si solo tiene una invitación aceptada
-            const mySedes = store.invitations?.filter(inv => inv.status === "accepted") || [];
-            if (mySedes.length === 1 && !data.barbershop_id) {
-                setData(prev => ({ ...prev, barbershop_id: mySedes[0].barbershop_id }));
-            }
-        }
-    }, [store.userInfo]);
+                const resBarbers = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbers`, { headers });
+                if (resBarbers.ok) dispatch({ type: "set-barbers", payload: await resBarbers.json() });
 
-    // 2. Buscador de Clientes
-    const handleSearchUser = async () => {
-        if (!phoneSearch) return;
-        try {
-            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/search?phone=${phoneSearch}`);
-            if (res.ok) {
-                const user = await res.json();
-                setFoundUser(user);
-                setData(prev => ({ ...prev, user_id: user.id }));
-            } else { alert("Cliente no encontrado"); }
-        } catch (error) { console.error(error); }
-    };
+                const resServ = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`, { headers });
+                if (resServ.ok) dispatch({ type: "set-barber_services", payload: await resServ.json() });
 
+            } catch (error) { console.error("Error inicializando:", error); }
+        };
+        loadInitialData();
+    }, []);
+
+    // 2. Filtros lógicos para los select
+    const currentBarbers = store.barbers?.filter(inv => 
+        inv.status === "accepted" && Number(inv.barbershop_id) === Number(data.barbershop_id)
+    );
+
+    const currentServices = store.barber_services?.filter(s => 
+        Number(s.barber_id) === Number(data.barber_id)
+    );
+
+    // 3. Envío del formulario
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (!currentUser?.id) {
+            alert("No se pudo identificar tu usuario. Por favor, reingresa.");
+            return;
+        }
+
         const payload = {
-            ...data,
-            user_id: Number(data.user_id),
-            barber_id: Number(store.userInfo.id), // Siempre el del JWT
+            user_id: currentUser.id, // El ID de Mario que faltaba
+            barber_id: Number(data.barber_id),
             barbershop_id: Number(data.barbershop_id),
             barber_service_id: Number(data.barber_service_id),
-            date: `${data.date}T${data.time}:00`
+            date: `${data.date}T${data.time}:00`, // Formato para el backend
+            notes: data.notes || ""
         };
 
-        const url = isEditing 
-            ? `${import.meta.env.VITE_BACKEND_URL}/appointments/${preData.id}` 
-            : `${import.meta.env.VITE_BACKEND_URL}/appointments`;
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${store.token}`
+            },
+            body: JSON.stringify(payload)
+        });
 
-        try {
-            const res = await fetch(url, {
-                method: isEditing ? "PUT" : "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${store.token}`
-                },
-                body: JSON.stringify(payload)
-            });
-            if (res.ok) {
-                dispatch({ type: "set-appointmentInfo", payload: null });
-                navigate("/private/barber");
-            }
-        } catch (error) { console.error(error); }
+        const responseData = await res.json();
+
+        if (res.ok) {
+            alert("¡Cita reservada con éxito!");
+            navigate("/private/client");
+        } else {
+            // Mostramos el mensaje de error del backend (como el de horarios)
+            alert(`Error: ${responseData.msg || "Error en la reserva"}`);
+        }
     };
 
     return (
-        <div className="container mt-4" style={{ maxWidth: "500px" }}>
-            <h3 className="mb-4">{isEditing ? "Editar Cita" : "Nueva Cita (Panel Barbero)"}</h3>
-            <form onSubmit={handleSubmit} className="card p-4 shadow">
+        <div className="container mt-4" style={{maxWidth: "600px"}}>
+            <h2 className="text-center mb-4">Reserva tu Cita</h2>
+            <form onSubmit={handleSubmit} className="card p-4 shadow-sm border-0">
                 
-                {/* BUSCADOR DE CLIENTE */}
-                <div className="mb-3 p-2 bg-light border rounded">
-                    {foundUser ? (
-                        <div className="d-flex justify-content-between align-items-center">
-                            <span>Cliente: <strong>{foundUser.name}</strong></span>
-                            <button type="button" className="btn btn-sm btn-link text-danger" onClick={() => {setFoundUser(null); setData({...data, user_id: ""})}}>Cambiar</button>
-                        </div>
-                    ) : (
-                        <div className="input-group">
-                            <input type="text" className="form-control" placeholder="Teléfono cliente..." value={phoneSearch} onChange={e => setPhoneSearch(e.target.value)} />
-                            <button type="button" className="btn btn-dark" onClick={handleSearchUser}>Buscar</button>
-                        </div>
-                    )}
+                {/* Info del Cliente (Mario) */}
+                <div className="mb-3 p-2 bg-light border-start border-4 border-dark">
+                    <label className="small text-muted text-uppercase fw-bold d-block">Cliente Reservando</label>
+                    <span className="fw-bold">{currentUser?.name || "Invitado"}</span>
                 </div>
 
-                {/* BARBERÍA (Solo sus invitaciones) */}
-                <div className="mb-3">
-                    <label className="form-label">Sede</label>
-                    <select className="form-select" value={data.barbershop_id} onChange={e => setData({...data, barbershop_id: e.target.value})} required>
-                        <option value="">Selecciona sede...</option>
-                        {store.invitations?.filter(inv => inv.status === "accepted").map(inv => (
-                            <option key={inv.barbershop.id} value={inv.barbershop.id}>{inv.barbershop.name}</option>
-                        ))}
-                    </select>
+                {/* Selección de Sede */}
+                <label className="form-label fw-bold">¿Dónde quieres venir?</label>
+                <select className="form-select mb-3" required value={data.barbershop_id}
+                    onChange={e => setData({...data, barbershop_id: e.target.value, barber_id: "", barber_service_id: ""})}>
+                    <option value="">Selecciona una barbería...</option>
+                    {store.barbershops?.map(shop => (
+                        <option key={shop.id} value={shop.id}>{shop.name}</option>
+                    ))}
+                </select>
+
+                {/* Selección de Barbero */}
+                <label className="form-label fw-bold">Elige a tu barbero</label>
+                <select className="form-select mb-3" disabled={!data.barbershop_id} required value={data.barber_id}
+                    onChange={e => setData({...data, barber_id: e.target.value, barber_service_id: ""})}>
+                    <option value="">{data.barbershop_id ? "Cualquier barbero..." : "Primero elige sede"}</option>
+                    {currentBarbers?.map(inv => (
+                        <option key={inv.id} value={inv.barber.id}>{inv.barber.name}</option>
+                    ))}
+                </select>
+
+                {/* Selección de Servicio */}
+                <label className="form-label fw-bold">¿Qué te vamos a hacer?</label>
+                <select className="form-select mb-3" disabled={!data.barber_id} required value={data.barber_service_id}
+                    onChange={e => setData({...data, barber_service_id: e.target.value})}>
+                    <option value="">Selecciona servicio...</option>
+                    {currentServices?.map(s => (
+                        <option key={s.id} value={s.id}>{s.name} ({s.price}€)</option>
+                    ))}
+                </select>
+
+                {/* Fecha y Hora */}
+                <div className="row mb-3">
+                    <div className="col">
+                        <label className="form-label fw-bold">Día</label>
+                        <input type="date" className="form-control" required value={data.date}
+                            onChange={e => setData({...data, date: e.target.value})} />
+                    </div>
+                    <div className="col">
+                        <label className="form-label fw-bold">Hora</label>
+                        <input type="time" className="form-control" required value={data.time}
+                            onChange={e => setData({...data, time: e.target.value})} />
+                    </div>
                 </div>
 
-                {/* SERVICIOS (Solo los suyos) */}
-                <div className="mb-3">
-                    <label className="form-label">Servicio</label>
-                    <select className="form-select" value={data.barber_service_id} onChange={e => setData({...data, barber_service_id: e.target.value})} required>
-                        <option value="">¿Qué servicio?</option>
-                        {store.services?.map(s => (
-                            <option key={s.id} value={s.id}>{s.service?.name} ({s.service?.price}€)</option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* FECHA Y HORA */}
-                <div className="row">
-                    <div className="col-6 mb-3"><input type="date" className="form-control" value={data.date} onChange={e => setData({...data, date: e.target.value})} required /></div>
-                    <div className="col-6 mb-3"><input type="time" className="form-control" value={data.time} onChange={e => setData({...data, time: e.target.value})} required /></div>
-                </div>
-
-                <button type="submit" className="btn btn-primary w-100 mt-2" disabled={!data.user_id}>
-                    {isEditing ? "Guardar Cambios" : "Confirmar Cita"}
+                <button type="submit" className="btn btn-dark w-100 py-2 mt-2">
+                    Confirmar Reserva
                 </button>
             </form>
         </div>
