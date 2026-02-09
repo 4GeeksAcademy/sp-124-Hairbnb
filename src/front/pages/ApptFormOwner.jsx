@@ -96,7 +96,7 @@ export const ApptFormOwner = () => {
             body: JSON.stringify(payload)
         });
 
-        const responseData = await res.json(); // Leemos la respuesta del back
+        const responseData = await res.json(); 
 
         if (res.ok) {
             dispatch({ type: "set-appointmentInfo", payload: null });
@@ -106,7 +106,6 @@ export const ApptFormOwner = () => {
             });
             navigate("/private/owner/gestion");
         } else {
-            // SI HAY ERROR (como el del horario), disparamos el mensaje aquí
             dispatch({ 
                 type: "set-message", 
                 payload: { 

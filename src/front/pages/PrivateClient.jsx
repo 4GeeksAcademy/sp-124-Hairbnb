@@ -15,7 +15,6 @@ export const PrivateClient = () => {
         if (res.ok) {
             const data = await res.json();
             
-            // ORDENAMOS AQUÍ:
             const sortedData = data.sort((a, b) => new Date(a.date) - new Date(b.date));
             
             setAppointments(sortedData);
