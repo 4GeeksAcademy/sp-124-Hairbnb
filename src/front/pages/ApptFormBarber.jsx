@@ -11,59 +11,70 @@ export const ApptFormBarber = () => {
 
     const [phoneSearch, setPhoneSearch] = useState("");
     const [foundUser, setFoundUser] = useState(null);
+    const [availableSlots, setAvailableSlots] = useState([]);
+
     const [data, setData] = useState({
         user_id: preData.user_id || "",
-        barber_id: store.userInfo?.id || "",
+        barber_id: store.userInfo?.id || "", 
         barbershop_id: preData.barbershop_id || "",
         barber_service_id: preData.barber_service_id || "",
         date: preData.date ? preData.date.split("T")[0] : "",
         time: preData.date ? preData.date.split("T")[1].slice(0, 5) : "",
         notes: preData.notes || ""
     });
+
     useEffect(() => {
-    if (isEditing && preData.user_name) {
-        setFoundUser({
-            id: preData.user_id,
-            name: preData.user_name,
-            last_name: preData.user_last_name || ""
-        });
-    }
-}, [isEditing, preData]);
+        const loadServices = async () => {
+            const token = store.token || localStorage.getItem("token");
+            const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (resp.ok) {
+                const resData = await resp.json();
+                dispatch({ type: "set-barber_services", payload: resData });
+            }
+        };
+        loadServices();
+    }, []);
+
     useEffect(() => {
-        if (store.userInfo?.id) {
-            const loadServices = async () => {
+        const fetchSlots = async () => {
+            if (data.barber_id && data.barbershop_id && data.date && data.barber_service_id) {
+                setAvailableSlots([]); 
+                
+                const url = `${import.meta.env.VITE_BACKEND_URL}/barber_availability?barber_id=${data.barber_id}&barbershop_id=${data.barbershop_id}&date=${data.date}&service_id=${data.barber_service_id}`;
+                
                 try {
-                    const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`, {
-                        headers: { "Authorization": `Bearer ${store.token}` }
+                    const resp = await fetch(url, { 
+                        headers: { "Authorization": `Bearer ${store.token}` } 
                     });
                     if (resp.ok) {
-                        const allServices = await resp.json();
-                        const myServices = allServices.filter(s =>
-                            Number(s.barber_id) === Number(store.userInfo.id)
-                        );
-                        dispatch({ type: "set-services", payload: myServices });
+                        const slots = await resp.json();
+                        setAvailableSlots(slots);
                     }
-                } catch (error) { console.error("Error servicios:", error); }
-            };
-
-            loadServices();
-
-            const mySedes = store.invitations?.filter(inv => inv.status === "accepted") || [];
-            if (mySedes.length === 1 && !data.barbershop_id) {
-                setData(prev => ({ ...prev, barbershop_id: mySedes[0].barbershop_id }));
+                } catch (error) {
+                    console.error("Error fetching slots", error);
+                }
             }
-        }
-    }, [store.userInfo?.id]);
+        };
+        fetchSlots();
+    }, [data.date, data.barber_id, data.barbershop_id, data.barber_service_id]);
+
+    const currentServices = store.barber_services?.filter(s =>
+        Number(s.barber_id) === Number(store.userInfo?.id)
+    ) || [];
 
     const handleSearchUser = async () => {
         if (!phoneSearch) return;
         try {
-            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/search?phone=${phoneSearch}`);
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/search?phone=${phoneSearch}`, {
+                headers: { "Authorization": `Bearer ${store.token}` }
+            });
             if (res.ok) {
                 const user = await res.json();
                 setFoundUser(user);
                 setData(prev => ({ ...prev, user_id: user.id }));
-            } else { alert("Cliente no encontrado"); }
+            }
         } catch (error) { console.error(error); }
     };
 
@@ -72,16 +83,14 @@ export const ApptFormBarber = () => {
         
         const payload = {
             user_id: Number(data.user_id),
-            barber_id: Number(store.userInfo.id), 
+            barber_id: Number(data.barber_id),
             barbershop_id: Number(data.barbershop_id),
             barber_service_id: Number(data.barber_service_id),
             date: `${data.date}T${data.time}:00`,
             notes: data.notes
         };
 
-        const url = isEditing
-            ? `${import.meta.env.VITE_BACKEND_URL}/appointments/${preData.id}`
-            : `${import.meta.env.VITE_BACKEND_URL}/appointments`;
+        const url = `${import.meta.env.VITE_BACKEND_URL}/appointments${isEditing ? `/${preData.id}` : ""}`;
 
         try {
             const res = await fetch(url, {
@@ -97,39 +106,42 @@ export const ApptFormBarber = () => {
 
             if (res.ok) {
                 dispatch({ type: "set-appointmentInfo", payload: null });
-                dispatch({ type: "set-message", payload: { "type": "success", "msg": "Cita guardada con éxito" } });
-                navigate("/private/barber");
+                dispatch({ type: "set-message", payload: { "type": "success", "msg": "Cita guardada correctamente" } });
+                navigate(-1);
             } else {
                 dispatch({ type: "set-message", payload: { "type": "error", "msg": responseData.message?.msg || "Error al guardar" } });
             }
-        } catch (error) { 
-            console.error(error); 
-        }
+        } catch (error) { console.error(error); }
     };
 
     return (
         <div className="container mt-4">
-            <h3 className="mb-4">{isEditing ? "Editar Cita" : "Nueva Cita"}</h3>
-            <form onSubmit={handleSubmit} className="card">
-
-                <div className="mb-3 p-2">
+            <h3 className="mb-4">{isEditing ? "Editar Cita" : "Nueva Cita (Barbero)"}</h3>
+            <form onSubmit={handleSubmit} className="card p-4 shadow-sm border-0">
+                
+                <div className="mb-3">
+                    <label className="form-label font-weight-bold">Cliente</label>
                     {foundUser ? (
                         <div className="d-flex justify-content-between align-items-center">
-                            <span>Cliente: <strong>{foundUser.name}</strong></span>
-                            <button type="button" className="btn" onClick={() => { setFoundUser(null); setData({ ...data, user_id: "" }) }}>Cambiar</button>
+                            <span><strong>{foundUser.name} {foundUser.last_name}</strong></span>
+                            <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => {setFoundUser(null); setData({...data, user_id: ""})}}>Cambiar</button>
                         </div>
                     ) : (
                         <div className="input-group">
-                            <input type="text" className="form-control" placeholder="Teléfono cliente..." value={phoneSearch} onChange={e => setPhoneSearch(e.target.value)} />
-                            <button type="button" className="btn" onClick={handleSearchUser}>Buscar</button>
+                            <input type="text" className="form-control" placeholder="Buscar por teléfono..." value={phoneSearch} onChange={e => setPhoneSearch(e.target.value)} />
+                            <button type="button" className="btn btn-dark" onClick={handleSearchUser}>Buscar</button>
                         </div>
                     )}
                 </div>
 
                 <div className="mb-3">
                     <label className="form-label">Sede</label>
-                    <select className="form-select" value={data.barbershop_id} onChange={e => setData({ ...data, barbershop_id: e.target.value })} required>
-                        <option value="">Selecciona lugar...</option>
+                    <select className="form-select" value={data.barbershop_id}
+                        onChange={e => {
+                            setAvailableSlots([]);
+                            setData({ ...data, barbershop_id: e.target.value, barber_service_id: "", time: "" });
+                        }}>
+                        <option value="">Selecciona una sede...</option>
                         {store.invitations?.filter(inv => inv.status === "accepted").map(inv => (
                             <option key={inv.barbershop.id} value={inv.barbershop.id}>{inv.barbershop.name}</option>
                         ))}
@@ -138,36 +150,50 @@ export const ApptFormBarber = () => {
 
                 <div className="mb-3">
                     <label className="form-label">Servicio</label>
-                    <select
-                        className="form-select"
-                        value={data.barber_service_id}
-                        onChange={e => setData({ ...data, barber_service_id: e.target.value })}
-                        required
-                    >
-                        <option value="">
-                            {store.services?.length > 0 ? "Selecciona un servicio..." : "Cargando servicios o lista vacía..."}
-                        </option>
-                        {store.services?.map(item => {
-                            const name = item.service?.name || item.name || "Servicio";
-                            const price = item.service?.price || item.price || "--";
-                            const duration = item.service?.duration || item.duration || "??";
-
-                            return (
-                                <option key={item.id} value={item.id}>
-                                    {name} - {price}€ ({duration} min)
-                                </option>
-                            );
-                        })}
+                    <select className="form-select" value={data.barber_service_id}
+                        onChange={e => {
+                            setAvailableSlots([]);
+                            setData({ ...data, barber_service_id: e.target.value, time: "" });
+                        }}
+                        disabled={!data.barbershop_id}>
+                        <option value="">Selecciona el servicio...</option>
+                        {currentServices?.map(s => (
+                            <option key={s.id} value={s.id}>{s.name} ({s.duration} min) - {s.price}€</option>
+                        ))}
                     </select>
                 </div>
 
-                <div className="row">
-                    <div className="col-6 mb-3"><input type="date" className="form-control" value={data.date} onChange={e => setData({ ...data, date: e.target.value })} required /></div>
-                    <div className="col-6 mb-3"><input type="time" className="form-control" value={data.time} onChange={e => setData({ ...data, time: e.target.value })} required /></div>
+                <div className="row mb-4">
+                    <div className="col-md-6 mb-3 mb-md-0">
+                        <label className="form-label">Fecha</label>
+                        <input type="date" className="form-control" value={data.date} 
+                            onChange={e => {
+                                setAvailableSlots([]);
+                                setData({ ...data, date: e.target.value, time: "" });
+                            }} />
+                    </div>
+                    <div className="col-md-6">
+                        <label className="form-label">Hora disponible</label>
+                        <select
+                            className="form-select"
+                            value={data.time}
+                            onChange={e => setData({ ...data, time: e.target.value })}
+                            disabled={availableSlots.length === 0}
+                            required
+                        >
+                            <option value="">{availableSlots.length > 0 ? "Elegir hora..." : "No hay disponibilidad"}</option>
+                            {availableSlots.map(slot => (
+                                <option key={slot} value={slot}>{slot}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
-                <button type="submit" className="btn btn-primary" disabled={!data.user_id}>
-                    {isEditing ? "Guardar Cambios" : "Confirmar Cita"}
+                <button type="button" className="btn btn-outline-secondary" onClick={() => navigate(-1)}>
+                    Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={!data.user_id || !data.time}>
+                    {isEditing ? "Actualizar Reserva" : "Confirmar Reserva"}
                 </button>
             </form>
         </div>

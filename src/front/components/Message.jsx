@@ -19,7 +19,7 @@ export const Message = () => {
 
     return (
         <div
-            className={`position-fixed top-50 start-50 text-center translate-middle-x mt-3 alert shadow-lg ${message.type === "error" ? "alert-danger" : "alert-success"
+            className={`position-fixed top-25 start-50 text-center translate-middle-x mt-3 alert shadow-lg ${message.type === "error" ? "alert-danger" : "alert-success"
                 }`}
             style={{ zIndex: 9999, minWidth: "300px" }}
         >

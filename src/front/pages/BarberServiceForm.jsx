@@ -51,7 +51,7 @@ export const BarberServiceForm = () => {
         if (resp.ok) {
             dispatch({ type: "set-barber_serviceInfo", payload: null });
             dispatch({ type: "set-message", payload: { type: "success", msg: `Servicio ${isEditing ? "actualizado" : "creado"} correctamente` } });
-            navigate("/private/barber");
+            navigate(-1);
         } else {
             const errorData = await resp.json();
             console.error("Error del servidor:", errorData);

@@ -76,7 +76,7 @@ export const ServiceForm = () => {
 
             dispatch({ type: "set-serviceInfo", payload: null });
 
-            setTimeout(() => navigate("/services"), 1200);
+            setTimeout(() => navigate(-1), 1200);
 
         } catch (error) {
             dispatch({

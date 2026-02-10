@@ -85,7 +85,7 @@ export const BarberForm = () => {
 
             dispatch({ type: "set-barberInfo", payload: null });
 
-            navigate("/barbers");
+            navigate(-1);
 
         } catch (error) {
             dispatch({
@@ -143,7 +143,7 @@ export const BarberForm = () => {
             </div>
 
             <div className="mt-5 d-flex justify-content-around">
-                <Link to="/barbers" className="btn btn-outline-secondary mx-3 w-25">Volver</Link>
+                <button onClick={()=>navigate(-1)} className="btn btn-outline-secondary mx-3 w-25">Volver</button>
                 <button type="submit" className="btn btn-outline-primary mx-3 w-25">
                     {data.id ? "Actualizar" : "Crear"}
                 </button>

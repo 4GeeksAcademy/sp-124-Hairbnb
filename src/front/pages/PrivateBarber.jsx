@@ -15,10 +15,17 @@ export const PrivateBarber = () => {
   };
 
   const loadAll = async () => {
-    if (!store.token) return;
+    if (!store.token || !store.userInfo?.id) return;
+    
     const headers = { "Authorization": `Bearer ${store.token}` };
+    
     try {
-      const endpoints = ["appointments", "schedules", "invitations", "barber_services"];
+      const endpoints = [
+        "appointments", 
+        "schedules", 
+        "invitations", 
+        `barber_services?barber_id=${store.userInfo.id}`
+      ];
 
       const responses = await Promise.all(
         endpoints.map(e => fetch(`${import.meta.env.VITE_BACKEND_URL}/${e}`, { headers }))
@@ -26,24 +33,22 @@ export const PrivateBarber = () => {
 
       for (let i = 0; i < responses.length; i++) {
         const res = responses[i];
-        const name = endpoints[i];
+
+        const cleanName = endpoints[i].split("?")[0];
 
         if (!res.ok) {
-          console.error(`Error en ${name}: Código ${res.status}`);
+          console.error(`Error en ${cleanName}: Código ${res.status}`);
           continue;
         }
 
         const contentType = res.headers.get("content-type");
-        if (contentType && contentType.indexOf("application/json") !== -1) {
+        if (contentType && contentType.includes("application/json")) {
           const data = await res.json();
-          dispatch({ type: `set-${name}`, payload: data });
-        } else {
-          const text = await res.text();
-          console.error(`¡OJO! El endpoint '${name}' ha devuelto HTML en lugar de JSON. Empieza por: ${text.slice(0, 50)}`);
+          dispatch({ type: `set-${cleanName}`, payload: data });
         }
       }
-      if (name === "barber_services") {
-      }
+      
+
     } catch (err) {
       console.error("Error crítico en loadAll:", err);
     }
@@ -87,7 +92,7 @@ export const PrivateBarber = () => {
     navigate("/schedules_form");
   };
 
-  const handleDelete = async (appointmentId) => {
+  const handleDeleteAppt = async (appointmentId) => {
     if (!window.confirm("¿Estás seguro de que deseas eliminar esta cita?")) return;
 
     try {
@@ -115,41 +120,89 @@ export const PrivateBarber = () => {
     }
   };
 
+  const handleDeleteInv = async (invitationId) => {
+    if (!window.confirm("¿Estás seguro de que deseas eliminar esta invitación?")) return;
+
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/invitations/${invitationId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${store.token}`
+        }
+      });
+
+      const data = await resp.json();
+
+      if (resp.ok) {
+        const updatedInvitations = store.invitations.filter(inv => inv.id !== invitationId);
+
+        dispatch({ type: "set-invitations", payload: updatedInvitations });
+
+        dispatch({ type: "set-message", payload: data.message });
+      } else {
+        dispatch({ type: "set-message", payload: data.message });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const handleAcceptInv = async (invitationId) => {
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/invitations/${invitationId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${store.token}`
+        },
+        body: JSON.stringify({ status: "accepted" })
+      });
+
+      if (resp.ok) {
+        dispatch({ type: "set-message", payload: { type: "success", msg: "Invitación aceptada" } });
+        loadAll();
+      }
+    } catch (error) {
+      console.error("Error al aceptar:", error);
+    }
+  };
+
   const handleDeleteService = async (serviceId) => {
     if (!window.confirm("¿Estás seguro de que quieres eliminar este servicio?")) return;
 
     try {
-        const token = store.token || localStorage.getItem("token");
+      const token = store.token || localStorage.getItem("token");
 
-        const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services/${serviceId}`, {
-            method: "DELETE",
-            headers: {
-                "Authorization": `Bearer ${token}`,
-                "Content-Type": "application/json"
-            }
+      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services/${serviceId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (resp.ok) {
+        const updatedServices = store.barber_services.filter(s => s.id !== serviceId);
+
+        dispatch({
+          type: "set-barber_services",
+          payload: updatedServices
         });
 
-        if (resp.ok) {
-            const updatedServices = store.barber_services.filter(s => s.id !== serviceId);
-            
-            dispatch({ 
-                type: "set-barber_services", 
-                payload: updatedServices 
-            });
-
-            dispatch({ 
-                type: "set-message", 
-                payload: { type: "success", msg: "Servicio eliminado correctamente" } 
-            });
-        } else {
-            const data = await resp.json();
-            alert(data.message?.msg || "No se pudo eliminar el servicio");
-        }
+        dispatch({
+          type: "set-message",
+          payload: { type: "success", msg: "Servicio eliminado correctamente" }
+        });
+      } else {
+        const data = await resp.json();
+        alert(data.message?.msg || "No se pudo eliminar el servicio");
+      }
     } catch (error) {
-        console.error("Error eliminando servicio:", error);
-        alert("Error de conexión al intentar eliminar");
+      console.error("Error eliminando servicio:", error);
+      alert("Error de conexión al intentar eliminar");
     }
-};
+  };
 
   const approvedInvitations = store.invitations?.filter(inv => inv.status === "accepted") || [];
   const pendingInvitations = store.invitations?.filter(inv => inv.status === "pending") || [];
@@ -198,7 +251,7 @@ export const PrivateBarber = () => {
                   className="btn btn-primary d-flex align-items-center gap-2"
                   onClick={() => { dispatch({ type: "set-appointmentInfo", payload: null }); navigate("/barber_appointment_form"); }}
                 >
-                  <i className="fas fa-plus"></i> Nueva Cita
+                  Nueva Cita
                 </button>
               </div>
             </div>
@@ -274,7 +327,7 @@ export const PrivateBarber = () => {
                                     <button className="btn" onClick={() => updateAppointmentStatus(a.id, 'confirmed')}><i className="fas fa-check"></i></button>
                                     <button
                                       className="btn btn-outline-danger btn-sm ms-2"
-                                      onClick={() => handleDelete(a.id)}
+                                      onClick={() => handleDeleteAppt(a.id)}
                                       title="Eliminar permanentemente"
                                     >
                                       <i className="fas fa-trash-alt"></i>
@@ -413,7 +466,7 @@ export const PrivateBarber = () => {
                 approvedInvitations.map(inv => (
                   <li key={inv.id} className="list-group-item d-flex justify-content-between align-items-center">
                     {inv.barbershop?.name}
-                    <button className="btn btn-outline-danger btn-sm">Salir</button>
+                    <button className="btn btn-outline-danger btn-sm" onClick={() => handleDeleteInv(inv.id)}>Terminar relación</button>
                   </li>
                 ))}
             </ul>
@@ -425,8 +478,20 @@ export const PrivateBarber = () => {
                   <li key={inv.id} className="list-group-item d-flex justify-content-between align-items-center">
                     {inv.barbershop?.name}
                     <div className="btn-group">
-                      <button className="btn btn-success btn-sm" onClick={() => handleAccept(inv.id)}>Aceptar</button>
-                      <button className="btn btn-danger btn-sm">Rechazar</button>
+                      <div className="btn-group">
+                        <button
+                          className="btn btn-sm"
+                          onClick={() => handleAcceptInv(inv.id)}
+                        >
+                          Aceptar
+                        </button>
+                        <button
+                          className="btn btn-sm"
+                          onClick={() => handleDeleteInv(inv.id)}
+                        >
+                          Rechazar
+                        </button>
+                      </div>
                     </div>
                   </li>
                 ))}

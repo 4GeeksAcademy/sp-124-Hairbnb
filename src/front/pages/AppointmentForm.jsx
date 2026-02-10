@@ -134,7 +134,7 @@ export const AppointmentForm = () => {
 
         if (res.ok) {
             dispatch({ type: "set-appointmentInfo", payload: null });
-            navigate(isBarber ? "/private/barber" : "/private/owner/gestion");
+            navigate(-1);
         } else {
             const errorText = await res.text();
             console.error("Error del servidor:", errorText);
@@ -247,7 +247,7 @@ export const AppointmentForm = () => {
                     </div>
                     <div className="col-6 mb-3">
                         <label className="form-label">Hora</label>
-                        <input type="time" className="form-control" value={data.time} onChange={e => setData({ ...data, time: e.target.value })} required />
+                        <input type="time" className="form-control" step="900" value={data.time} onChange={e => setData({ ...data, time: e.target.value })} required />
                     </div>
                 </div>
 

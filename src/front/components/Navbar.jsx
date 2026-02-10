@@ -1,28 +1,40 @@
 import { Link, useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 
-
 export const Navbar = () => {
-
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
+
+    const handleEditProfile = () => {
+        if (store.role === "barber") navigate("/signup/barber");
+        else if (store.role === "owner") navigate("/signup/owner");
+        else navigate("/signup/client");
+    };
 
     const handleLogout = () => {
         const confirmar = window.confirm("¿De verdad quieres cerrar sesión?");
         if (!confirmar) return;
-        dispatch({ type: "login", payload: { token: null, username: null, role: null } });
-        navigate("/");
-    }
+
+        dispatch({
+        type: "set-message",
+        payload: { type: "success", msg: "Has cerrado sesión correctamente" }
+    });
+
+    navigate("/");
+
+    setTimeout(() => {
+        dispatch({ type: "logout" });
+        localStorage.removeItem("token");
+        localStorage.removeItem("userInfo");
+    }, 1500);
+};
+    
+
     return (
         <nav className="navbar navbar-expand-lg navbar-light bg-light px-3">
             <div className="container-fluid">
-
                 <Link to="/" className="navbar-brand">
-                    <img
-                        src="/Logo-HBNB-completo.png"
-                        alt="Hairbnb"
-                        width="120"
-                    />
+                    <img src="/Logo-HBNB-completo.png" alt="Hairbnb" width="120" />
                 </Link>
 
                 <button
@@ -35,9 +47,9 @@ export const Navbar = () => {
                 </button>
 
                 <div className="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul className="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <ul className="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
                         <li className="nav-item">
-                            <Link className="nav-link active" to="/">Inicio</Link>
+                            <Link className="nav-link" to="/">Inicio</Link>
                         </li>
 
                         {!store.token ? (
@@ -46,56 +58,57 @@ export const Navbar = () => {
                                     <Link className="nav-link" to="/asociates">Nuestros asociados</Link>
                                 </li>
                                 <li className="nav-item dropdown">
-                                    <Link
-                                        className="nav-link dropdown-toggle"
-                                        role="button"
-                                        data-bs-toggle="dropdown"
-                                    >
+                                    <Link className="nav-link dropdown-toggle" to="#" role="button" data-bs-toggle="dropdown">
                                         Crear cuenta
                                     </Link>
-                                    <ul className="dropdown-menu">
-                                        <li><Link className="dropdown-item" to="/singup/client">Como cliente</Link></li>
-                                        <li><Link className="dropdown-item" to="/singup/barber">Como profesional</Link></li>
-                                        <li><Link className="dropdown-item" to="/singup/owner">Como dueño</Link></li>
+                                    <ul className="dropdown-menu dropdown-menu-end">
+                                        <li><Link className="dropdown-item" to="/signup/client">Como cliente</Link></li>
+                                        <li><Link className="dropdown-item" to="/signup/barber">Como profesional</Link></li>
+                                        <li><Link className="dropdown-item" to="/signup/owner">Como dueño</Link></li>
                                     </ul>
                                 </li>
-
                                 <li className="nav-item dropdown">
-                                    <Link
-                                        className="nav-link dropdown-toggle"
-                                        role="button"
-                                        data-bs-toggle="dropdown"
-                                    >
+                                    <Link className="nav-link dropdown-toggle" to="#" role="button" data-bs-toggle="dropdown">
                                         Inicia sesión
                                     </Link>
-                                    <ul className="dropdown-menu">
+                                    <ul className="dropdown-menu dropdown-menu-end">
                                         <li><Link className="dropdown-item" to="/login/client">Soy cliente</Link></li>
                                         <li><Link className="dropdown-item" to="/login/barber">Soy barbero</Link></li>
                                         <li><Link className="dropdown-item" to="/login/owner">Soy dueño</Link></li>
                                     </ul>
                                 </li>
-                            </>)
-                            :
-                            (<>
-                                <Link
-                                    className="nav-link"
-                                    to={
-                                        store.role === "owner" ? "/private/owner" :
-                                            store.role === "barber" ? "/private/barber" :
-                                                store.role === "client" ? "/private/client" : "/"
-                                    }
-                                >
-                                    Tu perfil
-                                </Link>
-                                <li className="nav-item">
-                                    <Link className="nav-link" onClick={handleLogout}>Cerrar sesión</Link>
-                                </li>
                             </>
-                            )}
+                        ) : (
+                            <li className="nav-item dropdown">
+                                <Link className="nav-link dropdown-toggle" to="#" role="button" data-bs-toggle="dropdown">
+                                    Hola, {store.userInfo?.name || "Usuario"}
+                                </Link>
+                                <ul className="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <Link className="dropdown-item" to={
+                                            store.role === "owner" ? "/private/owner" :
+                                                store.role === "barber" ? "/private/barber" : "/private/client"
+                                        }>
+                                            Tu perfil
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <button className="dropdown-item" onClick={handleEditProfile}>
+                                            Editar datos
+                                        </button>
+                                    </li>
+                                    <li><hr className="dropdown-divider" /></li>
+                                    <li>
+                                        <button className="dropdown-item text-danger" onClick={handleLogout}>
+                                            Cerrar sesión
+                                        </button>
+                                    </li>
+                                </ul>
+                            </li>
+                        )}
                     </ul>
                 </div>
-
             </div>
-        </nav >
-    )
-}
+        </nav>
+    );
+};

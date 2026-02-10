@@ -76,7 +76,7 @@ export const BarbershopForm = () => {
       }
 
       dispatch({ type: "set-message", payload: { type: "success", "msg": "Guardado" } });
-      navigate("/private/owner");
+      navigate(-1);
 
     } catch (err) {
       console.error("Error en fetch:", err);
@@ -88,9 +88,8 @@ export const BarbershopForm = () => {
     <div className="container">
       <div className="d-flex justify-content-between align-items-center my-4">
         <h1 className="display-6">{data.id ? "Editar barbería" : "Añadir barbería"}</h1>
-        <Link to="/private/owner">
-          <button type="button" className="mx-2 btn btn-outline-secondary mb-2">Volver</button>
-        </Link>
+          <button type="button" className="mx-2 btn btn-outline-secondary mb-2" onClick={()=>navigate(-1)}>Volver</button>
+       
       </div>
 
       <form className="mx-auto p-4" onSubmit={handleSubmit}>
@@ -133,14 +132,8 @@ export const BarbershopForm = () => {
         </div>
 
         <div className="mt-4 d-flex justify-content-around">
-          <Link
-            to="/private/owner"
-            className="btn btn-outline-secondary mx-3 w-25"
-            onClick={() => dispatch({ type: "set-barbershopInfo", payload: null })}
-          >
-            Volver
-          </Link>
-          <button type="submit" className="btn btn-outline-primary mx-3 w-25">
+          <button onClick={()=>navigate(-1)} className="btn btn-outline-secondary">Volver</button>
+          <button type="submit" className="btn btn-outline-primary">
             {data.id ? "Actualizar" : "Crear"}
           </button>
         </div>
