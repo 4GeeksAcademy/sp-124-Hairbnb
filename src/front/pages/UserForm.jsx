@@ -84,7 +84,7 @@ export const UserForm = () => {
 
         dispatch({ type: "set-userInfo", payload: null });
 
-        setTimeout(() => navigate("/users"), 1200);
+        setTimeout(() => navigate(-1), 1200);
 
     } catch (error) {
         dispatch({
@@ -175,7 +175,7 @@ export const UserForm = () => {
             </div>
 
             <div className="mt-4 d-flex justify-content-around">
-                <Link to="/" className="btn btn-outline-secondary mx-3 w-25">Volver</Link>
+                <button type="button" className="mx-2 btn btn-outline-secondary mb-2" onClick={()=>navigate(-1)}>Cancelar</button>
                 <button
                     type="submit"
                     className="btn btn-outline-primary mx-3 w-25"

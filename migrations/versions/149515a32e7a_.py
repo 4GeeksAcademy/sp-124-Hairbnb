@@ -17,21 +17,18 @@ depends_on = None
 
 
 def upgrade():
-    # 1️⃣ Crear un owner por defecto (si no existe)
     op.execute("""
         INSERT INTO owner (name, email, phone, password)
         SELECT 'Default Owner', 'default@owner.com', '000000000', 'temp'
         WHERE NOT EXISTS (SELECT 1 FROM owner WHERE id = 1);
     """)
 
-    # 2️⃣ Rellenar los NULL
     op.execute("""
         UPDATE barbershop
         SET owner_id = 1
         WHERE owner_id IS NULL;
     """)
 
-    # 3️⃣ Ahora sí: NOT NULL
     with op.batch_alter_table('barbershop') as batch_op:
         batch_op.alter_column(
             'owner_id',

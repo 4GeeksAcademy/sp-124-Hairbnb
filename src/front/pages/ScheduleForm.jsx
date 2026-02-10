@@ -53,7 +53,7 @@ export const ScheduleForm = () => {
 
         if (resp.ok) {
             dispatch({ type: "set-message", payload: { type: "success", msg: "Horario guardado correctamente" } });
-            navigate("/private/barber");
+            navigate(-1);
         } else {
             dispatch({ type: "set-message", payload: data.message });
         }
@@ -131,7 +131,7 @@ export const ScheduleForm = () => {
                         <button 
                             type="button" 
                             className="btn btn-outline-secondary text-decoration-none" 
-                            onClick={() => navigate("/private/barber")}
+                            onClick={() => navigate(-1)}
                         >
                             Cancelar
                         </button>

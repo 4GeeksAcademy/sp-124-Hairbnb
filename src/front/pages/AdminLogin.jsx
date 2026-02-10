@@ -57,7 +57,7 @@ export const AdminLogin = () => {
                 }
             });
 
-            navigate("/4dm1n1str4c10n");
+            navigate("/4dm1n1str4t10n");
 
         } catch (err) {
             dispatch({

@@ -103,7 +103,7 @@ export const PrivateOwner = () => {
 
         {barbershops.map((el) => (
           <div className="col-12 col-lg-6" key={el.id}>
-            <div className="card h-100 shadow-sm">
+            <div className="card h-100">
               <img
                 src={`https://random.imagecdn.app/v1/image?width=500&height=150&random=${el.id}`}
                 className="card-img-top"

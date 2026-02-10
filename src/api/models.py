@@ -7,6 +7,7 @@ from datetime import time, datetime, timedelta
 
 db = SQLAlchemy()
 
+
 class AdminUser(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(nullable=False)
@@ -29,8 +30,9 @@ class User(db.Model):
     email: Mapped[str] = mapped_column(nullable=False, unique=True)
     phone: Mapped[str] = mapped_column(nullable=False, unique=True)
     notes: Mapped[str] = mapped_column(nullable=True)
+    client_image: Mapped[str] = mapped_column(String(255), nullable=True)
 
-    appointments: Mapped[List["Appointment"]] = relationship(back_populates="user")
+    appointments: Mapped[List["Appointment"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
     def serialize(self):
         return {
@@ -40,6 +42,7 @@ class User(db.Model):
             "email": self.email,
             "phone": self.phone,
             "notes": self.notes,
+            "client_image": self.client_image,
         }
 
 
@@ -49,11 +52,12 @@ class Barbershop(db.Model):
     address: Mapped[str] = mapped_column(nullable=False)
     phone: Mapped[str] = mapped_column(nullable=False, unique=True)
     owner_id: Mapped[int] = mapped_column(ForeignKey("owner.id"))
+    local_image: Mapped[str] = mapped_column(String(255), nullable=True)
 
-    barbers: Mapped[List["Barber"]] = relationship(back_populates="barbershop")
+    barbers: Mapped[List["Barber"]] = relationship(back_populates="barbershop",cascade="all, delete-orphan")
     owner: Mapped["Owner"] = relationship(back_populates="barbershops")
-    appointments: Mapped[List["Appointment"]] = relationship(back_populates="barbershop")
-    local = relationship("BarberBarbershop", back_populates="barbershop")
+    appointments: Mapped[List["Appointment"]] = relationship(back_populates="barbershop", cascade="all, delete-orphan")
+    local = relationship("BarberBarbershop", back_populates="barbershop", cascade="all, delete-orphan")
 
     def serialize(self):
         return {
@@ -61,6 +65,7 @@ class Barbershop(db.Model):
             "name": self.name,
             "address": self.address,
             "phone": self.phone,
+            "local_image": self.local_image,
         }
 
 
@@ -70,9 +75,10 @@ class Owner(db.Model):
     email: Mapped[str] = mapped_column(nullable=False, unique=True)
     phone: Mapped[str] = mapped_column(nullable=False, unique=True)
     password: Mapped[str] = mapped_column(nullable=False)
+    owner_image: Mapped[str] = mapped_column(String(255), nullable=True)
 
-    barbershops: Mapped[List["Barbershop"]] = relationship(back_populates="owner"
-    )
+    barbershops: Mapped[List["Barbershop"]] = relationship(
+        back_populates="owner", cascade="all, delete-orphan")
 
     def serialize(self):
         return {
@@ -80,22 +86,8 @@ class Owner(db.Model):
             "name": self.name,
             "email": self.email,
             "phone": self.phone,
-            "barbershops": [barbershop.id for barbershop in self.barbershops]
-        }
-
-
-class Service(db.Model): 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(nullable=False)
-    duration: Mapped[int] = mapped_column(nullable=False)
-    price: Mapped[int] = mapped_column(nullable=False)
-
-    def serialize(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "duration": self.duration,
-            "price": self.price
+            "barbershops": [barbershop.id for barbershop in self.barbershops],
+            "owner_image": self.owner_image,
         }
 
 
@@ -103,35 +95,41 @@ class Barber(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(nullable=False)
     email: Mapped[str] = mapped_column(nullable=False, unique=True)
+    phone: Mapped[str] = mapped_column(nullable=False, unique=True)
     password: Mapped[str] = mapped_column(nullable=False)
     barbershop_id: Mapped[int] = mapped_column(ForeignKey("barbershop.id"), nullable=True)
+    barber_image: Mapped[str] = mapped_column(String(255), nullable=True)
 
     barbershop: Mapped["Barbershop"] = relationship(back_populates="barbers")
 
-    barber_services: Mapped[List["BarberService"]] = relationship(back_populates="barber")
-    appointments: Mapped[List["Appointment"]] = relationship(back_populates="barber")
-    professional = relationship("BarberBarbershop", back_populates="barber")
+    barber_services: Mapped[List["BarberService"]] = relationship(back_populates="barber", cascade="all, delete-orphan")
+    appointments: Mapped[List["Appointment"]] = relationship(back_populates="barber", cascade="all, delete-orphan")
+    professional = relationship("BarberBarbershop", back_populates="barber", cascade="all, delete-orphan")
 
     def serialize(self):
         return {
             "id": self.id,
             "name": self.name,
             "email": self.email,
+            "phone": self.phone,
             "barbershop_id": self.barbershop_id if self.barbershop else None,
             "barbershop_name": self.barbershop.name if self.barbershop else "Sin asignar",
+            "barber_image": self.barber_image,
         }
 
 
 class Schedule(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     day_of_week: Mapped[str] = mapped_column(String(20), nullable=False)
-    
-    barber_barbershop_id: Mapped[int] = mapped_column(ForeignKey("barber_barbershop.id", ondelete="CASCADE"),nullable=False)
-    
+
+    barber_barbershop_id: Mapped[int] = mapped_column(ForeignKey(
+        "barber_barbershop.id"), nullable=False)
+
     start_time: Mapped[time] = mapped_column(Time, nullable=False)
     end_time: Mapped[time] = mapped_column(Time, nullable=False)
 
-    invitations: Mapped["BarberBarbershop"] = relationship(back_populates="schedule")
+    invitations: Mapped["BarberBarbershop"] = relationship(
+        back_populates="schedule")
 
     def serialize(self):
         return {
@@ -143,20 +141,23 @@ class Schedule(db.Model):
             "barber_id": self.invitations.barber_id,
             "barbershop_id": self.invitations.barbershop_id,
             "barber_name": self.invitations.barber.name,
-            "barbershop_name": self.invitations.barbershop.name 
-    }
+            "barbershop_name": self.invitations.barbershop.name
+        }
 
 
 class BarberService(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
-    barber_id: Mapped[int] = mapped_column(ForeignKey("barber.id"), nullable=False)
-    
+    barber_id: Mapped[int] = mapped_column(
+        ForeignKey("barber.id"), nullable=False)
+
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     price: Mapped[int] = mapped_column(nullable=False)
     duration: Mapped[int] = mapped_column(nullable=False)
+    service_image: Mapped[str] = mapped_column(String(255), nullable=True)
 
     barber: Mapped["Barber"] = relationship(back_populates="barber_services")
-    appointments: Mapped[List["Appointment"]] = relationship(back_populates="selected_service")
+    appointments: Mapped[List["Appointment"]] = relationship(
+        back_populates="selected_service", cascade="all, delete-orphan")
 
     def serialize(self):
         return {
@@ -164,9 +165,10 @@ class BarberService(db.Model):
             "name": self.name,
             "price": self.price,
             "duration": self.duration,
-            "barber_id": self.barber_id
+            "barber_id": self.barber_id,
+            "barber_name": self.barber.name
         }
-    
+
 
 class Appointment(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -174,30 +176,37 @@ class Appointment(db.Model):
     end_time: Mapped[datetime] = mapped_column(nullable=True)
 
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
-    barber_id: Mapped[int] = mapped_column(ForeignKey("barber.id"), nullable=False)
-    barber_service_id: Mapped[int] = mapped_column(ForeignKey("barber_service.id"), nullable=False)
-    barbershop_id: Mapped[int] = mapped_column(ForeignKey("barbershop.id"), nullable=True)
+    barber_id: Mapped[int] = mapped_column(
+        ForeignKey("barber.id"), nullable=False)
+    barber_service_id: Mapped[int] = mapped_column(
+        ForeignKey("barber_service.id"), nullable=False)
+    barbershop_id: Mapped[int] = mapped_column(
+        ForeignKey("barbershop.id"), nullable=True)
 
     status: Mapped[str] = mapped_column(nullable=False, default="pending")
     notes: Mapped[str] = mapped_column(nullable=True)
 
     user: Mapped["User"] = relationship(back_populates="appointments")
     barber: Mapped["Barber"] = relationship(back_populates="appointments")
-    selected_service: Mapped["BarberService"] = relationship(back_populates="appointments")
-    barbershop: Mapped["Barbershop"] = relationship(back_populates="appointments")
+    selected_service: Mapped["BarberService"] = relationship(
+        back_populates="appointments")
+    barbershop: Mapped["Barbershop"] = relationship(
+        back_populates="appointments")
 
-    def __init__(self, date, user_id, end_time, barber_id, barber_service_id, barbershop_id, notes=None):
+    def __init__(self, date, end_time, user_id, barber_id, barber_service_id, barbershop_id, notes=None):
         self.date = date
+        self.end_time = end_time
         self.user_id = user_id
         self.barber_id = barber_id
         self.barber_service_id = barber_service_id
         self.barbershop_id = barbershop_id
         self.notes = notes
-        
+
     def serialize(self):
         actual_end_time = self.end_time
         if actual_end_time is None and self.selected_service:
-            actual_end_time = self.date + timedelta(minutes=self.selected_service.duration)
+            actual_end_time = self.date + \
+                timedelta(minutes=self.selected_service.duration)
 
         return {
             "id": self.id,
@@ -219,24 +228,25 @@ class Appointment(db.Model):
 
 
 class BarberBarbershop(db.Model):
-    __tablename__ = "barber_barbershop" # Harta de que me de error de que no lo encuentra, pues se lo pongo literal
+    # Harta de que me de error de que no lo encuentra, pues se lo pongo literal
+    __tablename__ = "barber_barbershop"
     id: Mapped[int] = mapped_column(primary_key=True)
-    barber_id: Mapped[int] = mapped_column(ForeignKey("barber.id"), nullable=False)
-    barbershop_id: Mapped[int] = mapped_column(ForeignKey("barbershop.id"), nullable=False)
+    barber_id: Mapped[int] = mapped_column(
+        ForeignKey("barber.id"), nullable=False)
+    barbershop_id: Mapped[int] = mapped_column(
+        ForeignKey("barbershop.id"), nullable=False)
     status: Mapped[str] = mapped_column(default="pending")
 
     barber: Mapped["Barber"] = relationship(back_populates="professional")
     barbershop: Mapped["Barbershop"] = relationship(back_populates="local")
-    schedule: Mapped[List["Schedule"]] = relationship(back_populates="invitations", cascade="all, delete-orphan")
+    schedule: Mapped[List["Schedule"]] = relationship(
+        back_populates="invitations", cascade="all, delete-orphan")
 
     def serialize(self):
         return {
             "id": self.id,
             "status": self.status,
             "barbershop_id": self.barbershop_id,
-            "barber": self.barber.serialize() if hasattr(self.barber, 'serialize') else {
-                "id": self.barber.id,
-                "name": self.barber.name,
-                "email": self.barber.email
+            "barber_name": self.barber.name,
+            "barbershop_name": self.barbershop.name,
             }
-        }

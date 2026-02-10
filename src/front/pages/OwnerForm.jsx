@@ -81,7 +81,7 @@ export const OwnerForm = () => {
 
             dispatch({ type: "set-ownerInfo", payload: null });
 
-            setTimeout(() => navigate("/owners"), 1200);
+            setTimeout(() => navigate(-1), 1200);
 
         } catch (error) {
             dispatch({
@@ -164,7 +164,8 @@ export const OwnerForm = () => {
             </div>
 
             <div className="mt-5 d-flex justify-content-around">
-                <Link to="/owners" className="btn btn-outline-secondary mx-3 w-25">Volver</Link>
+                
+                <button onClick={() => navigate(-1)} className="btn btn-outline-secondary mx-3 w-25">Volver</button>
                 <button
                     type="submit"
                     className="btn btn-outline-primary mx-3 w-25"

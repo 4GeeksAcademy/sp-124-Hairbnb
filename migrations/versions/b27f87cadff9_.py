@@ -17,7 +17,6 @@ depends_on = None
 
 
 def upgrade():
-    # 1. Limpiamos las tablas para que no haya datos viejos que causen conflictos de NULL
     op.execute('TRUNCATE TABLE appointment, barber_service, service RESTART IDENTITY CASCADE')
 
     # 2. Rompemos las restricciones (por si acaso queda alguna)
