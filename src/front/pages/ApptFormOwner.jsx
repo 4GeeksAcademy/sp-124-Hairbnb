@@ -155,6 +155,15 @@ export const ApptFormOwner = () => {
         }
     };
 
+    if (store.role !== "owner") {
+        return (
+            <div className="container mt-4">
+                <h2 className="text-danger">Acceso denegado</h2>
+                <p>Inicia sesión como dueño para gestionar la cita.</p>
+            </div>
+        );
+    }
+
     return (
         <div className="container mt-4">
             <h3 className="mb-4">{isEditing ? "Editar Cita" : "Nueva Cita (Dueño)"}</h3>

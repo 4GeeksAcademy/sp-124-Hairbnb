@@ -22,6 +22,8 @@ export const BarberServices = () => {
             .catch(err => console.error(err));
     }, []);
 
+    
+
     return (
         <div className="container">
             <div className="d-flex justify-content-between align-items-center my-4">

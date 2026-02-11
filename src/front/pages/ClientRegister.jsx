@@ -15,7 +15,8 @@ export const ClientRegister = () => {
         phone: "",
         password: "",
         confirmPassword: "",
-        notes: ""
+        notes: "",
+        client_profile_image: ""
     });
 
     useEffect(() => {

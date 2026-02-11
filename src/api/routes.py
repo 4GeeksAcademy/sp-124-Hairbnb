@@ -87,7 +87,7 @@ def private_admin():
     claims = get_jwt()
     if claims.get("role") != "admin":
         return jsonify({"msg": "No tienes permisos"}), 403
-    return jsonify({"msg": f"Bienvenido admin {current_user_id}"}), 200
+    return jsonify({"msg": f"Hola de nuevo, {current_user_id}"}), 200
 
 
 @api.route("/private_owner")
@@ -97,7 +97,7 @@ def private_owner():
     claims = get_jwt()
     if claims.get("role") != "owner":
         return jsonify({"msg": "No tienes permisos"}), 403
-    return jsonify({"msg": f"Bienvenido dueño {current_user_id}"}), 200
+    return jsonify({"msg": f"Hola de nuevo, {current_user_id}"}), 200
 
 
 @api.route("/private_barber")
@@ -107,7 +107,7 @@ def private_barber():
     claims = get_jwt()
     if claims.get("role") != "barber":
         return jsonify({"msg": "No tienes permisos"}), 403
-    return jsonify({"msg": f"Bienvenido barbero {current_user_id}"}), 200
+    return jsonify({"msg": f"Hola de nuevo, {current_user_id}"}), 200
 
 
 @api.route("/private_client")
@@ -117,7 +117,7 @@ def private_client():
     claims = get_jwt()
     if claims.get("role") != "client":
         return jsonify({"msg": "No tienes permisos"}), 403
-    return jsonify({"msg": f"Bienvenido cliente {current_user_id}"}), 200
+    return jsonify({"msg": f"Hola de nuevo, {current_user_id}"}), 200
 
 
 @api.route("/adminusers", methods=["GET"])

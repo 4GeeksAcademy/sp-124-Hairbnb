@@ -208,12 +208,13 @@ export const PrivateBarber = () => {
   const pendingInvitations = store.invitations?.filter(inv => inv.status === "pending") || [];
 
   if (store.role !== "barber") {
-    return (
-      <div className="container mt-5 text-center">
-        <h2>No tienes permisos de barbero</h2>
-      </div>
-    );
-  }
+        return (
+            <div className="container mt-4">
+                <h2 className="text-danger">Acceso denegado</h2>
+                <p>Inicia sesión como barbero para acceder.</p>
+            </div>
+        );
+    }
 
   const dayNameEn = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
 

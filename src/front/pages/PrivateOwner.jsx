@@ -72,16 +72,17 @@ export const PrivateOwner = () => {
 
   
   if (store.role !== "owner") {
-    return (
-      <div className="container mt-5 text-center">
-        <h2>No tienes permisos de dueño</h2>
-      </div>
-    );
-  }
+        return (
+            <div className="container mt-4">
+                <h2 className="text-danger">Acceso denegado</h2>
+                <p>Inicia sesión como dueño para acceder al panel de gestión.</p>
+            </div>
+        );
+    }
 
   return (
     <div className="container mt-5">
-      <h1>Bienvenido, {store.username}</h1>
+      <h1>Panel de, {store.username}</h1>
 
       <div className="d-flex justify-content-between align-items-center my-4">
         <h2>Tus barberías</h2>

@@ -83,6 +83,15 @@ export const AdminDashboard = () => {
         if (resp.ok) loadData();
     };
 
+    if (store.role !== "admin") {
+        return (
+            <div className="container mt-4">
+                <h2 className="text-danger">Acceso denegado</h2>
+                <p>Inicia sesión para acceder al panel de administración.</p>
+            </div>
+        );
+    }
+
     return (
         <div className="container mt-4">
             <h2 className="mb-4 text-primary">Base de Datos General</h2>

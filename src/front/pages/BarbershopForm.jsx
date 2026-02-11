@@ -84,6 +84,15 @@ export const BarbershopForm = () => {
     }
   };
 
+  if (store.role !== "owner") {
+        return (
+            <div className="container mt-4">
+                <h2 className="text-danger">Acceso denegado</h2>
+                <p>Inicia sesión para como dueño para gestionar tus barberias.</p>
+            </div>
+        );
+    }
+
   return (
     <div className="container">
       <div className="d-flex justify-content-between align-items-center my-4">

@@ -55,7 +55,7 @@ export const OwnerLogin = () => {
                 type: "set-message",
                 payload: {
                     type: "success",
-                    msg: `Dueño ${data.user.name} ha iniciado sesión`
+                    msg: `Hola de nuevo, ${data.user.name}`
                 }
             });
             

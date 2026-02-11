@@ -54,7 +54,7 @@ export const ClientLogin = () => {
                 type: "set-message",
                 payload: {
                     type: "success",
-                    msg: `Cliente ${data.user.name} ha iniciado sesión`
+                    msg: `Hola de nuevo, ${data.user.name}`
                 }
             });
 

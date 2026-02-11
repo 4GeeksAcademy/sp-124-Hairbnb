@@ -54,45 +54,47 @@ export const router = createBrowserRouter(
 
       {/* Nested Routes: Defines sub-routes within the BaseHome component. */}
       <Route path="/" element={<Home />} />
-      <Route path="/asociates" element={<Asociates />} />
-      <Route path="/barbershops" element={<Barbershops />} />
-      <Route path="/barbershops_form" element={<BarbershopForm />} />
-      <Route path="/owners" element={<Owners />} />
-      <Route path="/owners_form" element={<OwnerForm />} />
-      <Route path="/barbers" element={<Barbers />} />
-      <Route path="/barbers_form" element={<BarberForm />} />
-      <Route path="/schedules" element={<Schedules />} />
-      <Route path="/schedules_form" element={<ScheduleForm />} />
-      <Route path="/barber_services" element={<BarberServices />} />
-      <Route path="/barber_services_form" element={<BarberServiceForm />} />
-      <Route path="/appointments" element={<Appointments />} />
+      <Route path="/asociates" element={<Asociates />} /> {/* Aparecen todas las barberias. Sirve como publi */}
+      <Route path="/barbershops_form" element={<BarbershopForm />} /> {/* Crear y editar barberias (solo dueños) */}
+      <Route path="/barber_services_form" element={<BarberServiceForm />} /> {/* Crear y editar servicios (solo barberos) */}
+      <Route path="/schedules_form" element={<ScheduleForm />} />  {/* Crear y editar horarios (solo barberos) */}
 
-      <Route path="/barber_appointment_form" element={<ApptFormBarber />} />
-      <Route path="/client_appointment_form" element={<ApptFormClient />} />
-      <Route path="/owner_appointment_form" element={<ApptFormOwner />} />
+      <Route path="/barber_appointment_form" element={<ApptFormBarber />} /> {/* Crear y editar cita desde barbero */}
+      <Route path="/client_appointment_form" element={<ApptFormClient />} /> {/* Crear y editar cita desde cliente */}
+      <Route path="/owner_appointment_form" element={<ApptFormOwner />} /> {/* Crear y editar cita desde dueño */}
       
-      <Route path="/signup/client/:id?" element={<ClientRegister />} />
-      <Route path="/signup/barber/:id?" element={<BarberRegister />} />
-      <Route path="/signup/owner/:id?" element={<OwnerRegister />} />
+      <Route path="/signup/client/:id?" element={<ClientRegister />} /> {/* Crear cuenta cliente */}
+      <Route path="/signup/barber/:id?" element={<BarberRegister />} /> {/* Crear cuenta barbero */}
+      <Route path="/signup/owner/:id?" element={<OwnerRegister />} /> {/* Crear cuenta dueño */}
       
-      <Route path="/login/client" element={<ClientLogin />} />
-      <Route path="/login/barber" element={<BarberLogin />} />
-      <Route path="/login/owner" element={<OwnerLogin />} />
-      <Route path="/login/admin" element={<AdminLogin />} />
+      <Route path="/login/client" element={<ClientLogin />} /> {/* Inicio sesión cliente */}
+      <Route path="/login/barber" element={<BarberLogin />} /> {/* Inicio sesión barbero */}
+      <Route path="/login/owner" element={<OwnerLogin />} /> {/* Inicio sesión dueño */}
+      <Route path="/login/admin" element={<AdminLogin />} /> {/* Inicio sesión admin */}
 
-
-      <Route path="/4dm1n1str4t10n" element={<AdminDashboard />} />
+      <Route path="/4dm1n1str4t10n" element={<AdminDashboard />} /> {/* Panel de gestión del admin */}
       
-      <Route path="/private/owner" element={<PrivateOwner />} />
-      <Route path="/private/barber" element={<PrivateBarber />} />
-      <Route path="/private/client" element={<PrivateClient />} />
+      <Route path="/private/owner" element={<PrivateOwner />} /> {/* Zona privada de dueño, selección de barbería a gestionar */}
+      <Route path="/private/owner/gestion" element={<OwnerGestion />} /> {/* Zona privada de dueño */}
+      <Route path="/private/barber" element={<PrivateBarber />} /> {/* Zona privada de barbero */}
+      <Route path="/private/client" element={<PrivateClient />} /> {/* Zona privada de cliente */}
 
-      <Route path="/private/owner/gestion" element={<OwnerGestion />} />
 
-      {/* <Route path="/services" element={<Services />} />
-      <Route path="/services_form" element={<ServiceForm />} /> */}
-      {/* <Route path="/users" element={<Users />} />
-      <Route path="/users_form" element={<UserForm />} /> */}
+      {/* 
+        <Route path="/appointment_form" element={<AppointmentForm />} />
+        <Route path="/appointments" element={<Appointments />} />
+        <Route path="/barbers_form" element={<BarberForm />} />
+        <Route path="/barbers" element={<Barbers />} />
+        <Route path="/barber_services" element={<BarberServices />} />
+        <Route path="/barbershops" element={<Barbershops />} />
+        <Route path="/owners" element={<Owners />} />
+        <Route path="/owners_form" element={<OwnerForm />} />
+        <Route path="/schedules" element={<Schedules />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/services_form" element={<ServiceForm />} /> 
+        <Route path="/users" element={<Users />} />
+        <Route path="/users_form" element={<UserForm />} /> 
+      */}
       
     </Route>
   )

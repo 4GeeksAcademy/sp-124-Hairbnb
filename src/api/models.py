@@ -30,7 +30,7 @@ class User(db.Model):
     email: Mapped[str] = mapped_column(nullable=False, unique=True)
     phone: Mapped[str] = mapped_column(nullable=False, unique=True)
     notes: Mapped[str] = mapped_column(nullable=True)
-    client_image: Mapped[str] = mapped_column(String(255), nullable=True)
+    client_profile_image: Mapped[str] = mapped_column(String(255), nullable=True)
 
     appointments: Mapped[List["Appointment"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
@@ -42,7 +42,7 @@ class User(db.Model):
             "email": self.email,
             "phone": self.phone,
             "notes": self.notes,
-            "client_image": self.client_image,
+            "client_profile_image": self.client_image,
         }
 
 
@@ -52,7 +52,7 @@ class Barbershop(db.Model):
     address: Mapped[str] = mapped_column(nullable=False)
     phone: Mapped[str] = mapped_column(nullable=False, unique=True)
     owner_id: Mapped[int] = mapped_column(ForeignKey("owner.id"))
-    local_image: Mapped[str] = mapped_column(String(255), nullable=True)
+    barbershop_image: Mapped[str] = mapped_column(String(255), nullable=True)
 
     barbers: Mapped[List["Barber"]] = relationship(back_populates="barbershop",cascade="all, delete-orphan")
     owner: Mapped["Owner"] = relationship(back_populates="barbershops")
@@ -65,7 +65,7 @@ class Barbershop(db.Model):
             "name": self.name,
             "address": self.address,
             "phone": self.phone,
-            "local_image": self.local_image,
+            "barbershop_image": self.local_image,
         }
 
 
@@ -75,7 +75,7 @@ class Owner(db.Model):
     email: Mapped[str] = mapped_column(nullable=False, unique=True)
     phone: Mapped[str] = mapped_column(nullable=False, unique=True)
     password: Mapped[str] = mapped_column(nullable=False)
-    owner_image: Mapped[str] = mapped_column(String(255), nullable=True)
+    owner_profile_image: Mapped[str] = mapped_column(String(255), nullable=True)
 
     barbershops: Mapped[List["Barbershop"]] = relationship(
         back_populates="owner", cascade="all, delete-orphan")
@@ -87,7 +87,7 @@ class Owner(db.Model):
             "email": self.email,
             "phone": self.phone,
             "barbershops": [barbershop.id for barbershop in self.barbershops],
-            "owner_image": self.owner_image,
+            "owner_profile_image": self.owner_image,
         }
 
 
@@ -98,7 +98,7 @@ class Barber(db.Model):
     phone: Mapped[str] = mapped_column(nullable=False, unique=True)
     password: Mapped[str] = mapped_column(nullable=False)
     barbershop_id: Mapped[int] = mapped_column(ForeignKey("barbershop.id"), nullable=True)
-    barber_image: Mapped[str] = mapped_column(String(255), nullable=True)
+    barber_profile_image: Mapped[str] = mapped_column(String(255), nullable=True)
 
     barbershop: Mapped["Barbershop"] = relationship(back_populates="barbers")
 
@@ -114,7 +114,7 @@ class Barber(db.Model):
             "phone": self.phone,
             "barbershop_id": self.barbershop_id if self.barbershop else None,
             "barbershop_name": self.barbershop.name if self.barbershop else "Sin asignar",
-            "barber_image": self.barber_image,
+            "barber_profile_image": self.barber_image,
         }
 
 
@@ -122,14 +122,12 @@ class Schedule(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     day_of_week: Mapped[str] = mapped_column(String(20), nullable=False)
 
-    barber_barbershop_id: Mapped[int] = mapped_column(ForeignKey(
-        "barber_barbershop.id"), nullable=False)
+    barber_barbershop_id: Mapped[int] = mapped_column(ForeignKey("barber_barbershop.id"), nullable=False)
 
     start_time: Mapped[time] = mapped_column(Time, nullable=False)
     end_time: Mapped[time] = mapped_column(Time, nullable=False)
 
-    invitations: Mapped["BarberBarbershop"] = relationship(
-        back_populates="schedule")
+    invitations: Mapped["BarberBarbershop"] = relationship(back_populates="schedule")
 
     def serialize(self):
         return {
@@ -153,7 +151,7 @@ class BarberService(db.Model):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     price: Mapped[int] = mapped_column(nullable=False)
     duration: Mapped[int] = mapped_column(nullable=False)
-    service_image: Mapped[str] = mapped_column(String(255), nullable=True)
+    service_demo_image: Mapped[str] = mapped_column(String(255), nullable=True)
 
     barber: Mapped["Barber"] = relationship(back_populates="barber_services")
     appointments: Mapped[List["Appointment"]] = relationship(
@@ -166,7 +164,8 @@ class BarberService(db.Model):
             "price": self.price,
             "duration": self.duration,
             "barber_id": self.barber_id,
-            "barber_name": self.barber.name
+            "barber_name": self.barber.name,
+            "service_demo_image": self.service_demo_image,  
         }
 
 

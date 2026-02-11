@@ -53,7 +53,7 @@ export const AdminLogin = () => {
                 type: "set-message",
                 payload: {
                     type: "success",
-                    msg: `Administrador ${data.user.name} ha iniciado sesión`
+                    msg: `Hola de nuevo, ${data.user.name}`
                 }
             });
 
@@ -66,6 +66,7 @@ export const AdminLogin = () => {
             });
         }
     };
+    
 
     return (
         <div className="container mt-5">

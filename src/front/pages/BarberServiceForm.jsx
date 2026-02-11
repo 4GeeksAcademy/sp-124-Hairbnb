@@ -61,10 +61,19 @@ export const BarberServiceForm = () => {
     }
 };
 
+if (store.role !== "barber") {
+        return (
+            <div className="container mt-4">
+                <h2 className="text-danger">Acceso denegado</h2>
+                <p>Inicia sesión como barbero para gestionar tus servicios.</p>
+            </div>
+        );
+    }
+
   return (
     <div className="container mt-5">
-      <div className="card shadow-sm mx-auto" style={{ maxWidth: "500px" }}>
-        <div className="card-header bg-dark text-white">
+      <div className="card mx-auto" style={{ maxWidth: "500px" }}>
+        <div className="card-header">
           <h4 className="mb-0">{store.barber_serviceInfo ? "Editar Servicio" : "Nuevo Servicio"}</h4>
         </div>
         <div className="card-body">
@@ -74,7 +83,7 @@ export const BarberServiceForm = () => {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Ej: Corte Degradado, Arreglo de Barba..."
+                placeholder="Ej: Corte Degradado"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
