@@ -1,7 +1,6 @@
-// Import necessary components from react-router-dom and other parts of the application.
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import useGlobalReducer from "../hooks/useGlobalReducer";
+import useGlobalReducer from "../../hooks/useGlobalReducer";
 import { useEffect } from "react";
 
 

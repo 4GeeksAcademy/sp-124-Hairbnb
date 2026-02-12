@@ -1,11 +1,9 @@
-// Import necessary components from react-router-dom and other parts of the application.
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import useGlobalReducer from "../hooks/useGlobalReducer";
+import useGlobalReducer from "../../hooks/useGlobalReducer";
 import { useEffect } from "react";
 
 export const Users = () => {
-  // Access the global state and dispatch function using the useGlobalReducer hook.
   const navigate = useNavigate()
   const { store, dispatch } = useGlobalReducer();
 
@@ -82,19 +80,19 @@ export const Users = () => {
                   <p className="card-text text-center">
 
                     <p className="card-text">
-    Usuario: {a.user_name}<br/>
-    Barbero: {barbers.find(b => b.id === a.barber_id)?.name}<br/>
-    {a.notes ? (
-        <span>
-            <span className="fa-regular fa-note-sticky"></span>{" "}
-            <span className="fs-5">{a.notes}</span>
-        </span>
-    ) : (
-        <small className="text-muted fst-italic">
-            No hay notas para este cliente
-        </small>
-    )}
-</p>
+                      Usuario: {a.user_name}<br />
+                      Barbero: {barbers.find(b => b.id === a.barber_id)?.name}<br />
+                      {a.notes ? (
+                        <span>
+                          <span className="fa-regular fa-note-sticky"></span>{" "}
+                          <span className="fs-5">{a.notes}</span>
+                        </span>
+                      ) : (
+                        <small className="text-muted fst-italic">
+                          No hay notas para este cliente
+                        </small>
+                      )}
+                    </p>
                   </p>
                 </div>
 

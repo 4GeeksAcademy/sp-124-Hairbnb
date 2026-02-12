@@ -60,12 +60,14 @@ export const ScheduleForm = () => {
     };
     
     if (store.role !== "barber") {
-    return (
-      <div className="container mt-5 text-center">
-        <h2>No tienes permisos de barbero</h2>
-      </div>
-    );
-  }
+        return (
+            <div className="container mt-4">
+                <h2 className="text-danger">Acceso denegado</h2>
+                <p>Inicia sesión como barbero para acceder al formulario de horarios.</p>
+            </div>
+        );
+    }
+  
 
     return (
         <div className="container mt-5">

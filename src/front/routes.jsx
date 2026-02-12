@@ -1,5 +1,3 @@
-// Import necessary components and functions from react-router-dom.
-
 import {
   createBrowserRouter,
   createRoutesFromElements,
@@ -7,93 +5,94 @@ import {
 } from "react-router-dom";
 import { Layout } from "./pages/Layout";
 import { Home } from "./pages/Home";
-import { Barbershops } from "./pages/Barbershops";
-import { BarbershopForm } from "./pages/BarbershopForm";
-import { Owners } from "./pages/Owners";
-import { OwnerForm } from "./pages/OwnerForm";
-import { Barbers } from "./pages/Barbers";
-import { BarberForm } from "./pages/BarberForm";
-import { Schedules } from "./pages/Schedules";
-import { ScheduleForm } from "./pages/ScheduleForm";
-import { BarberServices } from "./pages/BarberServices";
-import { BarberServiceForm } from "./pages/BarberServiceForm";
-import { Appointments } from "./pages/Appointments";
-import { PrivateOwner } from "./pages/PrivateOwner.jsx";
-import { PrivateBarber } from "./pages/PrivateBarber.jsx";
-import { PrivateClient } from "./pages/PrivateClient.jsx";
-import { ClientLogin } from "./pages/ClientLogin.jsx";
-import { BarberLogin } from "./pages/BarberLogin.jsx";
-import { OwnerLogin } from "./pages/OwnerLogin.jsx";
-import { ClientRegister } from "./pages/ClientRegister.jsx";
-import { BarberRegister } from "./pages/BarberRegister.jsx";
-import { OwnerRegister } from "./pages/OwnerRegister.jsx";
+
 import { AdminDashboard } from "./pages/AdminDashboard.jsx";
-import { AdminLogin } from "./pages/AdminLogin.jsx";
-import { OwnerGestion } from "./pages/OwnerGestion.jsx";
-import { Asociates } from "./pages/Asociates.jsx";
+import { AdminEditForms } from "./pages/AdminEditForms.jsx";
 import { ApptFormBarber } from "./pages/ApptFormBarber.jsx";
 import { ApptFormClient } from "./pages/ApptFormClient.jsx";
 import { ApptFormOwner } from "./pages/ApptFormOwner.jsx";
+import { AdminLogin } from "./pages/AdminLogin.jsx";
+import { Asociates } from "./pages/Asociates.jsx";
+import { BarberLogin } from "./pages/BarberLogin.jsx";
+import { BarberRegister } from "./pages/BarberRegister.jsx";
+import { BarbershopForm } from "./pages/BarbershopForm";
+import { BarberServiceForm } from "./pages/BarberServiceForm";
+import { ClientLogin } from "./pages/ClientLogin.jsx";
+import { ClientRegister } from "./pages/ClientRegister.jsx";
+import { OwnerLogin } from "./pages/OwnerLogin.jsx";
+import { OwnerRegister } from "./pages/OwnerRegister.jsx";
+import { OwnerGestion } from "./pages/OwnerGestion.jsx";
+import { PrivateClient } from "./pages/PrivateClient.jsx";
+import { PrivateBarber } from "./pages/PrivateBarber.jsx";
+import { PrivateOwner } from "./pages/PrivateOwner.jsx";
+import { ScheduleForm } from "./pages/ScheduleForm";
 
-import { AppointmentForm } from "./pages/AppointmentForm";
-import { Services } from "./pages/Services";
-import { ServiceForm } from "./pages/ServiceForm";
-import { Users } from "./pages/Users";
-import { UserForm } from "./pages/UserForm";
+
+import { AppointmentForm } from "./pages/deprecated/AppointmentForm";
+import { Appointments } from "./pages/deprecated/Appointments";
+import { BarberForm } from "./pages/deprecated/BarberForm.jsx";
+import { Barbers } from "./pages/deprecated/Barbers";
+import { BarberServices } from "./pages/deprecated/BarberServices.jsx";
+import { Barbershops } from "./pages/deprecated/Barbershops";
+import { OwnerForm } from "./pages/deprecated/OwnerForm.jsx";
+import { Owners } from "./pages/deprecated/Owners";
+import { Schedules } from "./pages/deprecated/Schedules.jsx";
+import { ServiceForm } from "./pages/deprecated/ServiceForm.jsx";
+import { Services } from "./pages/deprecated/Services.jsx";
+import { UserForm } from "./pages/deprecated/UserForm.jsx";
+import { Users } from "./pages/deprecated/Users.jsx";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
-    // CreateRoutesFromElements function allows you to build route elements declaratively.
-    // Create your routes here, if you want to keep the Navbar and Footer in all views, add your new routes inside the containing Route.
-    // Root, on the contrary, create a sister Route, if you have doubts, try it!
-    // Note: keep in mind that errorElement will be the default page when you don't get a route, customize that page to make your project more attractive.
-    // Note: The child paths of the Layout element replace the Outlet component with the elements contained in the "element" attribute of these child paths.
-
-    // Root Route: All navigation will start from here.
+   
     <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>} >
 
-      {/* Nested Routes: Defines sub-routes within the BaseHome component. */}
       <Route path="/" element={<Home />} />
       <Route path="/asociates" element={<Asociates />} />
-      <Route path="/barbershops" element={<Barbershops />} />
       <Route path="/barbershops_form" element={<BarbershopForm />} />
-      <Route path="/owners" element={<Owners />} />
-      <Route path="/owners_form" element={<OwnerForm />} />
-      <Route path="/barbers" element={<Barbers />} />
-      <Route path="/barbers_form" element={<BarberForm />} />
-      <Route path="/schedules" element={<Schedules />} />
-      <Route path="/schedules_form" element={<ScheduleForm />} />
-      <Route path="/barber_services" element={<BarberServices />} />
       <Route path="/barber_services_form" element={<BarberServiceForm />} />
-      <Route path="/appointments" element={<Appointments />} />
+      <Route path="/schedules_form" element={<ScheduleForm />} />
 
       <Route path="/barber_appointment_form" element={<ApptFormBarber />} />
       <Route path="/client_appointment_form" element={<ApptFormClient />} />
       <Route path="/owner_appointment_form" element={<ApptFormOwner />} />
-      
+
       <Route path="/signup/client/:id?" element={<ClientRegister />} />
       <Route path="/signup/barber/:id?" element={<BarberRegister />} />
       <Route path="/signup/owner/:id?" element={<OwnerRegister />} />
-      
+
       <Route path="/login/client" element={<ClientLogin />} />
       <Route path="/login/barber" element={<BarberLogin />} />
       <Route path="/login/owner" element={<OwnerLogin />} />
       <Route path="/login/admin" element={<AdminLogin />} />
 
-
       <Route path="/4dm1n1str4t10n" element={<AdminDashboard />} />
-      
+      <Route path="/admin/:entity/:id" element={<AdminEditForms />} />
+      <Route path="/admin/:entity" element={<AdminEditForms />} />
+
+
       <Route path="/private/owner" element={<PrivateOwner />} />
+      <Route path="/private/owner/gestion" element={<OwnerGestion />} />
       <Route path="/private/barber" element={<PrivateBarber />} />
       <Route path="/private/client" element={<PrivateClient />} />
 
-      <Route path="/private/owner/gestion" element={<OwnerGestion />} />
 
-      {/* <Route path="/services" element={<Services />} />
-      <Route path="/services_form" element={<ServiceForm />} /> */}
-      {/* <Route path="/users" element={<Users />} />
-      <Route path="/users_form" element={<UserForm />} /> */}
-      
+      {/* En la carpeta ../deprecated
+        <Route path="/appointment_form" element={<AppointmentForm />} />
+        <Route path="/appointments" element={<Appointments />} />
+        <Route path="/barbers_form" element={<BarberForm />} />
+        <Route path="/barbers" element={<Barbers />} />
+        <Route path="/barber_services" element={<BarberServices />} />
+        <Route path="/barbershops" element={<Barbershops />} />
+        <Route path="/owners" element={<Owners />} />
+        <Route path="/owners_form" element={<OwnerForm />} />
+        <Route path="/schedules" element={<Schedules />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/services_form" element={<ServiceForm />} /> 
+        <Route path="/users" element={<Users />} />
+        <Route path="/users_form" element={<UserForm />} /> 
+      */}
+
     </Route>
   )
 );

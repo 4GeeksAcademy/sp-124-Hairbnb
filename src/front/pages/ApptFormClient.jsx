@@ -120,6 +120,15 @@ useEffect(() => {
         } catch (error) { console.error(error); }
     };
 
+    if (store.role !== "client") {
+        return (
+            <div className="container mt-4">
+                <h2 className="text-danger">Acceso denegado</h2>
+                <p>Inicia sesión como cliente para gestionar la cita.</p>
+            </div>
+        );
+    }
+
     return (
         <div className="container mt-4">
             <h2 className="text-center mb-4">Reserva tu Cita</h2>

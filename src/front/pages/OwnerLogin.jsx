@@ -40,6 +40,10 @@ export const OwnerLogin = () => {
                 return;
             }
 
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("role", data.user.role);
+            localStorage.setItem("userInfo", JSON.stringify(data.user))
+
             dispatch({
                 type: "login",
                 payload: {
@@ -55,7 +59,7 @@ export const OwnerLogin = () => {
                 type: "set-message",
                 payload: {
                     type: "success",
-                    msg: `Dueño ${data.user.name} ha iniciado sesión`
+                    msg: `Hola de nuevo, ${data.user.name}`
                 }
             });
             

@@ -15,6 +15,12 @@ export const Navbar = () => {
         const confirmar = window.confirm("¿De verdad quieres cerrar sesión?");
         if (!confirmar) return;
 
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        localStorage.removeItem("userInfo");
+        
+        dispatch({ type: "logout" });
+
         dispatch({
         type: "set-message",
         payload: { type: "success", msg: "Has cerrado sesión correctamente" }
@@ -22,11 +28,6 @@ export const Navbar = () => {
 
     navigate("/");
 
-    setTimeout(() => {
-        dispatch({ type: "logout" });
-        localStorage.removeItem("token");
-        localStorage.removeItem("userInfo");
-    }, 1500);
 };
     
 

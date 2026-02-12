@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import defaultImage from "../../../public/DefaultImage.png"
 
 export const PrivateOwner = () => {
   const { store, dispatch } = useGlobalReducer();
@@ -70,18 +71,19 @@ export const PrivateOwner = () => {
     }
   };
 
-  
+
   if (store.role !== "owner") {
     return (
-      <div className="container mt-5 text-center">
-        <h2>No tienes permisos de dueño</h2>
+      <div className="container mt-4">
+        <h2 className="text-danger">Acceso denegado</h2>
+        <p>Inicia sesión como dueño para acceder al panel de gestión.</p>
       </div>
     );
   }
 
   return (
     <div className="container mt-5">
-      <h1>Bienvenido, {store.username}</h1>
+      <h1>Panel de {store.username}</h1>
 
       <div className="d-flex justify-content-between align-items-center my-4">
         <h2>Tus barberías</h2>
@@ -105,9 +107,14 @@ export const PrivateOwner = () => {
           <div className="col-12 col-lg-6" key={el.id}>
             <div className="card h-100">
               <img
-                src={`https://random.imagecdn.app/v1/image?width=500&height=150&random=${el.id}`}
+                src={el.barbershop_image || defaultImage}
                 className="card-img-top"
                 alt={`Imagen de ${el.name}`}
+                style={{
+                  height: "150px",
+                  objectFit: "cover",
+                  width: "100%"
+                }}
               />
               <div className="card-body text-center">
                 <h5 className="card-title display-6">{el.name}</h5>
@@ -123,15 +130,15 @@ export const PrivateOwner = () => {
 
               <div className="d-flex justify-content-around m-3">
                 <Link
-  to="/private/owner/gestion"
-  className="btn btn-outline-secondary"
-  onClick={() => {
-    dispatch({ type: "set-barbershopInfo", payload: el });
-    dispatch({ type: "set-barbershops", payload: barbershops });
-  }}
->
-  <i className="fa-regular fa-compass"></i> Gestionar
-</Link>
+                  to="/private/owner/gestion"
+                  className="btn btn-outline-secondary"
+                  onClick={() => {
+                    dispatch({ type: "set-barbershopInfo", payload: el });
+                    dispatch({ type: "set-barbershops", payload: barbershops });
+                  }}
+                >
+                  <i className="fa-regular fa-compass"></i> Gestionar
+                </Link>
                 <Link
                   to="/barbershops_form"
                   className="btn btn-outline-warning"

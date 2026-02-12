@@ -39,6 +39,9 @@ export const AdminLogin = () => {
                 });
                 return;
             }
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("role", data.user.role);
+            localStorage.setItem("userInfo", JSON.stringify(data.user))
 
             dispatch({
                 type: "login",
@@ -53,7 +56,7 @@ export const AdminLogin = () => {
                 type: "set-message",
                 payload: {
                     type: "success",
-                    msg: `Administrador ${data.user.name} ha iniciado sesión`
+                    msg: `Hola de nuevo, ${data.user.name}`
                 }
             });
 
@@ -66,6 +69,7 @@ export const AdminLogin = () => {
             });
         }
     };
+    
 
     return (
         <div className="container mt-5">

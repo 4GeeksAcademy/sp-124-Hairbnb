@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import useGlobalReducer from "../hooks/useGlobalReducer";
+import useGlobalReducer from "../../hooks/useGlobalReducer";
 
 export const OwnerForm = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -164,7 +164,7 @@ export const OwnerForm = () => {
             </div>
 
             <div className="mt-5 d-flex justify-content-around">
-                
+
                 <button onClick={() => navigate(-1)} className="btn btn-outline-secondary mx-3 w-25">Volver</button>
                 <button
                     type="submit"

@@ -87,7 +87,7 @@ def private_admin():
     claims = get_jwt()
     if claims.get("role") != "admin":
         return jsonify({"msg": "No tienes permisos"}), 403
-    return jsonify({"msg": f"Bienvenido admin {current_user_id}"}), 200
+    return jsonify({"msg": f"Hola de nuevo, {current_user_id}"}), 200
 
 
 @api.route("/private_owner")
@@ -97,7 +97,7 @@ def private_owner():
     claims = get_jwt()
     if claims.get("role") != "owner":
         return jsonify({"msg": "No tienes permisos"}), 403
-    return jsonify({"msg": f"Bienvenido dueño {current_user_id}"}), 200
+    return jsonify({"msg": f"Hola de nuevo, {current_user_id}"}), 200
 
 
 @api.route("/private_barber")
@@ -107,7 +107,7 @@ def private_barber():
     claims = get_jwt()
     if claims.get("role") != "barber":
         return jsonify({"msg": "No tienes permisos"}), 403
-    return jsonify({"msg": f"Bienvenido barbero {current_user_id}"}), 200
+    return jsonify({"msg": f"Hola de nuevo, {current_user_id}"}), 200
 
 
 @api.route("/private_client")
@@ -117,7 +117,7 @@ def private_client():
     claims = get_jwt()
     if claims.get("role") != "client":
         return jsonify({"msg": "No tienes permisos"}), 403
-    return jsonify({"msg": f"Bienvenido cliente {current_user_id}"}), 200
+    return jsonify({"msg": f"Hola de nuevo, {current_user_id}"}), 200
 
 
 @api.route("/adminusers", methods=["GET"])
@@ -180,6 +180,7 @@ def new_user():
     email = data.get("email")
     phone = data.get("phone")
     notes = data.get("notes")
+    client_profile_image = data.get("client_profile_image")
 
     if User.query.filter_by(email=email).first():
         return jsonify({"message": {"type": "error", "msg": "Email ya registrado"}}), 409
@@ -193,13 +194,15 @@ def new_user():
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar un apellido"}}), 400
     if not password:
         return jsonify({"message": {"type": "error", "msg": "Necesitas una contraseña"}}), 400
+    if len(password) < 8:
+        return jsonify({"message": {"type": "error", "msg": "La contraseña debe tener al menos 8 caracteres"}}), 400
     if not email:
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar un email"}}), 400
     if not phone:
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar un teléfono"}}), 400
 
     new_user = User(name=name, last_name=last_name,
-                    password=password, email=email, phone=phone, notes=notes)
+                    password=password, email=email, phone=phone, notes=notes, client_profile_image=client_profile_image)
     db.session.add(new_user)
     db.session.commit()
 
@@ -275,6 +278,7 @@ def edit_user(user_id):
     user.last_name = data.get("last_name", user.last_name)
     user.password = data.get("password", user.password)
     user.notes = data.get("notes", user.notes)
+    user.client_profile_image = data.get("client_profile_image", user.client_profile_image)
 
     db.session.commit()
     return jsonify({"message": {"type": "success", "msg": f"Usuario {user.name} actualizado"}}), 200
@@ -342,7 +346,9 @@ def new_barbershop():
         name=data.get("name"),
         address=data.get("address"),
         phone=data.get("phone"),
+        barbershop_image=data.get("barbershop_image"),
         owner_id=int(current_user_id)
+
     )
     if not data.get("name") or not data.get("address"):
         return jsonify({"message": {"type": "error", "msg": "Nombre y dirección son obligatorios"}}), 400
@@ -383,6 +389,7 @@ def update_barbershop(barbershop_id):
     barbershop.name = data.get("name", barbershop.name)
     barbershop.address = data.get("address", barbershop.address)
     barbershop.phone = data.get("phone", barbershop.phone)
+    barbershop.barbershop_image= data.get("barbershop_image", barbershop.barbershop_image)
 
     db.session.commit()
     return jsonify({"message": {"type": "success", "msg": f"Barberia {barbershop.name} actualizada"}}), 200
@@ -413,7 +420,8 @@ def get_barbers_linked(shop_id):
             "barber": {
                 "id": link.barber.id,
                 "name": link.barber.name,
-                "email": link.barber.email
+                "email": link.barber.email,
+                "barber_profile_image": link.barber.barber_profile_image
             },
             "status": link.status,
             "schedules": schedules
@@ -498,6 +506,7 @@ def new_owner():
     email = data.get("email")
     phone = data.get("phone")
     password = data.get("password")
+    owner_profile_image = data.get("owner_profile_image")
 
     if not name:
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar un nombre"}}), 400
@@ -507,6 +516,8 @@ def new_owner():
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar un teléfono"}}), 400
     if not password:
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar una contraseña"}}), 400
+    if len(password) < 8:
+        return jsonify({"message": {"type": "error", "msg": "La contraseña debe tener al menos 8 caracteres"}}), 400
 
     if Owner.query.filter_by(email=email).first():
         return jsonify({"message": {"type": "error", "msg": "Email ya registrado"}}), 409
@@ -518,6 +529,7 @@ def new_owner():
         email=email,
         phone=phone,
         password=password,
+        owner_profile_image=owner_profile_image,
 
     )
     db.session.add(new_owner)
@@ -573,6 +585,7 @@ def edit_owner(owner_id):
 
     owner.name = data.get("name", owner.name)
     owner.password = data.get("password", owner.password)
+    owner.owner_profile_image = data.get("owner_profile_image", owner.owner_profile_image)
     
     db.session.commit()
     return jsonify({"message": {"type": "success", "msg": f"Dueño {owner.name} actualizado"}}), 200
@@ -617,6 +630,7 @@ def new_barber():
     email = data.get("email")
     phone = data.get("phone")
     password = data.get("password")
+    barber_profile_image = data.get("barber_profile_image")
 
     if not name:
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar un nombre"}}), 400
@@ -626,11 +640,13 @@ def new_barber():
         return jsonify({"message": {"type": "error", "msg": "Necesitas añadir un teléfono"}}), 400
     if not password:
         return jsonify({"message": {"type": "error", "msg": "Necesitas indicar una contraseña"}}), 400
+    if len(password) < 8:
+        return jsonify({"message": {"type": "error", "msg": "La contraseña debe tener al menos 8 caracteres"}}), 400
 
     if Barber.query.filter_by(email=email).first():
         return jsonify({"message": {"type": "error", "msg": "Email ya registrado"}}), 409
 
-    new_barber = Barber(name=name, email=email,password=password, phone=phone)
+    new_barber = Barber(name=name, email=email,password=password, phone=phone, barber_profile_image=barber_profile_image)
     db.session.add(new_barber)
     db.session.commit()
 
@@ -679,6 +695,7 @@ def edit_barber(barber_id):
 
     barber.name = data.get("name", barber.name)
     barber.password = data.get("password", barber.password)
+    barber.barber_profile_image = data.get("barber_profile_image", barber.barber_profile_image)
     
     barber.barbershop_id = data.get("barbershop_id", barber.barbershop_id)
 
@@ -1038,6 +1055,7 @@ def new_barber_service():
     name = data.get("name")
     price = data.get("price")
     duration = data.get("duration")
+    service_demo_image = data.get("service_demo_image")
 
     if not all([name, price, duration]):
         return jsonify({"message": {"type": "error", "msg": "Faltan datos: nombre, precio y duración son obligatorios"}}), 400
@@ -1051,7 +1069,8 @@ def new_barber_service():
             barber_id=current_barber_id,
             name=name,
             price=price,
-            duration=duration
+            duration=duration,
+            service_demo_image=service_demo_image
         )
 
         db.session.add(new_bs)
@@ -1080,6 +1099,7 @@ def edit_barber_service(barber_service_id):
     bs.name = data.get("name", bs.name)
     bs.price = data.get("price", bs.price)
     bs.duration = data.get("duration", bs.duration)
+    bs.service_demo_image = data.get("service_demo_image", bs.service_demo_image)
 
     db.session.commit()
     return jsonify({"message": {"type": "success", "msg": "Servicio actualizado"}}), 200
@@ -1158,6 +1178,16 @@ def get_appointments():
 
     appointments = query.order_by(Appointment.date).all()
     return jsonify([a.serialize() for a in appointments]), 200
+
+
+@api.route("/appointments/<int:appointment_id>", methods=["GET"])
+@jwt_required()
+def get_single_appointment(appointment_id):
+    appointment = Appointment.query.get(appointment_id)
+    
+    if not appointment:
+        return jsonify({"message": {"type": "error", "msg": "Cita no encontrada"}}), 404
+    return jsonify(appointment.serialize()), 200
 
 
 @api.route("/appointments", methods=["POST"])
@@ -1385,7 +1415,7 @@ def get_availability():
     if not all([barber_id, barbershop_id, date_str]):
         return jsonify({"msg": "Faltan parámetros"}), 400
 
-    duration = 15
+    duration = 30
     if service_id:
         service = BarberService.query.get(service_id)
         if service:
@@ -1420,7 +1450,7 @@ def get_availability():
 
     while current_time < end_time_limit:
         all_slots.append(current_time)
-        current_time += timedelta(minutes=15)
+        current_time += timedelta(minutes=30)
 
     existing_appointments = Appointment.query.filter(
         Appointment.barber_id == barber_id,

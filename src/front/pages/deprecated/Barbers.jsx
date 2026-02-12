@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import useGlobalReducer from "../hooks/useGlobalReducer";
+import useGlobalReducer from "../../hooks/useGlobalReducer";
 import { useEffect } from "react";
 
 export const Barbers = () => {

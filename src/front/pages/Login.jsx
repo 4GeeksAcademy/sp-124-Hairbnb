@@ -56,7 +56,7 @@ export const Login = () => {
 
             dispatch({
                 type: "set-message",
-                payload: { type: "success", msg: `Usuario ${data.user.name} ha iniciado sesión` }
+                payload: { type: "success", msg: `Hola de nuevo, ${data.user.name}` }
             });
 
             switch (data.user.role) {

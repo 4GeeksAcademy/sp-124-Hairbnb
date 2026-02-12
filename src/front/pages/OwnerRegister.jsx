@@ -1,18 +1,22 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import { uploadToCloudinary } from "../utilities/cloudinary";
 
 export const OwnerRegister = () => {
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
     const isEditing = !!store.token;
 
+    const [uploading, setUploading] = useState(false);
+
     const [form, setForm] = useState({
         name: "",
         email: "",
         phone: "",
         password: "",
-        confirmPassword: ""
+        confirmPassword: "",
+        owner_profile_image: ""
     });
 
     useEffect(() => {
@@ -32,7 +36,8 @@ export const OwnerRegister = () => {
                             email: data.email || "",
                             phone: data.phone || "",
                             password: "",
-                            confirmPassword: ""
+                            confirmPassword: "",
+                            owner_profile_image: data.owner_profile_image || "",
                         });
                     }
                 } catch (error) {
@@ -43,6 +48,18 @@ export const OwnerRegister = () => {
 
         loadOwnerData();
     }, [isEditing, store.token, store.userInfo?.id]);
+
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+    
+        setUploading(true);
+        const imageUrl = await uploadToCloudinary(file);
+        if (imageUrl) {
+          setForm(prev => ({ ...prev, owner_profile_image: imageUrl }));
+        }
+        setUploading(false);
+      };
 
     const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -70,6 +87,7 @@ export const OwnerRegister = () => {
                     name: form.name,
                     email: form.email,
                     phone: form.phone,
+                    owner_profile_image: form.owner_profile_image,
                     ...(form.password && { password: form.password })
                 })
             });
@@ -112,6 +130,33 @@ export const OwnerRegister = () => {
             <h1 className="display-6 mb-4">{isEditing ? "Editar mis datos" : "Crear cuenta de dueño"}</h1>
 
             <form onSubmit={handleSubmit}>
+                <label className="form-label d-block text-start">Foto de Perfil</label>
+                    <div className="d-flex flex-column align-items-center">
+                        {form.owner_profile_image ? (
+                            <img
+                                src={form.owner_profile_image}
+                                className="rounded-circle mb-3 shadow"
+                                style={{ width: "150px", height: "150px", objectFit: "cover"}}
+                            />
+                        ) : (
+                            <div
+                                className="rounded-circle mb-3 bg-light d-flex align-items-center justify-content-center border"
+                                style={{ width: "150px", height: "150px"}}
+                            >
+                                <i className="fa-solid fa-user fa-4x"></i>
+                            </div>
+                        )}
+
+                        <input
+                            type="file"
+                            className="form-control form-control-sm"
+                            style={{ maxWidth: "300px" }}
+                            onChange={handleFileChange}
+                            accept="image/*"
+                            disabled={uploading}
+                        />
+                        {uploading && <small className="text-primary mt-2 fw-bold">Subiendo foto...</small>}
+                    </div>
                 <label>Nombre</label>
                 <input className="form-control mb-2" name="name" value={form.name} onChange={handleChange} />
 
@@ -123,10 +168,10 @@ export const OwnerRegister = () => {
 
                 <hr />
                 <label>{isEditing ? "Nueva contraseña (dejar vacío para no cambiar)" : "Contraseña"}</label>
-                <input className="form-control mb-2" type="password" name="password" placeholder="********" onChange={handleChange} />
+                <input className="form-control mb-2" type="password" minLength="8" name="password" placeholder="********" onChange={handleChange} />
 
                 <label>Confirmar contraseña</label>
-                <input className="form-control mb-2" type="password" name="confirmPassword" placeholder="********" onChange={handleChange} />
+                <input className="form-control mb-2" type="password" minLength="8" name="confirmPassword" placeholder="********" onChange={handleChange} />
 
                 <button className="btn btn-outline-primary mt-3">
                     {isEditing ? "Guardar cambios" : "Crear cuenta"}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import useGlobalReducer from "../hooks/useGlobalReducer";
+import useGlobalReducer from "../../hooks/useGlobalReducer";
 import { Link, useNavigate } from "react-router-dom";
 
 export const UserForm = () => {
@@ -12,7 +12,7 @@ export const UserForm = () => {
         last_name: "",
         name: "",
         notes: "",
-        password:"",
+        password: "",
         phone: ""
     });
 
@@ -47,52 +47,52 @@ export const UserForm = () => {
     };
 
     const handleSubmit = async (e) => {
-    e.preventDefault();
+        e.preventDefault();
 
-    const isEditing = !!data.id;
+        const isEditing = !!data.id;
 
-    const url = isEditing
-        ? `${import.meta.env.VITE_BACKEND_URL}/users/${data.id}`
-        : `${import.meta.env.VITE_BACKEND_URL}/users`;
+        const url = isEditing
+            ? `${import.meta.env.VITE_BACKEND_URL}/users/${data.id}`
+            : `${import.meta.env.VITE_BACKEND_URL}/users`;
 
-    const method = isEditing ? "PUT" : "POST";
+        const method = isEditing ? "PUT" : "POST";
 
-    try {
-        const resp = await fetch(url, {
-            method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
-        });
+        try {
+            const resp = await fetch(url, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
 
-        const result = await resp.json();
+            const result = await resp.json();
 
-        if (result.message) {
+            if (result.message) {
+                dispatch({
+                    type: "set-message",
+                    payload: result.message
+                });
+            }
+
+            if (!resp.ok) return;
+
+            dispatch({
+                type: "set-users",
+                payload: isEditing
+                    ? store.users.map(u => u.id === data.id ? result : u)
+                    : [...store.users, result]
+            });
+
+            dispatch({ type: "set-userInfo", payload: null });
+
+            setTimeout(() => navigate(-1), 1200);
+
+        } catch (error) {
             dispatch({
                 type: "set-message",
-                payload: result.message
+                payload: { type: "error", msg: "Error de conexión con el servidor" }
             });
         }
-
-        if (!resp.ok) return;
-
-        dispatch({
-            type: "set-users",
-            payload: isEditing
-                ? store.users.map(u => u.id === data.id ? result : u)
-                : [...store.users, result]
-        });
-
-        dispatch({ type: "set-userInfo", payload: null });
-
-        setTimeout(() => navigate(-1), 1200);
-
-    } catch (error) {
-        dispatch({
-            type: "set-message",
-            payload: { type: "error", msg: "Error de conexión con el servidor" }
-        });
-    }
-};
+    };
 
 
     return (
@@ -107,7 +107,7 @@ export const UserForm = () => {
                         value={data.name}
                         type="text"
                         onChange={handleChange}
-                         required
+                        required
                     />
                 </div>
 
@@ -175,7 +175,7 @@ export const UserForm = () => {
             </div>
 
             <div className="mt-4 d-flex justify-content-around">
-                <button type="button" className="mx-2 btn btn-outline-secondary mb-2" onClick={()=>navigate(-1)}>Cancelar</button>
+                <button type="button" className="mx-2 btn btn-outline-secondary mb-2" onClick={() => navigate(-1)}>Cancelar</button>
                 <button
                     type="submit"
                     className="btn btn-outline-primary mx-3 w-25"

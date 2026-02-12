@@ -39,6 +39,10 @@ export const ClientLogin = () => {
                 });
                 return;
             }
+            
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("role", data.user.role);
+            localStorage.setItem("userInfo", JSON.stringify(data.user))
 
             dispatch({
                 type: "login",
@@ -54,7 +58,7 @@ export const ClientLogin = () => {
                 type: "set-message",
                 payload: {
                     type: "success",
-                    msg: `Cliente ${data.user.name} ha iniciado sesión`
+                    msg: `Hola de nuevo, ${data.user.name}`
                 }
             });
 

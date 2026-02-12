@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import useGlobalReducer from "../hooks/useGlobalReducer";
+import useGlobalReducer from "../../hooks/useGlobalReducer";
 
 export const BarberForm = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -59,9 +59,10 @@ export const BarberForm = () => {
         try {
             const resp = await fetch(url, {
                 method,
-                headers: { "Content-Type": "application/json",
-                "Authorization": `Bearer ${store.token}`
-                 },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${store.token}`
+                },
                 body: JSON.stringify(data)
             });
 
@@ -143,7 +144,7 @@ export const BarberForm = () => {
             </div>
 
             <div className="mt-5 d-flex justify-content-around">
-                <button onClick={()=>navigate(-1)} className="btn btn-outline-secondary mx-3 w-25">Volver</button>
+                <button onClick={() => navigate(-1)} className="btn btn-outline-secondary mx-3 w-25">Volver</button>
                 <button type="submit" className="btn btn-outline-primary mx-3 w-25">
                     {data.id ? "Actualizar" : "Crear"}
                 </button>

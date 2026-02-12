@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import defaultImage from "../../../public/DefaultImage.png"
 
 export const Asociates = () => {
   const [barbershops, setBarbershops] = useState([]);
@@ -33,8 +34,13 @@ export const Asociates = () => {
           <div className="col-12 col-md-6 col-lg-4" key={barb.id}>
             <div className="card h-100 shadow-sm">
                 <img
-                src={`https://random.imagecdn.app/v1/image?width=500&height=150&random=${barb.id}`}
+                src={barb.barbershop_image || defaultImage}
                 className="card-img-top"
+                style={{
+                  height: "150px",
+                  objectFit: "cover",
+                  width: "100%"
+                }}
                 alt={`Imagen de ${barb.name}`}
               />
               <div className="card-body">

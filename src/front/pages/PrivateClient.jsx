@@ -23,6 +23,15 @@ export const PrivateClient = () => {
     if (store.token) fetchAppts();
 }, [store.token]);
 
+    if (store.role !== "client") {
+        return (
+            <div className="container mt-4">
+                <h2 className="text-danger">Acceso denegado</h2>
+                <p>Inicia sesión con tu cuenta de cliente para acceder.</p>
+            </div>
+        );
+    }
+
     return (
         <div className="container mt-5">
             <div className="d-flex justify-content-betweenmb-4">
