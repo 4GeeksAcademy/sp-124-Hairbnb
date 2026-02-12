@@ -1,16 +1,20 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import { uploadToCloudinary } from "../utilities/cloudinary";
 
 export const BarbershopForm = () => {
   const { store, dispatch } = useGlobalReducer();
   const navigate = useNavigate();
 
+  const [uploading, setUploading] = useState(false);
+
   const [data, setData] = useState({
     id: null,
     name: "",
     address: "",
-    phone: ""
+    phone: "",
+    barbershop_image: ""
   });
 
   useEffect(() => {
@@ -19,10 +23,23 @@ export const BarbershopForm = () => {
         id: store.barbershopInfo.id || null,
         name: store.barbershopInfo.name || "",
         address: store.barbershopInfo.address || "",
-        phone: store.barbershopInfo.phone || ""
+        phone: store.barbershopInfo.phone || "",
+        barbershop_image: store.barbershopInfo.barbershop_image || ""
       });
     }
   }, [store.barbershopInfo]);
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    const imageUrl = await uploadToCloudinary(file);
+    if (imageUrl) {
+      setData(prev => ({ ...prev, barbershop_image: imageUrl }));
+    }
+    setUploading(false);
+  };
 
   const handleChange = (e) => {
     setData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -31,29 +48,19 @@ export const BarbershopForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!data.name) {
-      dispatch({ type: "set-message", payload: { type: "error", msg: "Es necesario un nombre" } });
-      return
+    if (!data.name || !data.address || !data.phone) {
+      dispatch({ type: "set-message", payload: { type: "error", msg: "Faltan campos obligatorios" } });
+      return;
     }
-    if (!data.address) {
-      dispatch({ type: "set-message", payload: { type: "error", msg: "Es necesario una dirección" } });
-      return
-    }
-    if (!data.phone) {
-      dispatch({ type: "set-message", payload: { type: "error", msg: "Es necesario un teléfono" } });
-      return
-    }
-
 
     const isEditing = !!data.id;
     const url = isEditing
       ? `${import.meta.env.VITE_BACKEND_URL}/barbershops/${data.id}`
       : `${import.meta.env.VITE_BACKEND_URL}/barbershops`;
-    const method = isEditing ? "PUT" : "POST";
-
+    
     try {
       const resp = await fetch(url, {
-        method,
+        method: isEditing ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${store.token}`
@@ -61,89 +68,61 @@ export const BarbershopForm = () => {
         body: JSON.stringify({
           name: data.name,
           address: data.address,
-          phone: data.phone
+          phone: data.phone,
+          barbershop_image: data.barbershop_image
         })
       });
 
-      const result = await resp.json();
-
-      if (!resp.ok) {
-        dispatch({
-          type: "set-message",
-          payload: { type: "error", "msg": "Error desconocido" }
-        });
-        return;
+      if (resp.ok) {
+        dispatch({ type: "set-message", payload: { type: "success", msg: "Guardado" } });
+        navigate(-1);
       }
-
-      dispatch({ type: "set-message", payload: { type: "success", "msg": "Guardado" } });
-      navigate(-1);
-
     } catch (err) {
-      console.error("Error en fetch:", err);
-      dispatch({ type: "set-message", payload: { type: "error", "msg": "Error de conexión con el servidor" } });
+      console.error("Error:", err);
     }
   };
 
   if (store.role !== "owner") {
-        return (
-            <div className="container mt-4">
-                <h2 className="text-danger">Acceso denegado</h2>
-                <p>Inicia sesión para como dueño para gestionar tus barberias.</p>
-            </div>
-        );
-    }
+    return <div className="container mt-4"><h2 className="text-danger">Acceso denegado</h2></div>;
+  }
 
   return (
     <div className="container">
       <div className="d-flex justify-content-between align-items-center my-4">
         <h1 className="display-6">{data.id ? "Editar barbería" : "Añadir barbería"}</h1>
-          <button type="button" className="mx-2 btn btn-outline-secondary mb-2" onClick={()=>navigate(-1)}>Volver</button>
-       
+        <button type="button" className="btn btn-outline-secondary" onClick={() => navigate(-1)}>Volver</button>
       </div>
 
       <form className="mx-auto p-4" onSubmit={handleSubmit}>
         <div className="row g-3">
+
           <div className="col-12 col-md-6">
-            <label className="form-label" htmlFor="name">Nombre</label>
-            <input
-              className="form-control"
-              id="name"
-              name="name"
-              type="text"
-              value={data.name}
-              onChange={handleChange}
-            />
+            <label className="form-label">Nombre</label>
+            <input className="form-control" name="name" type="text" value={data.name} onChange={handleChange} />
           </div>
 
           <div className="col-12 col-md-6">
-            <label className="form-label" htmlFor="phone">Teléfono</label>
-            <input
-              className="form-control"
-              id="phone"
-              name="phone"
-              type="text"
-              value={data.phone}
-              onChange={handleChange}
-            />
+            <label className="form-label">Teléfono</label>
+            <input className="form-control" name="phone" type="text" value={data.phone} onChange={handleChange} />
           </div>
 
           <div className="col-12">
-            <label className="form-label" htmlFor="address">Dirección</label>
-            <input
-              className="form-control"
-              id="address"
-              name="address"
-              type="text"
-              value={data.address}
-              onChange={handleChange}
-            />
+            <label className="form-label">Dirección</label>
+            <input className="form-control" name="address" type="text" value={data.address} onChange={handleChange} />
+          </div>
+          <div className="col-12 text-center mb-3">
+            {data.barbershop_image && (
+              <img src={data.barbershop_image} alt="Preview" className="img-thumbnail mb-2" style={{ maxHeight: "200px" }} />
+            )}
+            <input type="file" className="form-control" onChange={handleFileChange} accept="image/*" disabled={uploading} />
+            {uploading && <small className="text-primary fw-bold">Subiendo imagen a Cloudinary...</small>}
           </div>
         </div>
 
         <div className="mt-4 d-flex justify-content-around">
-          <button onClick={()=>navigate(-1)} className="btn btn-outline-secondary">Volver</button>
-          <button type="submit" className="btn btn-outline-primary">
-            {data.id ? "Actualizar" : "Crear"}
+          <button type="button" onClick={() => navigate(-1)} className="btn btn-outline-secondary">Cancelar</button>
+          <button type="submit" className="btn btn-primary" disabled={uploading}>
+            {uploading ? "Subiendo..." : (data.id ? "Actualizar" : "Crear")}
           </button>
         </div>
       </form>

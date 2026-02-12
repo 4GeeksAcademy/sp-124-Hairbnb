@@ -1,67 +1,83 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import { uploadToCloudinary } from "../utilities/cloudinary";
 
 export const BarberServiceForm = () => {
-  const { store, dispatch } = useGlobalReducer();
-  const navigate = useNavigate();
+    const { store, dispatch } = useGlobalReducer();
+    const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    name: "",
-    price: "",
-    duration: ""
-  });
+    const [uploading, setUploading] = useState(false);
+    const [formData, setFormData] = useState({
+        name: "",
+        price: "",
+        duration: "",
+        service_demo_image: ""
+    });
 
-  useEffect(() => {
-    if (store.barber_serviceInfo) {
-      setFormData({
-        name: store.barber_serviceInfo.name || "",
-        price: store.barber_serviceInfo.price || "",
-        duration: store.barber_serviceInfo.duration || ""
-      });
+    const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    const imageUrl = await uploadToCloudinary(file);
+    if (imageUrl) {
+      setFormData(prev => ({ ...prev, service_demo_image: imageUrl }));
     }
-  }, [store.barber_serviceInfo]);
+    setUploading(false);
+  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const token = store.token || localStorage.getItem("token"); 
-
-    if (!token) {
-        alert("Tu sesión ha caducado. Por favor, vuelve a iniciar sesión.");
-        navigate("/login");
-        return;
-    }
-
-    const isEditing = !!store.barber_serviceInfo;
-    const url = isEditing 
-        ? `${import.meta.env.VITE_BACKEND_URL}/barber_services/${store.barber_serviceInfo.id}`
-        : `${import.meta.env.VITE_BACKEND_URL}/barber_services`;
-
-    try {
-        const resp = await fetch(url, {
-            method: isEditing ? "PUT" : "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify(formData)
-        });
-
-        if (resp.ok) {
-            dispatch({ type: "set-barber_serviceInfo", payload: null });
-            dispatch({ type: "set-message", payload: { type: "success", msg: `Servicio ${isEditing ? "actualizado" : "creado"} correctamente` } });
-            navigate(-1);
-        } else {
-            const errorData = await resp.json();
-            console.error("Error del servidor:", errorData);
+    useEffect(() => {
+        if (store.barber_serviceInfo) {
+            setFormData({
+                name: store.barber_serviceInfo.name || "",
+                price: store.barber_serviceInfo.price || "",
+                duration: store.barber_serviceInfo.duration || "",
+                service_demo_image: store.barber_serviceInfo.service_demo_image || ""
+            });
         }
-    } catch (error) {
-        console.error("Error en la petición:", error);
-    }
-};
+    }, [store.barber_serviceInfo]);
 
-if (store.role !== "barber") {
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        const token = store.token || localStorage.getItem("token");
+
+        if (!token) {
+            alert("Tu sesión ha caducado. Por favor, vuelve a iniciar sesión.");
+            navigate("/login");
+            return;
+        }
+
+        const isEditing = !!store.barber_serviceInfo;
+        const url = isEditing
+            ? `${import.meta.env.VITE_BACKEND_URL}/barber_services/${store.barber_serviceInfo.id}`
+            : `${import.meta.env.VITE_BACKEND_URL}/barber_services`;
+
+        try {
+            const resp = await fetch(url, {
+                method: isEditing ? "PUT" : "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (resp.ok) {
+                dispatch({ type: "set-barber_serviceInfo", payload: null });
+                dispatch({ type: "set-message", payload: { type: "success", msg: `Servicio ${isEditing ? "actualizado" : "creado"} correctamente` } });
+                navigate(-1);
+            } else {
+                const errorData = await resp.json();
+                console.error("Error del servidor:", errorData);
+            }
+        } catch (error) {
+            console.error("Error en la petición:", error);
+        }
+    };
+
+    if (store.role !== "barber") {
         return (
             <div className="container mt-4">
                 <h2 className="text-danger">Acceso denegado</h2>
@@ -70,69 +86,76 @@ if (store.role !== "barber") {
         );
     }
 
-  return (
-    <div className="container mt-5">
-      <div className="card mx-auto" style={{ maxWidth: "500px" }}>
-        <div className="card-header">
-          <h4 className="mb-0">{store.barber_serviceInfo ? "Editar Servicio" : "Nuevo Servicio"}</h4>
-        </div>
-        <div className="card-body">
-          <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label className="form-label">Nombre del Servicio</label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Ej: Corte Degradado"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
-            </div>
+    return (
+        <div className="container mt-5">
+            <div className="card mx-auto" style={{ maxWidth: "500px" }}>
+                <div className="card-header">
+                    <h4 className="mb-0">{store.barber_serviceInfo ? "Editar Servicio" : "Nuevo Servicio"}</h4>
+                </div>
+                <div className="card-body">
+                    <form onSubmit={handleSubmit}>
+                        <div className="mb-3">
+                            <div className="col-12 text-center mb-3">
+                                {formData.service_demo_image && (
+                                    <img src={formData.service_demo_image} alt="Preview" className="img-thumbnail mb-2" style={{ maxHeight: "200px" }} />
+                                )}
+                                <input type="file" className="form-control" onChange={handleFileChange} accept="image/*" disabled={uploading} />
+                                {uploading && <small className="text-primary fw-bold">Subiendo imagen a Cloudinary...</small>}
+                            </div>
+                        </div>
+                        <label className="form-label">Nombre del Servicio</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Ej: Corte Degradado"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            required
+                        />
 
-            <div className="row">
-              <div className="col-md-6 mb-3">
-                <label className="form-label">Precio (€)</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  placeholder="0"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="col-md-6 mb-3">
-                <label className="form-label">Duración (min)</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  placeholder="30"
-                  value={formData.duration}
-                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                  required
-                />
-              </div>
-            </div>
+                <div className="row">
+                    <div className="col-md-6 mb-3">
+                        <label className="form-label">Precio (€)</label>
+                        <input
+                            type="number"
+                            className="form-control"
+                            placeholder="0"
+                            value={formData.price}
+                            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                            required
+                        />
+                    </div>
+                    <div className="col-md-6 mb-3">
+                        <label className="form-label">Duración (min)</label>
+                        <input
+                            type="number"
+                            className="form-control"
+                            placeholder="30"
+                            value={formData.duration}
+                            onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                            required
+                        />
+                    </div>
+                </div>
 
-            <div className="d-flex justify-content-between mt-4">
-              <button
-                type="button"
-                className="btn btn-outline-secondary"
-                onClick={() => {
-                  dispatch({ type: "set-barber_serviceInfo", payload: null });
-                  navigate(-1);
-                }}
-              >
-                Cancelar
-              </button>
-              <button type="submit" className="btn btn-primary">
-                {store.barber_serviceInfo ? "Guardar Cambios" : "Añadir a mi lista"}
-              </button>
-            </div>
-          </form>
+                <div className="d-flex justify-content-between mt-4">
+                    <button
+                        type="button"
+                        className="btn btn-outline-secondary"
+                        onClick={() => {
+                            dispatch({ type: "set-barber_serviceInfo", payload: null });
+                            navigate(-1);
+                        }}
+                    >
+                        Cancelar
+                    </button>
+                    <button type="submit" className="btn btn-primary">
+                        {store.barber_serviceInfo ? "Guardar Cambios" : "Añadir a mi lista"}
+                    </button>
+                </div>
+            </form>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };

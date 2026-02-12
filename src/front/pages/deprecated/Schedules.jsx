@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import useGlobalReducer from "../hooks/useGlobalReducer";
+import useGlobalReducer from "../../hooks/useGlobalReducer";
 import { useState, useEffect } from "react";
 
 export const Schedules = () => {
@@ -46,20 +46,20 @@ export const Schedules = () => {
         }
     };
 
-  
+
 
     return (
         <div className="container">
             <div className="d-flex justify-content-between align-items-center my-4">
                 <h1 className="display-6">Listado de horarios</h1>
                 <div>
-                <Link to="/">
-                    <button type="button" className="mx-2 btn btn-outline-secondary mb-2">Volver</button>
-                </Link>
-                <Link to="/schedules_form">
-                    <button type="button" className="mx-2 btn btn-outline-secondary mb-2">Añadir nuevo horario</button>
-                </Link>
-            </div>
+                    <Link to="/">
+                        <button type="button" className="mx-2 btn btn-outline-secondary mb-2">Volver</button>
+                    </Link>
+                    <Link to="/schedules_form">
+                        <button type="button" className="mx-2 btn btn-outline-secondary mb-2">Añadir nuevo horario</button>
+                    </Link>
+                </div>
             </div>
             <div className="row g-3">
                 {store.schedules.map(schedule => (

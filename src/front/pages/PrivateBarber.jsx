@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
+import notAvailable from "../../../public/NoDisponible.png"
 
 export const PrivateBarber = () => {
   const { store, dispatch } = useGlobalReducer();
@@ -16,14 +17,14 @@ export const PrivateBarber = () => {
 
   const loadAll = async () => {
     if (!store.token || !store.userInfo?.id) return;
-    
+
     const headers = { "Authorization": `Bearer ${store.token}` };
-    
+
     try {
       const endpoints = [
-        "appointments", 
-        "schedules", 
-        "invitations", 
+        "appointments",
+        "schedules",
+        "invitations",
         `barber_services?barber_id=${store.userInfo.id}`
       ];
 
@@ -47,7 +48,7 @@ export const PrivateBarber = () => {
           dispatch({ type: `set-${cleanName}`, payload: data });
         }
       }
-      
+
 
     } catch (err) {
       console.error("Error crítico en loadAll:", err);
@@ -208,13 +209,13 @@ export const PrivateBarber = () => {
   const pendingInvitations = store.invitations?.filter(inv => inv.status === "pending") || [];
 
   if (store.role !== "barber") {
-        return (
-            <div className="container mt-4">
-                <h2 className="text-danger">Acceso denegado</h2>
-                <p>Inicia sesión como barbero para acceder.</p>
-            </div>
-        );
-    }
+    return (
+      <div className="container mt-4">
+        <h2 className="text-danger">Acceso denegado</h2>
+        <p>Inicia sesión como barbero para acceder.</p>
+      </div>
+    );
+  }
 
   const dayNameEn = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
 
@@ -425,6 +426,15 @@ export const PrivateBarber = () => {
                 store.barber_services?.map(s => (
                   <div key={s.id} className="col-md-6 col-lg-4">
                     <div className="card">
+                      <div>
+                        <img src={s.service_demo_image || notAvailable} style={{
+                          height: "250px",
+                          objectFit: "cover",
+                          width: "100%"
+                        }}
+                          className="card-img-top" alt="..." />
+
+                      </div>
                       <div className="card-body">
                         <div className="d-flex justify-content-between align-items-start mb-2">
                           <h6 className="card-titlemb-0">{s.name}</h6>

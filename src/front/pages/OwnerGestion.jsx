@@ -12,6 +12,7 @@ export const OwnerGestion = () => {
   const [pending, setPending] = useState([]);
   const [inviteEmail, setInviteEmail] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [appointmentView, setAppointmentView] = useState("summary");
 
   const getDayName = (dateString) => {
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -61,10 +62,10 @@ export const OwnerGestion = () => {
     if (!inviteEmail || !barbershop) return;
 
     const isPhone = /^\d+$/.test(inviteEmail.trim());
-    
+
     const payload = {
-        barbershop_id: barbershop.id,
-        [isPhone ? "phone" : "email"]: inviteEmail.trim()
+      barbershop_id: barbershop.id,
+      [isPhone ? "phone" : "email"]: inviteEmail.trim()
     };
 
     try {
@@ -74,9 +75,9 @@ export const OwnerGestion = () => {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${store.token}`,
         },
-        body: JSON.stringify(payload), // Enviamos el payload dinámico
+        body: JSON.stringify(payload),
       });
-      
+
       const result = await res.json();
       if (!res.ok) throw new Error(result.message?.msg || "Error enviando invitación");
 
@@ -86,7 +87,7 @@ export const OwnerGestion = () => {
     } catch (err) {
       dispatch({ type: "set-message", payload: { type: "error", msg: err.message } });
     }
-};
+  };
 
   const handleDelete = async (id) => {
     if (!confirm("¿Seguro que quieres cancelar esta cita?")) return;
@@ -111,15 +112,15 @@ export const OwnerGestion = () => {
   };
 
   if (store.role !== "owner") {
-        return (
-            <div className="container mt-4">
-                <h2 className="text-danger">Acceso denegado</h2>
-                <p>Inicia sesión para acceder al panel de gestión.</p>
-            </div>
-        );
-    }
+    return (
+      <div className="container mt-4">
+        <h2 className="text-danger">Acceso denegado</h2>
+        <p>Inicia sesión para acceder al panel de gestión.</p>
+      </div>
+    );
+  }
 
-  
+  console.log("barberos:", barbers);
   return (
     <div className="container mt-5">
       <h1>Gestión de: {barbershop?.name}</h1>
@@ -153,12 +154,12 @@ export const OwnerGestion = () => {
                     <div className="card-body">
                       <div className="d-flex align-items-center mb-3">
                         <div className="flex-shrink-0">
-                          {b.barber?.profile_image ? (
+                          {b.barber?.barber_profile_image ? (
                             <img
-                              src={b.barber.profile_image}
-                              alt={b.barber.name}
+                              src={b.barber?.barber_profile_image}
+                              alt={b.barber?.name}
                               className="rounded-circle object-fit-cover"
-                              style={{ width: "50px", height: "50px"}}
+                              style={{ width: "50px", height: "50px" }}
                             />
                           ) : (
                             <div
@@ -216,16 +217,29 @@ export const OwnerGestion = () => {
 
         {activeTab === "appointments" && (
           <div className="appointments-wrapper p-3">
-            <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-              <div className="d-flex align-items-center gap-2 p-2">
-                <input type="date" className="form-control" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
-                <button className="btn btn-primary" onClick={() => { dispatch({ type: "set-appointmentInfo", payload: null }); navigate("/owner_appointment_form"); }}>
-                  Nueva Cita
-                </button>
+            <div className="d-flex justify-content-between align-items-center mb-4 gap-3">
+              <div className="d-flex align-items-center gap-2">
+                <input
+                  type="date"
+                  className="form-control w-auto"
+                  value={selectedDate}
+                  onChange={(e) => {
+                    setSelectedDate(e.target.value);
+                    setAppointmentView("summary");
+                  }}
+                />
+                {appointmentView === "details" && (
+                  <button className="btn btn-outline-secondary" onClick={() => setAppointmentView("summary")}>
+                    <i className="fas fa-arrow-left me-2"></i>Resumen
+                  </button>
+                )}
               </div>
+              <button className="btn btn-primary" onClick={() => { dispatch({ type: "set-appointmentInfo", payload: null }); navigate("/owner_appointment_form"); }}>
+                Nueva Cita
+              </button>
             </div>
 
-            <div className="d-flex gap-3 overflow-auto pb-4">
+            <div className="d-flex overflow-auto pb-3 gap-3" style={{ alignItems: "flex-start" }}>
               {barbers.map(b => {
                 const dayApps = store.appointments.filter(a =>
                   String(a.barber_id) === String(b.barber?.id) && a.date.split("T")[0] === selectedDate
@@ -235,50 +249,49 @@ export const OwnerGestion = () => {
                 const todaySchedule = b.schedules?.find(s => s.day_of_week === currentDayName);
 
                 return (
-                  <div key={b.id}>
+                  <div key={b.id} style={{ minWidth: "300px", maxWidth: "300px" }}>
                     <div className="card">
-                      <div className="card-header pt-3 pb-2 text-center bg-light">
-                        <h6 className="text-uppercase mb-1 fw-bold">{b.barber?.name}</h6>
-                        {todaySchedule ? (
-                          <div>
-                            {todaySchedule.start_time} - {todaySchedule.end_time}
-                          </div>
-                        ) : (
-                          <div>
-                            No trabaja hoy
-                          </div>
-                        )}
-                        <hr className="mb-0 mt-2" />
+                      <div className="card-headertext-center py-3 text-center">
+                        <h6 className="mb-0 fs-5 text-uppercase">{b.barber?.name}</h6>
+                        {todaySchedule ? `${todaySchedule.start_time} - ${todaySchedule.end_time}` : "No trabaja"}
                       </div>
 
-                      <div className="card-body p-2">
-                        {dayApps.length === 0 ? (
-                          <div className="text-center py-5">Sin citas</div>
+                      <div className="card-body p-2 d-flex flex-column justify-content-start" style={{ minHeight: "250px" }}>
+
+                        {appointmentView === "summary" ? (
+                          <div className="text-center my-auto py-4">
+                            <div className="display-4">{dayApps.length}</div>
+                            <p className="mb-3">citas hoy</p>
+                            <button className="btn btn-outline-primary" onClick={() => setAppointmentView("details")}>
+                              Detalles
+                            </button>
+                          </div>
                         ) : (
-                          dayApps.map(a => (
-                            <div key={a.id} className="card mb-2">
-                              <div className="card-body p-2">
-                                <div className="d-flex justify-content-between align-items-start">
-                                  <span>
-                                    {a.date.split("T")[1].slice(0, 5)} - {a.end_time.split("T")[1].slice(0, 5)}
-                                  </span>
-                                  <div className="d-flex gap-1">
-                                    <button className="btn p-0" onClick={() => handleEdit(a)}>
-                                      <i className="fas fa-edit"></i>
-                                    </button>
-                                    <button className="btn text-danger p-0" onClick={() => handleDelete(a.id)}>
-                                      <i className="fas fa-trash"></i>
-                                    </button>
+                          <>
+                            {dayApps.length === 0 ? (
+                              <div className="text-center py-5">Sin citas</div>
+                            ) : (
+                              dayApps.map(a => (
+                                <div key={a.id} className="card mb-2">
+                                  <div className="card-body p-2">
+                                    <div className="d-flex justify-content-between mb-1">
+                                      <span>
+                                        {a.date.split("T")[1].slice(0, 5)}
+                                      </span>
+                                      <div className="d-flex gap-2">
+                                        <i className="fas fa-edit" onClick={() => handleEdit(a)}></i>
+                                        <i className="fas fa-trash" onClick={() => handleDelete(a.id)}></i>
+                                      </div>
+                                    </div>
+                                    <div>{a.user_name}</div>
+                                    <div>{a.service_name}</div>
                                   </div>
                                 </div>
-                                <div className="mt-2">{a.user_name}</div>
-                                <div>
-                                  {a.service_name}
-                                </div>
-                              </div>
-                            </div>
-                          ))
+                              ))
+                            )}
+                          </>
                         )}
+
                       </div>
                     </div>
                   </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import useGlobalReducer from "../hooks/useGlobalReducer";
+import useGlobalReducer from "../../hooks/useGlobalReducer";
+import { uploadToCloudinary } from "../../utilities/cloudinary";
 
 export const ServiceForm = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -11,10 +12,12 @@ export const ServiceForm = () => {
         name: "",
         duration: "",
         price: "",
-        barbershop_id: ""
+        barbershop_id: "",
+        service_demo_image: ""
     });
 
     const [barbershops, setBarbershops] = useState([]);
+    const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
         fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`)
@@ -30,10 +33,24 @@ export const ServiceForm = () => {
                 name: store.serviceInfo.name || "",
                 duration: store.serviceInfo.duration || "",
                 price: store.serviceInfo.price || "",
-                barbershop_id: store.serviceInfo.barbershop_id || ""
+                barbershop_id: store.serviceInfo.barbershop_id || "",
+                service_demo_image: store.serviceInfo.service_demo_image || "",
             });
         }
     }, [store.serviceInfo]);
+
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploading(true);
+        const imageUrl = await uploadToCloudinary(file);
+        if (imageUrl) {
+            setData(prev => ({ ...prev, service_demo_image: imageUrl }));
+        }
+        setUploading(false);
+    };
+
 
     const handleChange = (e) => {
         setData(prev => ({
@@ -89,7 +106,51 @@ export const ServiceForm = () => {
     return (
         <form className="mx-auto p-4" onSubmit={handleSubmit}>
             <div className="row g-3">
+                <div className="col-12 col-md-6 mx-auto mt-3 text-center">
+                    <label className="form-label d-block">Imagen demostrativa del servicio</label>
+                    <div className="mb-3 d-flex justify-content-center">
+                        {data.service_demo_image ? (
+                            <div className="position-relative">
+                                <img
+                                    src={data.service_demo_image}
+                                    alt="Preview"
+                                    className="rounded shadow-sm"
+                                    style={{ width: "150px", height: "150px", objectFit: "cover"}}
+                                />
+                                <button
+                                    type="button"
+                                    className="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 shadow"
+                                    onClick={() => setData(prev => ({ ...prev, service_demo_image: "" }))}
+                                >
+                                    <i className="fas fa-times"></i>
+                                </button>
+                            </div>
+                        ) : (
+                            <div
+                                className="bg-light rounded d-flex align-items-center justify-content-center shadow-sm"
+                                style={{ width: "150px", height: "150px"}}
+                            >
+                                {uploading ? (
+                                    <div className="spinner-border text-primary" role="status">
+                                        <span className="visually-hidden">Loading...</span>
+                                    </div>
+                                ) : (
+                                    <i className="fas fa-image text-muted fa-3x"></i>
+                                )}
+                            </div>
+                        )}
+                    </div>
 
+                    <input
+                        type="file"
+                        id="service_image"
+                        className="form-control"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        disabled={uploading}
+                    />
+                    {uploading && <small className="text-primary">Subiendo a Cloudinary...</small>}
+                </div>
                 <div className="col-sm-12 col-md-6 col-lg-4">
                     <label className="form-label" htmlFor="name">Nombre</label>
                     <input

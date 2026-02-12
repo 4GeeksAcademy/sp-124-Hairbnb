@@ -1,11 +1,9 @@
-// Import necessary components from react-router-dom and other parts of the application.
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import useGlobalReducer from "../hooks/useGlobalReducer";
+import useGlobalReducer from "../../hooks/useGlobalReducer";
 import { useEffect } from "react";
 
 export const Users = () => {
-  // Access the global state and dispatch function using the useGlobalReducer hook.
   const navigate = useNavigate()
   const { store, dispatch } = useGlobalReducer();
 

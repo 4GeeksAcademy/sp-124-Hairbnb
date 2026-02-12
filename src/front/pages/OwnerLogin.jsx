@@ -40,6 +40,10 @@ export const OwnerLogin = () => {
                 return;
             }
 
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("role", data.user.role);
+            localStorage.setItem("userInfo", JSON.stringify(data.user))
+
             dispatch({
                 type: "login",
                 payload: {

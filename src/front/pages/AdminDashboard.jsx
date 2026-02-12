@@ -3,9 +3,10 @@ import useGlobalReducer from "../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
 
 export const AdminDashboard = () => {
-    const { store } = useGlobalReducer();
+    const { store, dispatch } = useGlobalReducer();
     const [endpoint, setEndpoint] = useState("users");
     const [data, setData] = useState([]);
+    const navigate = useNavigate();
 
     const generalTables = [
         { route: "users", label: "Clientes" },
@@ -17,50 +18,37 @@ export const AdminDashboard = () => {
         { route: "barber_services", label: "Servicios de Barbero" },
         { route: "schedules", label: "Horarios" },
         { route: "invitations", label: "Barbero-Barbería" },
-
     ];
-    const navigate = useNavigate();
-    const formRoutes = {
-        "users": "/signup/client",
-        "barbershops": "/barbershops_form",
-        "owners": "/signup/owner",
-        "barbers": "/signup/barber",
-        "barber_services": "/barber_services_form",
-        "schedules": "/schedules_form",
-        "appointments": "/barber_appointment_form",
-        "invitations": null
-    };
 
     const handleEdit = (item) => {
-        const route = formRoutes[endpoint];
-        if (route) {
-            navigate(`${route}/${item.id}`);
-        } else {
-            alert("Esta tabla no tiene un formulario de edición asignado.");
+        if (endpoint === "invitations") {
+
+            dispatch({ 
+                type: "set-message", 
+                payload: { 
+                    type: "error", 
+                    msg: "Las relaciones barbero-barbería no se pueden editar. Si es incorrecta, bórrala y crea una nueva." 
+                } 
+            });
+            return;
         }
+        navigate(`/admin/${endpoint}/${item.id}`); 
     };
 
     const handleAdd = () => {
-        const route = formRoutes[endpoint];
-        if (route) navigate(route);
+        navigate(`/admin/${endpoint}`);
     };
-
 
     const loadData = async () => {
         const url = `${import.meta.env.VITE_BACKEND_URL}/admin/${endpoint}`;
-
         try {
             const resp = await fetch(url, {
-                headers: {
-                    "Authorization": `Bearer ${store.token}`
-                }
+                headers: { "Authorization": `Bearer ${store.token}` }
             });
-
             if (resp.ok) {
                 const json = await resp.json();
                 setData(Array.isArray(json) ? json : [json]);
             } else {
-                console.error(`Error ${resp.status} en ${url}`);
                 setData([]);
             }
         } catch (error) {
@@ -74,22 +62,27 @@ export const AdminDashboard = () => {
 
     const handleDelete = async (id) => {
         if (!confirm("¿Eliminar registro permanente?")) return;
-
         const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/${endpoint}/${id}`, {
             method: "DELETE",
             headers: { "Authorization": `Bearer ${store.token}` }
         });
-
         if (resp.ok) loadData();
     };
 
-    if (store.role !== "admin") {
+     if (store.role !== "admin") {
+
         return (
+
             <div className="container mt-4">
+
                 <h2 className="text-danger">Acceso denegado</h2>
+
                 <p>Inicia sesión para acceder al panel de administración.</p>
+
             </div>
+
         );
+
     }
 
     return (
@@ -105,24 +98,22 @@ export const AdminDashboard = () => {
                     >
                         {item.label}
                     </button>
-
                 ))}
-
             </div>
+
             <div className="d-flex justify-content-end mb-3">
                 <button className="btn btn-success mx-auto" onClick={handleAdd}>
                     Crear nuevo elemento en {endpoint.toLowerCase()}
                 </button>
             </div>
 
-
-            <div className="card ">
+            <div className="card shadow-sm border-0">
                 <div className="table-responsive">
-                    <table className="table">
+                    <table className="table align-middle">
                         <thead className="table-dark">
                             <tr>
                                 {data.length > 0 && Object.keys(data[0]).map(key => (
-                                    <th key={key}>{key}</th>
+                                    <th key={key}>{key.toUpperCase()}</th>
                                 ))}
                                 <th className="text-center">ACCIONES</th>
                             </tr>
@@ -137,10 +128,10 @@ export const AdminDashboard = () => {
                                     ))}
                                     <td className="text-center">
                                         <button
-                                            className="btn btn-outline-primary me-2"
+                                            className={`btn me-2 ${endpoint === 'invitations' ? 'btn-outline-secondary' : 'btn-outline-primary'}`}
                                             onClick={() => handleEdit(item)}
                                         >
-                                            Editar
+                                            {endpoint === 'invitations' ? 'Info' : 'Editar'}
                                         </button>
                                         <button
                                             className="btn btn-outline-danger"

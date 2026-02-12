@@ -42,7 +42,7 @@ class User(db.Model):
             "email": self.email,
             "phone": self.phone,
             "notes": self.notes,
-            "client_profile_image": self.client_image,
+            "client_profile_image": self.client_profile_image,
         }
 
 
@@ -65,7 +65,7 @@ class Barbershop(db.Model):
             "name": self.name,
             "address": self.address,
             "phone": self.phone,
-            "barbershop_image": self.local_image,
+            "barbershop_image": self.barbershop_image,
         }
 
 
@@ -87,7 +87,7 @@ class Owner(db.Model):
             "email": self.email,
             "phone": self.phone,
             "barbershops": [barbershop.id for barbershop in self.barbershops],
-            "owner_profile_image": self.owner_image,
+            "owner_profile_image": self.owner_profile_image,
         }
 
 
@@ -114,7 +114,7 @@ class Barber(db.Model):
             "phone": self.phone,
             "barbershop_id": self.barbershop_id if self.barbershop else None,
             "barbershop_name": self.barbershop.name if self.barbershop else "Sin asignar",
-            "barber_profile_image": self.barber_image,
+            "barber_profile_image": self.barber_profile_image,
         }
 
 
@@ -248,4 +248,6 @@ class BarberBarbershop(db.Model):
             "barbershop_id": self.barbershop_id,
             "barber_name": self.barber.name,
             "barbershop_name": self.barbershop.name,
+            "barber_image": self.barber.barber_profile_image,
+            "ESTOY_VIVO": True
             }

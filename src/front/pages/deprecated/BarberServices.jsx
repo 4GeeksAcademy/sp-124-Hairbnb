@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import useGlobalReducer from "../hooks/useGlobalReducer";
+import useGlobalReducer from "../../hooks/useGlobalReducer";
 import { Link } from "react-router-dom";
 
 export const BarberServices = () => {
@@ -22,7 +22,7 @@ export const BarberServices = () => {
             .catch(err => console.error(err));
     }, []);
 
-    
+
 
     return (
         <div className="container">
