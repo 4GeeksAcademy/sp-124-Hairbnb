@@ -12,7 +12,7 @@ from flask_jwt_extended import JWTManager
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
-app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET", "Sup3rUltr4S3cr3t0")
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET")
 jwt = JWTManager(app)
 
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
