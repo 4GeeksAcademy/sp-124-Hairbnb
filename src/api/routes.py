@@ -126,7 +126,7 @@ def get_adminusers():
     claims = get_jwt()
     if claims.get("role") != "admin":
         return jsonify({"msg": "No tienes permisos"}), 403
-    
+
     adminusers = AdminUser.query.order_by(AdminUser.id).all()
     data = [adminuser.serialize() for adminuser in adminusers]
     return jsonify(data), 200
@@ -221,7 +221,7 @@ def get_single_user(user_id):
     user = User.query.get(user_id)
     if not user:
         return jsonify({"message": {"type": "error", "msg": "Usuario no encontrado"}}), 404
-    
+
     data = user.serialize()
 
     return jsonify(data), 200
@@ -253,7 +253,7 @@ def edit_user(user_id):
     user = User.query.get(user_id)
     if not user:
         return jsonify({"message": {"type": "error", "msg": "No encontrado"}}), 404
-    
+
     user = User.query.get(user_id)
     if not user:
         return jsonify({"message": {"type": "error", "msg": "No encontrado"}}), 404
@@ -278,7 +278,8 @@ def edit_user(user_id):
     user.last_name = data.get("last_name", user.last_name)
     user.password = data.get("password", user.password)
     user.notes = data.get("notes", user.notes)
-    user.client_profile_image = data.get("client_profile_image", user.client_profile_image)
+    user.client_profile_image = data.get(
+        "client_profile_image", user.client_profile_image)
 
     db.session.commit()
     return jsonify({"message": {"type": "success", "msg": f"Usuario {user.name} actualizado"}}), 200
@@ -296,7 +297,7 @@ def delete_user(user_id):
     user = User.query.get(user_id)
     if not user:
         return jsonify({"message": {"type": "error", "msg": "No encontrado"}}), 404
-    
+
     user = User.query.get(user_id)
     if not user:
         return jsonify({"message": {"type": "error", "msg": "Usuario no encontrado"}}), 404
@@ -320,7 +321,8 @@ def get_my_barbershops():
     if role == "admin":
         barbershops = Barbershop.query.all()
     else:
-        barbershops = Barbershop.query.filter_by(owner_id=int(current_user_id)).all()
+        barbershops = Barbershop.query.filter_by(
+            owner_id=int(current_user_id)).all()
     return jsonify([barb.serialize() for barb in barbershops]), 200
 
 
@@ -340,7 +342,7 @@ def new_barbershop():
 
     if role not in ["owner", "admin"]:
         return jsonify({"msg": "Acceso denegado: No tienes permisos"}), 403
-    
+
     data = request.json
     new_barbsh = Barbershop(
         name=data.get("name"),
@@ -352,7 +354,7 @@ def new_barbershop():
     )
     if not data.get("name") or not data.get("address"):
         return jsonify({"message": {"type": "error", "msg": "Nombre y dirección son obligatorios"}}), 400
-    
+
     db.session.add(new_barbsh)
     db.session.commit()
     return jsonify({"message": {"type": "success", "msg": f"Barbería {new_barbsh.name} creada"}}), 201
@@ -377,19 +379,20 @@ def update_barbershop(barbershop_id):
 
     if role not in ["owner", "admin"]:
         return jsonify({"msg": "Acceso denegado"}), 403
-    
+
     barbershop = Barbershop.query.get(barbershop_id)
     if not barbershop:
         return jsonify({"message": {"type": "error", "msg": "Barberia no encontrada"}}), 404
 
     if role == "owner" and str(barbershop.owner_id) != str(current_user_id):
         return jsonify({"msg": "Esta barbería no te pertenece"}), 403
-    
+
     data = request.json
     barbershop.name = data.get("name", barbershop.name)
     barbershop.address = data.get("address", barbershop.address)
     barbershop.phone = data.get("phone", barbershop.phone)
-    barbershop.barbershop_image= data.get("barbershop_image", barbershop.barbershop_image)
+    barbershop.barbershop_image = data.get(
+        "barbershop_image", barbershop.barbershop_image)
 
     db.session.commit()
     return jsonify({"message": {"type": "success", "msg": f"Barberia {barbershop.name} actualizada"}}), 200
@@ -410,7 +413,7 @@ def get_barbers_linked(shop_id):
     results = []
     for link in links:
         if not link.barber:
-            continue 
+            continue
 
         schedules = [s.serialize() for s in link.schedule]
 
@@ -428,7 +431,6 @@ def get_barbers_linked(shop_id):
         })
 
     return jsonify(results), 200
-
 
 
 @api.route("/barbershops/<int:barbershop_id>/appointments", methods=["GET"])
@@ -470,7 +472,7 @@ def delete_barbershop(barbershop_id):
 
     if role not in ["owner", "admin"]:
         return jsonify({"msg": "Acceso denegado"}), 403
-    
+
     barbershop = Barbershop.query.get(barbershop_id)
     if not barbershop:
         return jsonify({"message": {"type": "error", "msg": "Barberia no encontrada"}}), 404
@@ -490,7 +492,7 @@ def delete_barbershop(barbershop_id):
 def get_owners():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
-    
+
     if claims.get("role") != "admin":
         return jsonify({"msg": "Acceso restringido al administrador"}), 403
 
@@ -551,7 +553,7 @@ def get_single_owner(owner_id):
     owner = Owner.query.get(owner_id)
     if not owner:
         return jsonify({"message": {"type": "error", "msg": "Dueño no encontrado"}}), 404
-    
+
     return jsonify(owner.serialize()), 200
 
 
@@ -570,23 +572,26 @@ def edit_owner(owner_id):
         return jsonify({"message": {"type": "error", "msg": "Dueño no encontrado"}}), 404
 
     data = request.json
-    
+
     if "email" in data:
-        existing_email = Owner.query.filter(Owner.email == data["email"], Owner.id != owner_id).first()
+        existing_email = Owner.query.filter(
+            Owner.email == data["email"], Owner.id != owner_id).first()
         if existing_email:
             return jsonify({"message": {"type": "error", "msg": "Email ya registrado"}}), 409
         owner.email = data["email"]
 
     if "phone" in data:
-        existing_phone = Owner.query.filter(Owner.phone == data["phone"], Owner.id != owner_id).first()
+        existing_phone = Owner.query.filter(
+            Owner.phone == data["phone"], Owner.id != owner_id).first()
         if existing_phone:
             return jsonify({"message": {"type": "error", "msg": "Teléfono ya registrado"}}), 409
         owner.phone = data["phone"]
 
     owner.name = data.get("name", owner.name)
     owner.password = data.get("password", owner.password)
-    owner.owner_profile_image = data.get("owner_profile_image", owner.owner_profile_image)
-    
+    owner.owner_profile_image = data.get(
+        "owner_profile_image", owner.owner_profile_image)
+
     db.session.commit()
     return jsonify({"message": {"type": "success", "msg": f"Dueño {owner.name} actualizado"}}), 200
 
@@ -609,7 +614,7 @@ def delete_owner(owner_id):
 
     db.session.delete(owner)
     db.session.commit()
-    
+
     return jsonify({"message": {"type": "success", "msg": f"La cuenta del dueño {owner_name} ha sido eliminada"}}), 200
 
 
@@ -646,7 +651,8 @@ def new_barber():
     if Barber.query.filter_by(email=email).first():
         return jsonify({"message": {"type": "error", "msg": "Email ya registrado"}}), 409
 
-    new_barber = Barber(name=name, email=email,password=password, phone=phone, barber_profile_image=barber_profile_image)
+    new_barber = Barber(name=name, email=email, password=password,
+                        phone=phone, barber_profile_image=barber_profile_image)
     db.session.add(new_barber)
     db.session.commit()
 
@@ -659,13 +665,13 @@ def get_single_barber(barber_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
     role = claims.get("role")
-    
+
     barber = Barber.query.get(barber_id)
     if not barber:
         return jsonify({"message": {"type": "error", "msg": "Barbero no encontrado"}}), 404
 
     if role not in ["admin", "owner", "client"] and str(current_user_id) != str(barber_id):
-         return jsonify({"msg": "Acceso denegado"}), 403
+        return jsonify({"msg": "Acceso denegado"}), 403
 
     return jsonify(barber.serialize()), 200
 
@@ -695,12 +701,14 @@ def edit_barber(barber_id):
 
     barber.name = data.get("name", barber.name)
     barber.password = data.get("password", barber.password)
-    barber.barber_profile_image = data.get("barber_profile_image", barber.barber_profile_image)
-    
+    barber.barber_profile_image = data.get(
+        "barber_profile_image", barber.barber_profile_image)
+
     barber.barbershop_id = data.get("barbershop_id", barber.barbershop_id)
 
     db.session.commit()
     return jsonify({"message": {"type": "success", "msg": f"Barbero {barber.name} actualizado"}}), 200
+
 
 @api.route("/barbers/<int:barber_id>", methods=["DELETE"])
 @jwt_required()
@@ -775,10 +783,10 @@ def invite_barber():
         barber = Barber.query.filter_by(email=email).first()
     elif phone:
         barber = Barber.query.filter_by(phone=phone).first()
-    
+
     if not barber:
         return jsonify({"message": {"type": "error", "msg": "No se encontró ningún barbero con esos datos"}}), 404
-    
+
     barbershop = Barbershop.query.filter_by(
         id=shop_id,
         owner_id=current_user_id
@@ -786,7 +794,6 @@ def invite_barber():
 
     if not barbershop:
         return jsonify({"message": {"type": "error", "msg": "Hay un error con tus barberías"}}), 404
-
 
     pending = BarberBarbershop.query.filter_by(
         barber_id=barber.id,
@@ -876,10 +883,10 @@ def get_barber_schedules():
         schedules = db.session.query(Schedule).join(BarberBarbershop).filter(
             BarberBarbershop.barber_id == current_user_id
         ).all()
-    
+
     elif role == "admin":
         schedules = Schedule.query.all()
-    
+
     else:
         return jsonify({"msg": "No tienes permiso para ver horarios generales"}), 403
 
@@ -908,8 +915,8 @@ def new_schedule():
     if new_end <= new_start:
         return jsonify({"message": {"type": "error", "msg": "La hora de fin debe ser mayor a la de inicio"}}), 400
 
-
-    link = BarberBarbershop.query.filter_by(id=invitation_id, barber_id=current_barber_id).first()
+    link = BarberBarbershop.query.filter_by(
+        id=invitation_id, barber_id=current_barber_id).first()
 
     if not link:
         return jsonify({"message": {"type": "error", "msg": "Vínculo con barbería no válido o no te pertenece"}}), 403
@@ -1014,7 +1021,7 @@ def edit_schedule(schedule_id):
 @jwt_required()
 def delete_schedule(schedule_id):
     current_user_id = get_jwt_identity()
-    
+
     schedule = Schedule.query.get(schedule_id)
     if not schedule:
         return jsonify({"message": {"type": "error", "msg": "Horario no encontrado"}}), 404
@@ -1024,17 +1031,19 @@ def delete_schedule(schedule_id):
 
     db.session.delete(schedule)
     db.session.commit()
-    
+
     return jsonify({"message": {"type": "success", "msg": "Horario eliminado correctamente"}}), 200
 
 # ENDPOINTS DE BARBERO Y SUS SERVICIOS
+
 
 @api.route("/barber_services", methods=["GET"])
 def get_barber_services():
     specific_barber = request.args.get("barber_id")
 
     if specific_barber:
-        services = BarberService.query.filter_by(barber_id=specific_barber).all()
+        services = BarberService.query.filter_by(
+            barber_id=specific_barber).all()
     else:
         services = BarberService.query.all()
 
@@ -1060,10 +1069,11 @@ def new_barber_service():
     if not all([name, price, duration]):
         return jsonify({"message": {"type": "error", "msg": "Faltan datos: nombre, precio y duración son obligatorios"}}), 400
 
-    existing = BarberService.query.filter_by(barber_id=current_barber_id, name=name).first()
+    existing = BarberService.query.filter_by(
+        barber_id=current_barber_id, name=name).first()
     if existing:
         return jsonify({"message": {"type": "error", "msg": "Ya tienes un servicio con este nombre"}}), 400
-    
+
     try:
         new_bs = BarberService(
             barber_id=current_barber_id,
@@ -1077,7 +1087,7 @@ def new_barber_service():
         db.session.commit()
 
         return jsonify({"message": {"type": "success", "msg": "Servicio creado con éxito"}}), 201
-    
+
     except Exception as e:
         db.session.rollback()
         return jsonify({"message": {"type": "error", "msg": str(e)}}), 500
@@ -1094,12 +1104,13 @@ def edit_barber_service(barber_service_id):
 
     if str(bs.barber_id) != str(current_barber_id):
         return jsonify({"message": {"type": "error", "msg": "No tienes permiso para editar este servicio"}}), 403
-    
+
     data = request.json
     bs.name = data.get("name", bs.name)
     bs.price = data.get("price", bs.price)
     bs.duration = data.get("duration", bs.duration)
-    bs.service_demo_image = data.get("service_demo_image", bs.service_demo_image)
+    bs.service_demo_image = data.get(
+        "service_demo_image", bs.service_demo_image)
 
     db.session.commit()
     return jsonify({"message": {"type": "success", "msg": "Servicio actualizado"}}), 200
@@ -1121,7 +1132,7 @@ def delete_barber_service(barber_service_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
     role = claims.get("role")
-    
+
     barber_service = BarberService.query.get(barber_service_id)
 
     if not barber_service:
@@ -1150,19 +1161,20 @@ def get_appointments():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
     role = claims.get("role")
-    
+
     date_str = request.args.get("date")
     shop_id = request.args.get("barbershop_id")
     query = Appointment.query
 
     if role == "barber":
         query = query.filter_by(barber_id=current_user_id)
-    
+
     elif role == "owner":
         if shop_id:
             query = query.filter_by(barbershop_id=shop_id)
         else:
-            my_shops = Barbershop.query.filter_by(owner_id=current_user_id).all()
+            my_shops = Barbershop.query.filter_by(
+                owner_id=current_user_id).all()
             my_shop_ids = [s.id for s in my_shops]
             query = query.filter(Appointment.barbershop_id.in_(my_shop_ids))
 
@@ -1172,9 +1184,10 @@ def get_appointments():
     elif role == "admin":
         if shop_id:
             query = query.filter_by(barbershop_id=shop_id)
-    
+
     if date_str:
-        query = query.filter(Appointment.date.cast(db.String).contains(date_str))
+        query = query.filter(Appointment.date.cast(
+            db.String).contains(date_str))
 
     appointments = query.order_by(Appointment.date).all()
     return jsonify([a.serialize() for a in appointments]), 200
@@ -1184,7 +1197,7 @@ def get_appointments():
 @jwt_required()
 def get_single_appointment(appointment_id):
     appointment = Appointment.query.get(appointment_id)
-    
+
     if not appointment:
         return jsonify({"message": {"type": "error", "msg": "Cita no encontrada"}}), 404
     return jsonify(appointment.serialize()), 200
@@ -1243,7 +1256,8 @@ def new_appointment():
     collision = Appointment.query.filter(
         Appointment.barber_id == barber_service.barber_id,
         Appointment.date < new_end_time,
-        Appointment.end_time > start_date
+        Appointment.end_time > start_date,
+        Appointment.status.in_(['pending', 'confirmed', 'completed'])
     ).first()
 
     if collision:
@@ -1358,7 +1372,6 @@ def delete_appointment(appointment_id):
 
     return jsonify({"message": {"type": "success", "msg": "Reserva eliminada correctamente"}}), 200
 
-
 @api.route("/appointments/<int:appointment_id>/status", methods=["PUT"])
 @jwt_required()
 def change_appointment_status(appointment_id):
@@ -1369,7 +1382,7 @@ def change_appointment_status(appointment_id):
     data = request.json
     new_status = data.get("status")
 
-    valid_statuses = ['pending', 'confirmed', 'completed', 'no_show']
+    valid_statuses = ['pending', 'confirmed', 'completed', 'no_show', 'rejected']
     if new_status not in valid_statuses:
         return jsonify({"message": {"type": "error", "msg": "Estado no válido"}}), 400
 
@@ -1377,13 +1390,20 @@ def change_appointment_status(appointment_id):
     if not appointment:
         return jsonify({"message": {"type": "error", "msg": "Cita no encontrada"}}), 404
 
-    is_barber = (role == "barber" and appointment.barber_id == current_user_id)
-    is_owner = (role == "owner" and appointment.barbershop.owner_id == current_user_id)
-    is_admin = (role == "admin")
+    print(f"DEBUG: Identidad JWT: {current_user_id} (Tipo: {type(current_user_id)})")
+    print(f"DEBUG: Barber ID de la cita: {appointment.barber_id} (Tipo: {type(appointment.barber_id)})")
+    print(f"DEBUG: Rol del usuario: {role}")
 
+    try:
+        user_id_int = int(current_user_id)
+        is_barber = (role == "barber" and int(appointment.barber_id) == user_id_int)
+        is_owner = (role == "owner" and int(appointment.barbershop.owner_id) == user_id_int)
+        is_admin = (role == "admin")
+    except (ValueError, TypeError):
+        return jsonify({"message": {"type": "error", "msg": "Error de autenticación: ID no válido"}}), 401
 
     if not (is_barber or is_owner or is_admin):
-        return jsonify({"message": {"type": "error", "msg": "No tienes permiso para esta acción"}}), 403
+        return jsonify({"message": {"type": "error", "msg": "No tienes permiso para gestionar esta cita"}}), 403
 
     appointment.status = new_status
 
@@ -1392,10 +1412,9 @@ def change_appointment_status(appointment_id):
         return jsonify({
             "message": {"type": "success", "msg": f"Cita marcada como {new_status}"}
         }), 200
-    except Exception:
+    except Exception as e:
         db.session.rollback()
-        return jsonify({"message": {"type": "error", "msg": "Error al actualizar"}}), 500
-    
+        return jsonify({"message": {"type": "error", "msg": f"Error al actualizar: {str(e)}"}}), 500
 
 @api.route("/my-appointments", methods=["GET"])
 @jwt_required()
@@ -1457,7 +1476,8 @@ def get_availability():
         Appointment.date >= datetime.combine(
             date_obj.date(), datetime.min.time()),
         Appointment.date <= datetime.combine(
-            date_obj.date(), datetime.max.time())
+            date_obj.date(), datetime.max.time()),
+        Appointment.status.in_(['pending', 'confirmed', 'completed'])
     ).all()
 
     valid_slots = []
@@ -1469,7 +1489,7 @@ def get_availability():
 
         collision = False
         for appt in existing_appointments:
-            
+
             appt_end = appt.end_time if appt.end_time else (
                 appt.date + timedelta(minutes=15))
 
@@ -1501,4 +1521,3 @@ def serve_any_other_file(path):
     response = send_from_directory(static_file_dir, path)
     response.cache_control.max_age = 0  # avoid cache memory
     return response
-
