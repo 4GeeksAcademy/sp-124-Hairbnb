@@ -242,7 +242,9 @@ export const OwnerGestion = () => {
             <div className="d-flex overflow-auto pb-3 gap-3" style={{ alignItems: "flex-start" }}>
               {barbers.map(b => {
                 const dayApps = store.appointments.filter(a =>
-                  String(a.barber_id) === String(b.barber?.id) && a.date.split("T")[0] === selectedDate
+                  String(a.barber_id) === String(b.barber?.id) &&
+                  a.date.split("T")[0] === selectedDate &&
+                  (a.status === "confirmed")
                 ).sort((a, b) => a.date.localeCompare(b.date));
 
                 const currentDayName = getDayName(selectedDate);
