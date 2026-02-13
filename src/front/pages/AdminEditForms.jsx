@@ -10,7 +10,6 @@ import { AdminEditBarberServices } from "../components/AdminEditBarberServices";
 import { AdminEditSchedule } from "../components/AdminEditSchedule";
 import { AdminEditInvitation } from "../components/AdminEditInvitation";
 
-
 export const AdminEditForms = () => {
     const { entity, id } = useParams();
     const navigate = useNavigate();
