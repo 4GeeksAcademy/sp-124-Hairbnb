@@ -29,9 +29,9 @@ export const AppointmentForm = () => {
         const fetchBarberServices = async () => {
             if (!data.barber_id) return;
             try {
-                const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbers/${data.barber_id}/services`);
-                if (resp.ok) {
-                    const services = await resp.json();
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbers/${data.barber_id}/services`);
+                if (response.ok) {
+                    const services = await response.json();
                     dispatch({ type: "set-services", payload: services });
                 }
             } catch (error) { console.error(error); }
@@ -66,15 +66,15 @@ export const AppointmentForm = () => {
         if (!targetBarberId) return;
 
         try {
-            const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`, {
                 headers: { 
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${store.token}` 
                 }
             });
 
-            if (resp.ok) {
-                const allServices = await resp.json();
+            if (response.ok) {
+                const allServices = await response.json();
                 
                 const myServices = allServices.filter(s => 
                     Number(s.barber_id) === Number(targetBarberId)
@@ -93,9 +93,9 @@ export const AppointmentForm = () => {
     const handleSearchUser = async () => {
         if (!phoneSearch) return;
         try {
-            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/search?phone=${phoneSearch}`);
-            if (res.ok) {
-                const user = await res.json();
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/search?phone=${phoneSearch}`);
+            if (response.ok) {
+                const user = await response.json();
                 setFoundUser(user);
                 setData(prev => ({ ...prev, user_id: user.id }));
             } else {
@@ -123,7 +123,7 @@ export const AppointmentForm = () => {
         : `${import.meta.env.VITE_BACKEND_URL}/appointments`;
 
     try {
-        const res = await fetch(url, {
+        const response = await fetch(url, {
             method: isEditing ? "PUT" : "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -132,11 +132,11 @@ export const AppointmentForm = () => {
             body: JSON.stringify(appointmentData)
         });
 
-        if (res.ok) {
+        if (response.ok) {
             dispatch({ type: "set-appointmentInfo", payload: null });
             navigate(-1);
         } else {
-            const errorText = await res.text();
+            const errorText = await response.text();
             console.error("Error del servidor:", errorText);
         }
     } catch (error) { 

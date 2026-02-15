@@ -25,14 +25,14 @@ export const ClientRegister = () => {
         const loadClientData = async () => {
             if (isEditing && store.userInfo?.id) {
                 try {
-                    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/${store.userInfo.id}`, {
+                    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/${store.userInfo.id}`, {
                         method: "GET",
                         headers: {
                             "Authorization": `Bearer ${store.token}`
                         }
                     });
-                    if (res.ok) {
-                        const data = await res.json();
+                    if (response.ok) {
+                        const data = await response.json();
                         setForm({
                             name: data.name || "",
                             last_name: data.last_name || "",
@@ -73,7 +73,7 @@ export const ClientRegister = () => {
             : `${import.meta.env.VITE_BACKEND_URL}/users`;
 
         try {
-            const res = await fetch(url, {
+            const response = await fetch(url, {
                 method: method,
                 headers: {
                     "Content-Type": "application/json",

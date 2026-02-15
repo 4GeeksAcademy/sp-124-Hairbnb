@@ -3,10 +3,7 @@ export const initialStore = () => {
     token: null,
     username: null,
     role: null,
-    message:{
-              type: "",
-              msg: ""
-            },
+    message:null,
     users: [],
     userInfo: null,
     barbershops: [],

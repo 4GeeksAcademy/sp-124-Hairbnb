@@ -19,11 +19,11 @@ export const AdminEditAdmin = () => {
         const loadAdminData = async () => {
             if (isEditing) {
                 try {
-                    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/admins/${id}`, {
+                    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/admins/${id}`, {
                         headers: { "Authorization": `Bearer ${store.token}` }
                     });
-                    if (res.ok) {
-                        const data = await res.json();
+                    if (response.ok) {
+                        const data = await response.json();
                         setForm({
                             name: data.name || "",
                             email: data.email || "",
@@ -32,7 +32,10 @@ export const AdminEditAdmin = () => {
                         });
                     }
                 } catch (error) {
-                    console.error("Error cargando admin:", error);
+                    dispatch({
+                        type: "set-message",
+                        payload: { type: "error", msg: "Error de conexión con el servidor" }
+                    });
                 }
             }
         };
@@ -53,7 +56,7 @@ export const AdminEditAdmin = () => {
         const url = `${import.meta.env.VITE_BACKEND_URL}/admins${isEditing ? `/${id}` : ""}`;
 
         try {
-            const res = await fetch(url, {
+            const response = await fetch(url, {
                 method: method,
                 headers: {
                     "Content-Type": "application/json",
@@ -66,14 +69,14 @@ export const AdminEditAdmin = () => {
                 })
             });
 
-            if (res.ok) {
+            if (response.ok) {
                 dispatch({
                     type: "set-message",
                     payload: { type: "success", msg: isEditing ? "Administrador actualizado" : "Administrador creado" }
                 });
                 navigate("/4dm1n1str4t10n");
             } else {
-                const errorData = await res.json();
+                const errorData = await response.json();
                 dispatch({ type: "set-message", payload: { type: "error", msg: errorData.msg || "Error en la operación" } });
             }
         } catch (err) {

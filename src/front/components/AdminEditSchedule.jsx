@@ -35,16 +35,16 @@ export const AdminEditSchedule = () => {
             const headers = { "Authorization": `Bearer ${token}` };
 
             try {
-                const resB = await fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/barbers`, { headers });
-                if (resB.ok) setBarbers(await resB.json());
+                const responseBarbers = await fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/barbers`, { headers });
+                if (responseBarbers.ok) setBarbers(await responseBarbers.json());
             } catch (error) {
                 console.error("Error cargando barberos:", error);
             }
 
             try {
-                const resI = await fetch(`${import.meta.env.VITE_BACKEND_URL}/invitations`, { headers });
-                if (resI.ok) {
-                    const invData = await resI.json();
+                const responseInvitations = await fetch(`${import.meta.env.VITE_BACKEND_URL}/invitations`, { headers });
+                if (responseInvitations.ok) {
+                    const invData = await responseInvitations.json();
                     const accepted = invData.filter(i => i.status === "accepted");
                     dispatch({ type: "set-invitations", payload: accepted });
                 }
@@ -54,10 +54,10 @@ export const AdminEditSchedule = () => {
 
             if (isEditing) {
                 try {
-                    const resS = await fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules/${id}`, { headers });
-                    if (resS.ok) {
-                        const sch = await resS.json();
-                        
+                    const responseSchedule = await fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules/${id}`, { headers });
+                    if (responseSchedule.ok) {
+                        const sch = await responseSchedule.json();
+
                         setSelectedBarber(sch.barber_id);
                         setAvailableShops([{
                             id: sch.barber_barbershop_id,
@@ -79,11 +79,11 @@ export const AdminEditSchedule = () => {
         };
 
         loadInitialData();
-    }, [id, isEditing, store.token]);
+    }, [id, isEditing, store.token, dispatch]);
 
     useEffect(() => {
         if (!isEditing && selectedBarber && store.invitations?.length > 0) {
-            const filtered = store.invitations.filter(inv => 
+            const filtered = store.invitations.filter(inv =>
                 String(inv.barber_id) === String(selectedBarber)
             );
             setAvailableShops(filtered);
@@ -92,32 +92,36 @@ export const AdminEditSchedule = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         const method = isEditing ? "PUT" : "POST";
-        const url = isEditing 
+        const url = isEditing
             ? `${import.meta.env.VITE_BACKEND_URL}/schedules/${id}`
             : `${import.meta.env.VITE_BACKEND_URL}/schedules`;
 
-        const resp = await fetch(url, {
-            method: method,
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${store.token}`
-            },
-            body: JSON.stringify({
-                barber_barbershop_id: formData.invitation_id,
-                day_of_week: formData.day_of_week,
-                start_time: formData.start_time,
-                end_time: formData.end_time
-            })
-        });
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${store.token}`
+                },
+                body: JSON.stringify({
+                    barber_barbershop_id: formData.invitation_id,
+                    day_of_week: formData.day_of_week,
+                    start_time: formData.start_time,
+                    end_time: formData.end_time
+                })
+            });
 
-        if (resp.ok) {
-            dispatch({ type: "set-message", payload: { type: "success", msg: "Horario gestionado con éxito" } });
-            navigate("/4dm1n1str4t10n");
-        } else {
-            const data = await resp.json();
-            dispatch({ type: "set-message", payload: { type: "error", msg: data.msg || "Error al guardar" } });
+            if (response.ok) {
+                dispatch({ type: "set-message", payload: { type: "success", msg: "Horario gestionado con éxito" } });
+                navigate("/4dm1n1str4t10n");
+            } else {
+                const data = await response.json();
+                dispatch({ type: "set-message", payload: { type: "error", msg: data.msg || "Error al guardar" } });
+            }
+        } catch (err) {
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
         }
     };
 
@@ -128,7 +132,7 @@ export const AdminEditSchedule = () => {
                     <h3 className="mb-4 text-center fw-bold">
                         {isEditing ? "Editar turno" : "Nuevo turno"}
                     </h3>
-                    
+
                     <form onSubmit={handleSubmit} className="card p-4">
                         <div className="mb-3">
                             <label className="form-label fw-bold">Barbero</label>
@@ -137,12 +141,12 @@ export const AdminEditSchedule = () => {
                                     {availableShops[0]?.barber_name || "Cargando barbero..."}
                                 </div>
                             ) : (
-                                <select 
-                                    className="form-select border-primary" 
+                                <select
+                                    className="form-select border-primary"
                                     value={selectedBarber}
                                     onChange={(e) => {
                                         setSelectedBarber(e.target.value);
-                                        setFormData({...formData, invitation_id: ""});
+                                        setFormData({ ...formData, invitation_id: "" });
                                     }}
                                     required
                                 >
@@ -159,10 +163,10 @@ export const AdminEditSchedule = () => {
                                     {availableShops[0]?.barbershop_name || "Cargando sede..."}
                                 </div>
                             ) : (
-                                <select 
-                                    className="form-select border-primary" 
+                                <select
+                                    className="form-select border-primary"
                                     value={formData.invitation_id}
-                                    onChange={(e) => setFormData({...formData, invitation_id: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, invitation_id: e.target.value })}
                                     disabled={!selectedBarber}
                                     required
                                 >
@@ -178,10 +182,10 @@ export const AdminEditSchedule = () => {
 
                         <div className="mb-3">
                             <label className="form-label fw-bold">Día de la semana</label>
-                            <select 
-                                className="form-select" 
+                            <select
+                                className="form-select"
                                 value={formData.day_of_week}
-                                onChange={(e) => setFormData({...formData, day_of_week: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, day_of_week: e.target.value })}
                                 required
                             >
                                 {days.map(d => <option key={d.val} value={d.val}>{d.lab}</option>)}
@@ -191,21 +195,21 @@ export const AdminEditSchedule = () => {
                         <div className="row">
                             <div className="col-6 mb-4">
                                 <label className="form-label fw-bold">Hora Entrada</label>
-                                <input 
-                                    type="time" 
-                                    className="form-control" 
+                                <input
+                                    type="time"
+                                    className="form-control"
                                     value={formData.start_time}
-                                    onChange={(e) => setFormData({...formData, start_time: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
                                     required
                                 />
                             </div>
                             <div className="col-6 mb-4">
                                 <label className="form-label fw-bold">Hora Salida</label>
-                                <input 
-                                    type="time" 
-                                    className="form-control" 
+                                <input
+                                    type="time"
+                                    className="form-control"
                                     value={formData.end_time}
-                                    onChange={(e) => setFormData({...formData, end_time: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
                                     required
                                 />
                             </div>

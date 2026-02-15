@@ -8,27 +8,37 @@ export const Owners = () => {
     const { store, dispatch } = useGlobalReducer();
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/owners`)
-            .then(resp => resp.json())
-            .then(data => {
+    const loadOwners = async () => {
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/owners`);
+            
+            if (response.ok) {
+                const data = await response.json();
                 dispatch({ type: "set-owners", payload: data });
-            })
-            .catch(err => console.error(err));
-    }, []);
+            } else {
+                console.error("No se pudo cargar la lista de dueños. Status:", response.status);
+            }
+        } catch (error) {
+            console.error("Error de red al intentar obtener los dueños:", error);
+        }
+    };
+
+    loadOwners();
+}, [dispatch]);
 
     const deleteOwner = async (id) => {
         const confirmar = window.confirm("¿Deseas eliminar este dueño?");
         if (!confirmar) return;
 
         try {
-            const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/owners/${id}`, { method: "DELETE" });
-            const result = await resp.json();
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/owners/${id}`, { method: "DELETE" });
+            const result = await response.json();
 
             if (result.message) {
                 dispatch({ type: "set-message", payload: result.message });
             }
 
-            if (!resp.ok) return;
+            if (!response.ok) return;
 
             dispatch({
                 type: "set-owners",

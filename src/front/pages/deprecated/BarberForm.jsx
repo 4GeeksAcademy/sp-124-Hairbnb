@@ -20,11 +20,25 @@ export const BarberForm = () => {
     const isEditing = !!data.id;
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`)
-            .then(resp => resp.json())
-            .then(data => setBarbershops(data))
-            .catch(err => console.error(err));
-    }, []);
+    const loadBarbershops = async () => {
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                setBarbershops(data);
+            } else {
+                console.error("Error en la respuesta del servidor");
+                setBarbershops([]);
+            }
+        } catch (error) {
+            console.error("Error de conexión cargando las sedes:", error);
+            setBarbershops([]);
+        }
+    };
+
+    loadBarbershops();
+}, []);
 
     useEffect(() => {
         if (store.barberInfo) {
@@ -57,7 +71,7 @@ export const BarberForm = () => {
         const method = isEditing ? "PUT" : "POST";
 
         try {
-            const resp = await fetch(url, {
+            const response = await fetch(url, {
                 method,
                 headers: {
                     "Content-Type": "application/json",
@@ -66,7 +80,7 @@ export const BarberForm = () => {
                 body: JSON.stringify(data)
             });
 
-            const result = await resp.json();
+            const result = await response.json();
 
             if (result.message) {
                 dispatch({
@@ -75,7 +89,7 @@ export const BarberForm = () => {
                 });
             }
 
-            if (!resp.ok) return;
+            if (!response.ok) return;
 
             dispatch({
                 type: "set-barbers",

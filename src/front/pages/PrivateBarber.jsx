@@ -21,37 +21,36 @@ export const PrivateBarber = () => {
     const headers = { "Authorization": `Bearer ${store.token}` };
 
     try {
-      const endpoints = [
-        "appointments",
-        "schedules",
-        "invitations",
-        `barber_services?barber_id=${store.userInfo.id}`
-      ];
-
-      const responses = await Promise.all(
-        endpoints.map(e => fetch(`${import.meta.env.VITE_BACKEND_URL}/${e}`, { headers }))
-      );
-
-      for (let i = 0; i < responses.length; i++) {
-        const res = responses[i];
-
-        const cleanName = endpoints[i].split("?")[0];
-
-        if (!res.ok) {
-          console.error(`Error en ${cleanName}: Código ${res.status}`);
-          continue;
-        }
-
-        const contentType = res.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const data = await res.json();
-          dispatch({ type: `set-${cleanName}`, payload: data });
-        }
+      const responseApp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments`, { headers });
+      if (responseApp.ok) {
+        const dataApp = await responseApp.json();
+        dispatch({ type: "set-appointments", payload: dataApp });
       }
 
+      const responseSch = await fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules`, { headers });
+      if (responseSch.ok) {
+        const dataSch = await responseSch.json();
+        dispatch({ type: "set-schedules", payload: dataSch });
+      }
+
+      const responseInv = await fetch(`${import.meta.env.VITE_BACKEND_URL}/invitations`, { headers });
+      if (responseInv.ok) {
+        const dataInv = await responseInv.json();
+        dispatch({ type: "set-invitations", payload: dataInv });
+      }
+
+      const responseServ = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services?barber_id=${store.userInfo.id}`, { headers });
+      if (responseServ.ok) {
+        const dataServ = await responseServ.json();
+        dispatch({ type: "set-barber_services", payload: dataServ });
+      }
 
     } catch (err) {
-      console.error("Error crítico en loadAll:", err);
+      console.error("Error crítico en la carga secuencial:", err);
+      dispatch({
+        type: "set-message",
+        payload: { type: "error", msg: "Fallo al sincronizar los datos del perfil" }
+      });
     }
   };
 
@@ -59,7 +58,7 @@ export const PrivateBarber = () => {
 
   const updateAppointmentStatus = async (appointmentId, newStatus) => {
     try {
-      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments/${appointmentId}/status`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments/${appointmentId}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -68,7 +67,7 @@ export const PrivateBarber = () => {
         body: JSON.stringify({ status: newStatus })
       });
 
-      if (resp.ok) {
+      if (response.ok) {
         const updatedAppointments = store.appointments.map(appt =>
           appt.id === appointmentId ? { ...appt, status: newStatus } : appt
         );
@@ -80,11 +79,11 @@ export const PrivateBarber = () => {
 
   const deleteSchedule = async (id) => {
     try {
-      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules/${id}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${store.token}` }
       });
-      if (resp.ok) loadAll();
+      if (response.ok) loadAll();
     } catch (error) { console.error(error); }
   };
 
@@ -97,7 +96,7 @@ export const PrivateBarber = () => {
     if (!window.confirm("¿Estás seguro de que deseas eliminar esta cita?")) return;
 
     try {
-      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments/${appointmentId}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments/${appointmentId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -105,9 +104,9 @@ export const PrivateBarber = () => {
         }
       });
 
-      const data = await resp.json();
+      const data = await response.json();
 
-      if (resp.ok) {
+      if (response.ok) {
         const updatedAppointments = store.appointments.filter(appt => appt.id !== appointmentId);
 
         dispatch({ type: "set-appointments", payload: updatedAppointments });
@@ -125,7 +124,7 @@ export const PrivateBarber = () => {
     if (!window.confirm("¿Estás seguro de que deseas eliminar esta invitación?")) return;
 
     try {
-      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/invitations/${invitationId}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/invitations/${invitationId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -133,9 +132,9 @@ export const PrivateBarber = () => {
         }
       });
 
-      const data = await resp.json();
+      const data = await response.json();
 
-      if (resp.ok) {
+      if (response.ok) {
         const updatedInvitations = store.invitations.filter(inv => inv.id !== invitationId);
 
         dispatch({ type: "set-invitations", payload: updatedInvitations });
@@ -151,7 +150,7 @@ export const PrivateBarber = () => {
 
   const handleAcceptInv = async (invitationId) => {
     try {
-      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/invitations/${invitationId}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/invitations/${invitationId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -160,7 +159,7 @@ export const PrivateBarber = () => {
         body: JSON.stringify({ status: "accepted" })
       });
 
-      if (resp.ok) {
+      if (response.ok) {
         dispatch({ type: "set-message", payload: { type: "success", msg: "Invitación aceptada" } });
         loadAll();
       }
@@ -175,7 +174,7 @@ export const PrivateBarber = () => {
     try {
       const token = store.token || localStorage.getItem("token");
 
-      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services/${serviceId}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services/${serviceId}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -183,7 +182,7 @@ export const PrivateBarber = () => {
         }
       });
 
-      if (resp.ok) {
+      if (response.ok) {
         const updatedServices = store.barber_services.filter(s => s.id !== serviceId);
 
         dispatch({
@@ -196,7 +195,7 @@ export const PrivateBarber = () => {
           payload: { type: "success", msg: "Servicio eliminado correctamente" }
         });
       } else {
-        const data = await resp.json();
+        const data = await response.json();
         alert(data.message?.msg || "No se pudo eliminar el servicio");
       }
     } catch (error) {
@@ -219,13 +218,13 @@ export const PrivateBarber = () => {
 
   const dayNameEn = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
   const confirmedAppts = store.appointments?.filter(a =>
-    a.status === "confirmed" && // <--- Solo aceptadas
+    a.status === "confirmed" &&
     a.date.split("T")[0] === selectedDate &&
     Number(a.barber_id) === Number(store.userInfo?.id)
   ) || [];
 
   const pendingAppts = store.appointments?.filter(a =>
-    a.status === "pending" && // <--- Solo pendientes
+    a.status === "pending" &&
     Number(a.barber_id) === Number(store.userInfo?.id)
   ) || [];
 
@@ -281,7 +280,7 @@ export const PrivateBarber = () => {
               <div className="card">
                 <div className="card-header">
                   <h6 className="mb-0">
-                    Dia {new Date(selectedDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long'})}
+                    Dia {new Date(selectedDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}
                   </h6>
                 </div>
 

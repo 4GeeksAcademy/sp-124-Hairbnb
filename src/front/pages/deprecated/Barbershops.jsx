@@ -9,20 +9,30 @@ export const Barbershops = () => {
     const { store, dispatch } = useGlobalReducer();
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`)
-            .then(resp => resp.json())
-            .then(data => {
+    const loadBarbershops = async () => {
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`);
+            
+            if (response.ok) {
+                const data = await response.json();
                 dispatch({ type: "set-barbershops", payload: data });
-            })
-            .catch(err => console.error(err));
-    }, []);
+            } else {
+                console.error("Error al obtener las sedes. Status:", response.status);
+            }
+        } catch (error) {
+            console.error("Error de conexión cargando las sedes:", error);
+        }
+    };
+
+    loadBarbershops();
+}, [dispatch]);
 
     const deleteBarbershop = async (id) => {
         const confirmar = window.confirm("¿Deseas eliminar esta barbería?");
         if (!confirmar) return;
 
         try {
-            const resp = await fetch(
+            const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/barbershops/${el.id}`,
         {
           method: "DELETE",
@@ -32,7 +42,7 @@ export const Barbershops = () => {
           },
         }
       );
-            const result = await resp.json();
+            const result = await response.json();
 
             if (result.message) {
                 dispatch({
@@ -41,7 +51,7 @@ export const Barbershops = () => {
                 });
             }
 
-            if (!resp.ok) return;
+            if (!response.ok) return;
 
             dispatch({
                 type: "set-barbershops",

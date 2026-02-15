@@ -8,13 +8,21 @@ export const Users = () => {
   const { store, dispatch } = useGlobalReducer();
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_BACKEND_URL}/users`)
-      .then(resp => resp.json())
-      .then(data => {
-        dispatch({ type: "set-users", payload: data });
-      })
-      .catch(err => console.error(err));
-  }, []);
+    const loadUsers = async () => {
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                dispatch({ type: "set-users", payload: data });
+            }
+        } catch (error) {
+            console.error("Error de conexión al cargar los usuarios:", error);
+        }
+    };
+
+    loadUsers();
+}, []);
 
   const deleteUser = async (id) => {
     const confirmar = window.confirm("¿Deseas eliminar este usuario?");

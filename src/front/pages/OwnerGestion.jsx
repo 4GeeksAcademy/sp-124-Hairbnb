@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
+import { MessagePage } from "../components/MessagesPage"
+import { Link } from "react-router-dom";
+
 
 export const OwnerGestion = () => {
   const { store, dispatch } = useGlobalReducer();
@@ -22,11 +25,11 @@ export const OwnerGestion = () => {
 
   const loadBarbers = async () => {
     if (!barbershop?.id) return;
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops/${barbershop.id}/barbers`,
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops/${barbershop.id}/barbers`,
       { headers: { "Authorization": `Bearer ${store.token}` } });
 
-    if (res.ok) {
-      const data = await res.json();
+    if (response.ok) {
+      const data = await response.json();
       dispatch({ type: "set-barbers", payload: data });
       setBarbers(data.filter(b => b.status === "accepted"));
       setPending(data.filter(b => b.status === "pending"));
@@ -36,11 +39,11 @@ export const OwnerGestion = () => {
   const loadAppointments = async () => {
     if (!barbershop?.id || !store.token) return;
     try {
-      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments`, {
         headers: { "Authorization": `Bearer ${store.token}` }
       });
-      if (resp.ok) {
-        const data = await resp.json();
+      if (response.ok) {
+        const data = await response.json();
         dispatch({ type: "set-appointments", payload: data });
       }
     } catch (error) {
@@ -56,6 +59,7 @@ export const OwnerGestion = () => {
     if (!barbershop?.id || !store.token) return;
     if (activeTab === "barbers") loadBarbers();
     if (activeTab === "appointments") loadAppointments();
+
   }, [activeTab, barbershop?.id, store.token]);
 
   const handleInvite = async () => {
@@ -69,7 +73,7 @@ export const OwnerGestion = () => {
     };
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/invitations`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/invitations`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -79,7 +83,7 @@ export const OwnerGestion = () => {
       });
 
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message?.msg || "Error enviando invitación");
+      if (!response.ok) throw new Error(result.message?.msg || "Error enviando invitación");
 
       setInviteEmail("");
       loadBarbers();
@@ -92,11 +96,11 @@ export const OwnerGestion = () => {
   const handleDelete = async (id) => {
     if (!confirm("¿Seguro que quieres cancelar esta cita?")) return;
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments/${id}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${store.token}` }
       });
-      if (res.ok) {
+      if (response.ok) {
         const filteredApps = store.appointments.filter(a => a.id !== id);
         dispatch({ type: "set-appointments", payload: filteredApps });
         dispatch({ type: "set-message", payload: { type: "success", msg: "Cita eliminada" } });
@@ -120,11 +124,19 @@ export const OwnerGestion = () => {
     );
   }
 
-  console.log("barberos:", barbers);
   return (
     <div className="container mt-5">
-      <h1>Gestión de: {barbershop?.name}</h1>
+      
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 className="mb-0">Gestión de: {barbershop?.name}</h1>
 
+        </div>
+        <Link to="/private/owner" className="btn btn-outline-secondary">
+          <i className="fa-solid fa-arrow-rotate-left me-2"></i>
+          Cambiar de barbería
+        </Link>
+      </div>
       <ul className="nav nav-tabs my-4">
         <li className="nav-item">
           <button className={`nav-link ${activeTab === "barbers" ? "active" : ""}`} onClick={() => setActiveTab("barbers")}>
@@ -134,6 +146,11 @@ export const OwnerGestion = () => {
         <li className="nav-item">
           <button className={`nav-link ${activeTab === "appointments" ? "active" : ""}`} onClick={() => setActiveTab("appointments")}>
             Citas
+          </button>
+        </li>
+        <li className="nav-item">
+          <button className={`nav-link ${activeTab === "messages" ? "active" : ""}`} onClick={() => setActiveTab("messages")}>
+            Mensajes
           </button>
         </li>
       </ul>
@@ -300,6 +317,11 @@ export const OwnerGestion = () => {
                 );
               })}
             </div>
+          </div>
+        )}
+        {activeTab === "messages" && (
+          <div className="messages-wrapper p-3">
+            <MessagePage />
           </div>
         )}
       </div>

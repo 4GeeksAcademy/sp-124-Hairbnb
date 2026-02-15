@@ -26,6 +26,7 @@ import { PrivateClient } from "./pages/PrivateClient.jsx";
 import { PrivateBarber } from "./pages/PrivateBarber.jsx";
 import { PrivateOwner } from "./pages/PrivateOwner.jsx";
 import { ScheduleForm } from "./pages/ScheduleForm";
+import { BarbershopDetails } from "./pages/BarbershopDetails.jsx"
 
 
 import { AppointmentForm } from "./pages/deprecated/AppointmentForm";
@@ -53,6 +54,8 @@ export const router = createBrowserRouter(
       <Route path="/barber_services_form" element={<BarberServiceForm />} />
       <Route path="/schedules_form" element={<ScheduleForm />} />
 
+      <Route path="/barbershop/:id" element={<BarbershopDetails />} />
+      
       <Route path="/barber_appointment_form" element={<ApptFormBarber />} />
       <Route path="/client_appointment_form" element={<ApptFormClient />} />
       <Route path="/owner_appointment_form" element={<ApptFormOwner />} />

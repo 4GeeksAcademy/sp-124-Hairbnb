@@ -21,68 +21,76 @@ export const ApptFormOwner = () => {
         notes: preData.notes || ""
     });
     const [availableSlots, setAvailableSlots] = useState([]);
-    
+
     useEffect(() => {
-    const loadBarbersByShop = async () => {
-        if (!data.barbershop_id) return;
+        const loadBarbersByShop = async () => {
+            if (!data.barbershop_id) return;
 
-        const token = store.token || localStorage.getItem("token");
-        try {
-            const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops/${data.barbershop_id}/barbers`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
+            const token = store.token || localStorage.getItem("token");
+            try {
+                const responseBarbers = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops/${data.barbershop_id}/barbers`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
 
-            if (resp.ok) {
-                const barbersData = await resp.json();
-                dispatch({ type: "set-barbers", payload: barbersData });
+                if (responseBarbers.ok) {
+                    const barbersData = await responseBarbers.json();
+                    dispatch({ type: "set-barbers", payload: barbersData });
+                }
+            } catch (error) {
+                console.error("Error cargando barberos de la sede:", error);
             }
-        } catch (error) {
-            console.error("Error cargando barberos de la sede:", error);
-        }
-    };
-    loadBarbersByShop();
-}, [data.barbershop_id]);
+        };
+        loadBarbersByShop();
+    }, [data.barbershop_id, store.token, dispatch]);
 
     const currentBarbers = store.barbers?.filter(inv => {
-    const matchesShop = inv.barbershop_id 
-        ? Number(inv.barbershop_id) === Number(data.barbershop_id) 
-        : true;
+        const matchesShop = inv.barbershop_id
+            ? Number(inv.barbershop_id) === Number(data.barbershop_id)
+            : true;
 
-    return inv.status === "accepted" && matchesShop;
-}) || [];
+        return inv.status === "accepted" && matchesShop;
+    }) || [];
 
     useEffect(() => {
         const loadServices = async () => {
             const token = store.token || localStorage.getItem("token");
-            const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`, {
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
+            try {
+                const responseServices = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+                if (responseServices.ok) {
+                    const servicesData = await responseServices.json();
+                    dispatch({ type: "set-barber_services", payload: servicesData });
                 }
-            });
-            if (resp.ok) {
-                const data = await resp.json();
-                dispatch({ type: "set-barber_services", payload: data });
+            } catch (error) {
+                console.error("Error cargando servicios:", error);
             }
         };
         loadServices();
-    }, []);
+    }, [dispatch, store.token]);
 
     useEffect(() => {
         const fetchSlots = async () => {
             if (data.barber_id && data.barbershop_id && data.date && data.barber_service_id) {
-                const resp = await fetch(
-                    `${import.meta.env.VITE_BACKEND_URL}/barber_availability?barber_id=${data.barber_id}&barbershop_id=${data.barbershop_id}&date=${data.date}&service_id=${data.barber_service_id}`,
-                    { headers: { "Authorization": `Bearer ${store.token}` } }
-                );
-                if (resp.ok) {
-                    const slots = await resp.json();
-                    setAvailableSlots(slots);
+                try {
+                    const responseSlots = await fetch(
+                        `${import.meta.env.VITE_BACKEND_URL}/barber_availability?barber_id=${data.barber_id}&barbershop_id=${data.barbershop_id}&date=${data.date}&service_id=${data.barber_service_id}`,
+                        { headers: { "Authorization": `Bearer ${store.token}` } }
+                    );
+                    if (responseSlots.ok) {
+                        const slots = await responseSlots.json();
+                        setAvailableSlots(slots);
+                    }
+                } catch (error) {
+                    console.error("Error al obtener disponibilidad:", error);
                 }
             }
         };
         fetchSlots();
-    }, [data.date, data.barber_id, data.barbershop_id, data.barber_service_id]);
+    }, [data.date, data.barber_id, data.barbershop_id, data.barber_service_id, store.token]);
 
     const currentServices = store.barber_services?.filter(s => {
         if (!data.barber_id) return false;
@@ -92,20 +100,22 @@ export const ApptFormOwner = () => {
     const handleSearchUser = async () => {
         if (!phoneSearch) return;
         try {
-            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/search?phone=${phoneSearch}`, {
+            const responseUser = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/search?phone=${phoneSearch}`, {
                 headers: { "Authorization": `Bearer ${store.token}` }
             });
-            if (res.ok) {
-                const user = await res.json();
+            if (responseUser.ok) {
+                const user = await responseUser.json();
                 setFoundUser(user);
                 setData(prev => ({ ...prev, user_id: user.id }));
-            } else if (res.status === 404) {
+            } else if (responseUser.status === 404) {
                 dispatch({
                     type: "set-message",
                     payload: { "type": "error", "msg": "El teléfono no se encuentra en el sistema" }
                 });
             }
-        } catch (error) { console.error(error); }
+        } catch (error) {
+            console.error("Error en búsqueda de usuario:", error);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -120,7 +130,7 @@ export const ApptFormOwner = () => {
         };
 
         try {
-            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments${isEditing ? `/${preData.id}` : ""}`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments${isEditing ? `/${preData.id}` : ""}`, {
                 method: isEditing ? "PUT" : "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -129,9 +139,9 @@ export const ApptFormOwner = () => {
                 body: JSON.stringify(payload)
             });
 
-            const responseData = await res.json();
+            const responseData = await response.json();
 
-            if (res.ok) {
+            if (response.ok) {
                 dispatch({ type: "set-appointmentInfo", payload: null });
                 dispatch({
                     type: "set-message",

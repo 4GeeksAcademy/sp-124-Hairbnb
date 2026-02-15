@@ -18,21 +18,18 @@ export const Navbar = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("role");
         localStorage.removeItem("userInfo");
-        
+
         dispatch({ type: "logout" });
-
         dispatch({
-        type: "set-message",
-        payload: { type: "success", msg: "Has cerrado sesión correctamente" }
-    });
+            type: "set-message",
+            payload: { type: "success", msg: "Has cerrado sesión correctamente" }
+        });
 
-    navigate("/");
-
-};
-    
+        navigate("/");
+    };
 
     return (
-        <nav className="navbar navbar-expand-lg navbar-light bg-light px-3">
+        <nav className="navbar navbar-expand-lg navbar-light bg-light px-3 shadow-sm">
             <div className="container-fluid">
                 <Link to="/" className="navbar-brand">
                     <img src="/Logo-HBNB-completo.png" alt="Hairbnb" width="120" />
@@ -53,16 +50,35 @@ export const Navbar = () => {
                             <Link className="nav-link" to="/">Inicio</Link>
                         </li>
 
+                        {(!store.token || store.role === "client") && (
+                            <li className="nav-item">
+                                <Link className="nav-link" to="/asociates">Nuestros asociados</Link>
+                            </li>
+                        )}
+                        {store.token == "client" && (
+                            <li className="nav-item">
+                                <Link
+                                    className="nav-link d-flex align-items-center"
+                                    to="/private/client"
+                                    state={{ activeTab: "messages" }}
+                                >
+                                    
+                                    Mensajes
+                                    {store.hasNewMessages && (
+                                        <span className="badge rounded-pill bg-danger ms-1" style={{ fontSize: "0.5rem" }}>
+                                            ●
+                                        </span>
+                                    )}
+                                </Link>
+                            </li>
+                        )}
                         {!store.token ? (
                             <>
-                                <li className="nav-item">
-                                    <Link className="nav-link" to="/asociates">Nuestros asociados</Link>
-                                </li>
                                 <li className="nav-item dropdown">
                                     <Link className="nav-link dropdown-toggle" to="#" role="button" data-bs-toggle="dropdown">
                                         Crear cuenta
                                     </Link>
-                                    <ul className="dropdown-menu dropdown-menu-end">
+                                    <ul className="dropdown-menu dropdown-menu-end shadow">
                                         <li><Link className="dropdown-item" to="/signup/client">Como cliente</Link></li>
                                         <li><Link className="dropdown-item" to="/signup/barber">Como profesional</Link></li>
                                         <li><Link className="dropdown-item" to="/signup/owner">Como dueño</Link></li>
@@ -82,20 +98,20 @@ export const Navbar = () => {
                         ) : (
                             <li className="nav-item dropdown">
                                 <Link className="nav-link dropdown-toggle" to="#" role="button" data-bs-toggle="dropdown">
-                                    Hola, {store.userInfo?.name || "Usuario"}
+                                    Hola, {store.userInfo?.name || "Administrador"}
                                 </Link>
-                                <ul className="dropdown-menu dropdown-menu-end">
+                                <ul className="dropdown-menu dropdown-menu-end shadow">
                                     <li>
                                         <Link className="dropdown-item" to={
                                             store.role === "owner" ? "/private/owner" :
                                                 store.role === "barber" ? "/private/barber" : "/private/client"
                                         }>
-                                            Tu perfil
+                                            Panel principal
                                         </Link>
                                     </li>
                                     <li>
                                         <button className="dropdown-item" onClick={handleEditProfile}>
-                                            Editar datos
+                                            Editar perfil
                                         </button>
                                     </li>
                                     <li><hr className="dropdown-divider" /></li>
