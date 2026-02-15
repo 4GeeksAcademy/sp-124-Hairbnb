@@ -18,32 +18,42 @@ export const AdminEditOwner = () => {
 
     useEffect(() => {
         const loadOwnerData = async () => {
-            if (isEditing) {
-                try {
-                    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/owners/${id}`, {
-                        method: "GET",
-                        headers: {
-                            "Authorization": `Bearer ${store.token}`
-                        }
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        setForm({
-                            name: data.name || "",
-                            email: data.email || "",
-                            phone: data.phone || "",
-                            password: "",
-                            confirmPassword: ""
-                        });
+            if (!isEditing) return;
+
+            try {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/owners/${id}`, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${store.token}`
                     }
-                } catch (error) {
-                    console.error("Error cargando datos del dueño:", error);
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setForm({
+                        name: data.name || "",
+                        email: data.email || "",
+                        phone: data.phone || "",
+                        password: "",
+                        confirmPassword: ""
+                    });
+                } else {
+                    dispatch({
+                        type: "set-message",
+                        payload: { type: "error", msg: "No se pudo cargar la información del dueño" }
+                    });
                 }
+            } catch (error) {
+                console.error("Error cargando datos del dueño:", error);
+                dispatch({
+                    type: "set-message",
+                    payload: { type: "error", msg: "Error de conexión con el servidor" }
+                });
             }
         };
 
         loadOwnerData();
-    }, [id, isEditing, store.token]);
+    }, [id, isEditing, store.token, dispatch]);
 
     const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -51,7 +61,10 @@ export const AdminEditOwner = () => {
         e.preventDefault();
 
         if (form.password !== "" && form.password !== form.confirmPassword) {
-            dispatch({ type: "set-message", payload: { type: "error", msg: "Las contraseñas no coinciden" } });
+            dispatch({
+                type: "set-message",
+                payload: { type: "error", msg: "Las contraseñas no coinciden" }
+            });
             return;
         }
 
@@ -61,7 +74,7 @@ export const AdminEditOwner = () => {
             : `${import.meta.env.VITE_BACKEND_URL}/owners`;
 
         try {
-            const res = await fetch(url, {
+            const response = await fetch(url, {
                 method: method,
                 headers: {
                     "Content-Type": "application/json",
@@ -75,9 +88,9 @@ export const AdminEditOwner = () => {
                 })
             });
 
-            const data = await res.json();
+            const data = await response.json();
 
-            if (res.ok) {
+            if (response.ok) {
                 dispatch({
                     type: "set-message",
                     payload: { type: "success", msg: isEditing ? "Dueño actualizado" : "Dueño creado" }
@@ -86,11 +99,14 @@ export const AdminEditOwner = () => {
             } else {
                 dispatch({
                     type: "set-message",
-                    payload: data.message || { type: "error", msg: "Error al procesar los datos" }
+                    payload: { type: "error", msg: data.msg || "Error al procesar los datos del dueño" }
                 });
             }
         } catch (err) {
-            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
+            dispatch({
+                type: "set-message",
+                payload: { type: "error", msg: "Error de conexión con el servidor" }
+            });
         }
     };
 

@@ -20,12 +20,14 @@ export const Asociates = () => {
   useEffect(() => {
     const fetchBarbershops = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`);
-        if (!res.ok) throw new Error("Error cargando barberías");
-        const data = await res.json();
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`);
+
+        if (!response.ok) throw new Error("Error cargando barberías");
+
+        const data = await response.json();
         setBarbershops(data);
       } catch (error) {
-        console.error(error);
+        console.error("Error al obtener las sedes:", error);
         setBarbershops([]);
       }
     };
@@ -47,20 +49,20 @@ export const Asociates = () => {
   };
 
   return (
-    <div 
-    className="container-fluid px-4" 
-    style={{ 
-      height: "calc(100vh - 160px)",
-      overflow: "hidden" 
-    }}
+    <div
+      className="container-fluid px-4"
+      style={{
+        height: "calc(100vh - 160px)",
+        overflow: "hidden"
+      }}
     >
-    <h1 className="mb-4">Todas las barberías</h1>
+      <h1 className="mb-4">Todas las barberías</h1>
       <div className="row h-100">
-        
-        <div 
-          className="col-md-7 h-100 py-4" 
-          style={{ 
-            overflowY: "auto", 
+
+        <div
+          className="col-md-7 h-100 py-4"
+          style={{
+            overflowY: "auto",
           }}
         >
           <div className="row g-3">
@@ -84,10 +86,8 @@ export const Asociates = () => {
                       <i className="fa-solid fa-location-dot me-2"></i>{barb.address}
                     </p>
                   </div>
-                  <div className="d-flex mb-3 mx-auto">
-                    <Link to={`/barbershops/${barb.id}`} className="btn btn-outline-primary disabled">
-                      Ver detalles
-                    </Link>
+                  <div className="d-flex mb-3 mx-auto gap-2">
+                    <Link to={`/barbershop/${barb.id}`}>Ver detalles</Link>
                   </div>
                 </div>
               </div>
@@ -106,10 +106,10 @@ export const Asociates = () => {
                 />
               </Autocomplete>
               <div className="flex-grow-1">
-                 <GoogleMap
+                <GoogleMap
                   mapContainerStyle={{ width: "90%", height: "90%" }}
                   center={center}
-                  zoom={12}
+                  zoom={14}
                   onLoad={(map) => setMap(map)}
                   options={{ gestureHandling: "greedy" }}
                 />

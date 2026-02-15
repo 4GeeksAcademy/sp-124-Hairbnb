@@ -19,11 +19,23 @@ export const UserForm = () => {
     const isEditing = !!data.id;
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`)
-            .then(resp => resp.json())
-            .then(data => setBarbershops(data))
-            .catch(err => console.error(err));
-    }, []);
+    const loadBarbershops = async () => {
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                setBarbershops(data);
+            } else {
+                console.error("No se pudo cargar la lista de sedes. Status:", response.status);
+            }
+        } catch (error) {
+            console.error("Error de conexión al cargar las barberías:", error);
+        }
+    };
+
+    loadBarbershops();
+}, []);
 
     useEffect(() => {
         if (store.userInfo) {
@@ -58,13 +70,13 @@ export const UserForm = () => {
         const method = isEditing ? "PUT" : "POST";
 
         try {
-            const resp = await fetch(url, {
+            const response = await fetch(url, {
                 method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data)
             });
 
-            const result = await resp.json();
+            const result = await response.json();
 
             if (result.message) {
                 dispatch({
@@ -73,7 +85,7 @@ export const UserForm = () => {
                 });
             }
 
-            if (!resp.ok) return;
+            if (!response.ok) return;
 
             dispatch({
                 type: "set-users",

@@ -23,14 +23,14 @@ export const OwnerRegister = () => {
         const loadOwnerData = async () => {
             if (isEditing && store.userInfo?.id) {
                 try {
-                    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/owners/${store.userInfo.id}`, {
+                    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/owners/${store.userInfo.id}`, {
                         method: "GET",
                         headers: {
                             "Authorization": `Bearer ${store.token}`
                         }
                     });
-                    if (res.ok) {
-                        const data = await res.json();
+                    if (response.ok) {
+                        const data = await response.json();
                         setForm({
                             name: data.name || "",
                             email: data.email || "",
@@ -77,7 +77,7 @@ export const OwnerRegister = () => {
             : `${import.meta.env.VITE_BACKEND_URL}/owners`;
 
         try {
-            const res = await fetch(url, {
+            const response = await fetch(url, {
                 method: method,
                 headers: {
                     "Content-Type": "application/json",
@@ -92,9 +92,9 @@ export const OwnerRegister = () => {
                 })
             });
 
-            const data = await res.json();
+            const data = await response.json();
 
-            if (res.ok) {
+            if (response.ok) {
                 if (isEditing) {
                     dispatch({ type: "set-userInfo", payload: data.user || { ...store.userInfo, ...form } });
 

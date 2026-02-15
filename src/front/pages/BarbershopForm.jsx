@@ -14,6 +14,7 @@ export const BarbershopForm = () => {
     name: "",
     address: "",
     phone: "",
+    barbershop_description: "",
     barbershop_image: ""
   });
 
@@ -24,6 +25,7 @@ export const BarbershopForm = () => {
         name: store.barbershopInfo.name || "",
         address: store.barbershopInfo.address || "",
         phone: store.barbershopInfo.phone || "",
+        barbershop_description: store.barbershopInfo.barbershop_description || "",
         barbershop_image: store.barbershopInfo.barbershop_image || ""
       });
     }
@@ -59,7 +61,7 @@ export const BarbershopForm = () => {
       : `${import.meta.env.VITE_BACKEND_URL}/barbershops`;
     
     try {
-      const resp = await fetch(url, {
+      const response = await fetch(url, {
         method: isEditing ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
@@ -69,11 +71,12 @@ export const BarbershopForm = () => {
           name: data.name,
           address: data.address,
           phone: data.phone,
-          barbershop_image: data.barbershop_image
+          barbershop_image: data.barbershop_image,
+          barbershop_description: data.barbershop_description
         })
       });
 
-      if (resp.ok) {
+      if (response.ok) {
         dispatch({ type: "set-message", payload: { type: "success", msg: "Guardado" } });
         navigate(-1);
       }
@@ -110,12 +113,16 @@ export const BarbershopForm = () => {
             <label className="form-label">Dirección</label>
             <input className="form-control" name="address" type="text" value={data.address} onChange={handleChange} />
           </div>
+          <div className="col-12">
+            <label className="form-label">Descripción</label>
+            <textarea className="form-control" name="barbershop_description" type="text" value={data.barbershop_description} onChange={handleChange} />
+          </div>
           <div className="col-12 text-center mb-3">
             {data.barbershop_image && (
               <img src={data.barbershop_image} alt="Preview" className="img-thumbnail mb-2" style={{ maxHeight: "200px" }} />
             )}
             <input type="file" className="form-control" onChange={handleFileChange} accept="image/*" disabled={uploading} />
-            {uploading && <small className="text-primary fw-bold">Subiendo imagen a Cloudinary...</small>}
+            {uploading && <small className="text-primary fw-bold">Subiendo imagen...</small>}
           </div>
         </div>
 

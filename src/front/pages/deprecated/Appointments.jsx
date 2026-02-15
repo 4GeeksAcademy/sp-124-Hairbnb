@@ -12,21 +12,33 @@ export const Appointments = () => {
     const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
 
     useEffect(() => {
-        fetch(`${API_URL}/barbershops`)
-            .then(res => res.json())
-            .then(data => dispatch({ type: "set-barbershops", payload: data }))
-            .catch(err => console.error("Error cargando barberías:", err));
+    const loadGlobalData = async () => {
+        try {
+            const responseShops = await fetch(`${API_URL}/barbershops`);
+            if (responseShops.ok) {
+                const shopsData = await responseShops.json();
+                dispatch({ type: "set-barbershops", payload: shopsData });
+            }
 
-        fetch(`${API_URL}/barbers`)
-            .then(res => res.json())
-            .then(data => dispatch({ type: "set-barbers", payload: data }))
-            .catch(err => console.error("Error cargando barberos:", err));
+            const responseBarbers = await fetch(`${API_URL}/barbers`);
+            if (responseBarbers.ok) {
+                const barbersData = await responseBarbers.json();
+                dispatch({ type: "set-barbers", payload: barbersData });
+            }
 
-        fetch(`${API_URL}/appointments`)
-            .then(res => res.json())
-            .then(data => dispatch({ type: "set-appointments", payload: data }))
-            .catch(err => console.error("Error cargando citas:", err));
-    }, []);
+            const responseAppointments = await fetch(`${API_URL}/appointments`);
+            if (responseAppointments.ok) {
+                const appointmentsData = await responseAppointments.json();
+                dispatch({ type: "set-appointments", payload: appointmentsData });
+            }
+
+        } catch (error) {
+            console.error("Error cargando datos globales:", error);
+        }
+    };
+
+    loadGlobalData();
+}, []);
 
     useEffect(() => {
         if (store.barbershops?.length > 0 && !barbershopId) {
@@ -43,11 +55,11 @@ export const Appointments = () => {
         if (!window.confirm("¿Deseas eliminar esta cita?")) return;
 
         try {
-            const resp = await fetch(`${API_URL}/appointments/${id}`, { method: "DELETE" });
-            const result = await resp.json();
+            const response = await fetch(`${API_URL}/appointments/${id}`, { method: "DELETE" });
+            const result = await response.json();
 
-            if (!resp.ok) {
-                dispatch({ type: "set-message", payload: result.message || { type: "error", msg: "Error al eliminar cita" } });
+            if (!response.ok) {
+                dispatch({ type: "set-message", payload: response.message || { type: "error", msg: "Error al eliminar cita" } });
                 return;
             }
 

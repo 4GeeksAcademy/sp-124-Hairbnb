@@ -6,23 +6,33 @@ export const BarberServices = () => {
     const { store, dispatch } = useGlobalReducer();
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/barbers`)
-            .then(resp => resp.json())
-            .then(data => dispatch({ type: "set-barbers", payload: data }))
-            .catch(err => console.error(err));
+    const loadMasterData = async () => {
+        try {
+            const responseBarbers = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbers`);
+            if (responseBarbers.ok) {
+                const dataBarbers = await responseBarbers.json();
+                dispatch({ type: "set-barbers", payload: dataBarbers });
+            }
 
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/services`)
-            .then(resp => resp.json())
-            .then(data => dispatch({ type: "set-services", payload: data }))
-            .catch(err => console.error(err));
+            const responseServices = await fetch(`${import.meta.env.VITE_BACKEND_URL}/services`);
+            if (responseServices.ok) {
+                const dataServices = await responseServices.json();
+                dispatch({ type: "set-services", payload: dataServices });
+            }
 
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`)
-            .then(resp => resp.json())
-            .then(data => dispatch({ type: "set-barberservices", payload: data }))
-            .catch(err => console.error(err));
-    }, []);
+            const responseBarberServ = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`);
+            if (responseBarberServ.ok) {
+                const dataBarberServ = await responseBarberServ.json();
+                dispatch({ type: "set-barberservices", payload: dataBarberServ });
+            }
 
+        } catch (error) {
+            console.error("Error cargando datos maestros:", error);
+        }
+    };
 
+    loadMasterData();
+}, []);
 
     return (
         <div className="container">

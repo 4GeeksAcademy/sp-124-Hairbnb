@@ -16,26 +16,36 @@ export const AdminEditBarbershop = () => {
 
     useEffect(() => {
         const loadBarbershopData = async () => {
-            if (isEditing) {
-                try {
-                    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops/${id}`, {
-                        headers: { "Authorization": `Bearer ${store.token}` }
+            if (!isEditing) return;
+
+            try {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops/${id}`, {
+                    headers: { "Authorization": `Bearer ${store.token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setForm({
+                        name: data.name || "",
+                        address: data.address || "",
+                        phone: data.phone || "",
                     });
-                    if (res.ok) {
-                        const data = await res.json();
-                        setForm({
-                            name: data.name || "",
-                            address: data.address || "",
-                            phone: data.phone || "",
-                        });
-                    }
-                } catch (error) {
-                    console.error("Error cargando barbería:", error);
+                } else {
+                    dispatch({
+                        type: "set-message",
+                        payload: { type: "error", msg: "No se pudo cargar la información de la barbería" }
+                    });
                 }
+            } catch (error) {
+                console.error("Error cargando barbería:", error);
+                dispatch({
+                    type: "set-message",
+                    payload: { type: "error", msg: "Error de conexión al cargar los datos" }
+                });
             }
         };
         loadBarbershopData();
-    }, [id, isEditing, store.token]);
+    }, [id, isEditing, store.token, dispatch]);
 
     const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -43,37 +53,39 @@ export const AdminEditBarbershop = () => {
         e.preventDefault();
 
         const method = isEditing ? "PUT" : "POST";
-        const url = isEditing 
+        const url = isEditing
             ? `${import.meta.env.VITE_BACKEND_URL}/barbershops/${id}`
             : `${import.meta.env.VITE_BACKEND_URL}/barbershops`;
 
         try {
-            const res = await fetch(url, {
+            const response = await fetch(url, {
                 method: method,
-                headers: { 
+                headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${store.token}`
                 },
                 body: JSON.stringify(form)
             });
 
-            const data = await res.json();
+            const data = await response.json();
 
-            if (!res.ok) {
-                dispatch({ 
-                    type: "set-message", 
-                    payload: data.message || { type: "error", msg: "Error en la barbería" } 
+            if (response.ok) {
+                dispatch({
+                    type: "set-message",
+                    payload: { type: "success", msg: isEditing ? "Barbería actualizada" : "Barbería creada" }
                 });
-                return;
+                navigate("/4dm1n1str4t10n");
+            } else {
+                dispatch({
+                    type: "set-message",
+                    payload: { type: "error", msg: data.msg || "Error al gestionar la barbería" }
+                });
             }
-
+        } catch (err) {
             dispatch({
                 type: "set-message",
-                payload: { type: "success", msg: isEditing ? "Barbería actualizada" : "Barbería creada" }
+                payload: { type: "error", msg: "Error de conexión con el servidor" }
             });
-            navigate("/4dm1n1str4t10n");
-        } catch (err) {
-            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
         }
     };
 
@@ -86,13 +98,13 @@ export const AdminEditBarbershop = () => {
             <form onSubmit={handleSubmit} className="card p-4 shadow-sm">
                 <label className="fw-bold">Nombre de la Barbería</label>
                 <input className="form-control mb-2" name="name" value={form.name} onChange={handleChange} required />
-                
+
                 <label className="fw-bold">Dirección completa</label>
                 <input className="form-control mb-2" name="address" value={form.address} onChange={handleChange} required />
-                
+
                 <label className="fw-bold">Teléfono</label>
                 <input className="form-control mb-2" name="phone" value={form.phone} onChange={handleChange} required />
-                
+
                 <div className="d-flex gap-2 mt-3">
                     <button type="button" className="btn btn-outline-secondary" onClick={() => navigate(-1)}>
                         Cancelar

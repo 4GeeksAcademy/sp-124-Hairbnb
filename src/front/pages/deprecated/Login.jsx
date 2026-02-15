@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import useGlobalReducer from "../hooks/useGlobalReducer";
+import useGlobalReducer from "../../hooks/useGlobalReducer";
 
 export const Login = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -21,18 +21,18 @@ export const Login = () => {
         }
 
         try {
-            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/login`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password })
             });
 
-            const data = await res.json();
+            const data = await response.json();
 
-            if (!res.ok) {
+            if (!response.ok) {
                 dispatch({
                     type: "set-message",
-                    payload: { type: "error", msg: data.msg || `Error ${res.status}` }
+                    payload: { type: "error", msg: data.msg || `Error ${response.status}` }
                 });
                 return;
             }

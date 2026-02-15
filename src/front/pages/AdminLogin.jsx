@@ -21,7 +21,7 @@ export const AdminLogin = () => {
         }
 
         try {
-            const res = await fetch(
+            const response = await fetch(
                 `${import.meta.env.VITE_BACKEND_URL}/login/admin`,
                 {
                     method: "POST",
@@ -30,9 +30,9 @@ export const AdminLogin = () => {
                 }
             );
 
-            const data = await res.json();
+            const data = await response.json();
 
-            if (!res.ok) {
+            if (!response.ok) {
                 dispatch({
                     type: "set-message",
                     payload: { type: "error", msg: data.msg || "Credenciales incorrectas" }

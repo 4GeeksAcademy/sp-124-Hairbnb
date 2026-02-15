@@ -55,7 +55,7 @@ export const BarberServiceForm = () => {
             : `${import.meta.env.VITE_BACKEND_URL}/barber_services`;
 
         try {
-            const resp = await fetch(url, {
+            const response = await fetch(url, {
                 method: isEditing ? "PUT" : "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -64,14 +64,11 @@ export const BarberServiceForm = () => {
                 body: JSON.stringify(formData)
             });
 
-            if (resp.ok) {
+            if (response.ok) {
                 dispatch({ type: "set-barber_serviceInfo", payload: null });
                 dispatch({ type: "set-message", payload: { type: "success", msg: `Servicio ${isEditing ? "actualizado" : "creado"} correctamente` } });
                 navigate(-1);
-            } else {
-                const errorData = await resp.json();
-                console.error("Error del servidor:", errorData);
-            }
+            } 
         } catch (error) {
             console.error("Error en la petición:", error);
         }

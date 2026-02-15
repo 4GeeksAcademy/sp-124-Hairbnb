@@ -7,8 +7,8 @@ from api.utils import generate_sitemap
 from flask_cors import CORS
 import os
 from api.utils import generate_sitemap
-from api.models import db, User, Barbershop, Owner, Barber, Schedule, BarberService, Appointment, AdminUser, BarberBarbershop
-from datetime import datetime, timedelta
+from api.models import db, User, Barbershop, Owner, Barber, Schedule, BarberService, Appointment, AdminUser, BarberBarbershop, Conversation, ChatMessage
+from datetime import datetime, timedelta, timezone
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
 from flask_cors import CORS
 
@@ -148,7 +148,9 @@ def get_admin_data(model_name):
         "barbers": Barber,
         "barber_services": BarberService,
         "schedules": Schedule,
-        "invitations": BarberBarbershop
+        "invitations": BarberBarbershop,
+        "conversations": Conversation,
+        "messages": ChatMessage
     }
 
     model = models_map.get(model_name)
@@ -348,6 +350,7 @@ def new_barbershop():
         name=data.get("name"),
         address=data.get("address"),
         phone=data.get("phone"),
+        barbershop_description=data.get("barbershop_description"),
         barbershop_image=data.get("barbershop_image"),
         owner_id=int(current_user_id)
 
@@ -391,6 +394,7 @@ def update_barbershop(barbershop_id):
     barbershop.name = data.get("name", barbershop.name)
     barbershop.address = data.get("address", barbershop.address)
     barbershop.phone = data.get("phone", barbershop.phone)
+    barbershop.barbershop_description = data.get("barbershop_description", barbershop.barbershop_description)
     barbershop.barbershop_image = data.get(
         "barbershop_image", barbershop.barbershop_image)
 
@@ -1501,6 +1505,113 @@ def get_availability():
             valid_slots.append(slot_start_dt.strftime("%H:%M"))
 
     return jsonify(valid_slots), 200
+
+
+# ENDPOINTS PARA LOS CHATS
+
+@api.route("/conversations", methods=["GET"])
+@jwt_required()
+def get_conversations():
+    current_user_id = get_jwt_identity()
+    claims = get_jwt()
+    role = claims.get("role")
+
+    query = Conversation.query
+
+    if role == "owner":
+        query = query.filter_by(owner_id=current_user_id)
+    elif role == "user" or role == "client":
+        query = query.filter_by(user_id=current_user_id)
+    else:
+        return jsonify({"msg": "Rol no autorizado para ver chats"}), 403
+
+    conversations = query.order_by(Conversation.last_message_at.desc()).all()
+    return jsonify([c.serialize() for c in conversations]), 200
+
+
+@api.route('/conversations', methods=['POST'])
+@jwt_required()
+def create_conversation():
+    current_user_id = get_jwt_identity()
+    body = request.get_json()
+    barbershop_id = body.get("barbershop_id")
+
+    if not barbershop_id:
+        return jsonify({"msg": "Falta el ID de la barbería"}), 400
+
+    barbershop = Barbershop.query.get(barbershop_id)
+    if not barbershop:
+        return jsonify({"msg": "La barbería no existe"}), 404
+
+    owner_id = barbershop.owner_id
+
+    existing_conv = Conversation.query.filter_by(
+        user_id=current_user_id, 
+        barbershop_id=barbershop_id
+    ).first()
+
+    if existing_conv:
+        return jsonify(existing_conv.serialize()), 200
+
+    new_conv = Conversation(
+        user_id=current_user_id,
+        owner_id=owner_id,
+        barbershop_id=barbershop_id
+    )
+
+    db.session.add(new_conv)
+    db.session.commit()
+
+    return jsonify(new_conv.serialize()), 201
+
+
+@api.route("/conversations/<int:conv_id>/messages", methods=["GET"])
+@jwt_required()
+def get_conversation_messages(conv_id):
+    current_user_id = str(get_jwt_identity())
+    
+    conv = Conversation.query.get(conv_id)
+    if not conv:
+        return jsonify({"msg": "Conversación no encontrada"}), 404
+
+    is_owner = str(conv.owner_id) == current_user_id
+    is_user = str(conv.user_id) == current_user_id
+
+    if not is_owner and not is_user:
+        return jsonify({"msg": "No tienes permiso para ver este chat"}), 403
+
+    return jsonify([m.serialize() for m in conv.chat_messages]), 200
+
+
+@api.route("/messages", methods=["POST"])
+@jwt_required()
+def send_message():
+    current_user_id = get_jwt_identity()
+    claims = get_jwt()
+    role = claims.get("role")
+    
+    data = request.json
+    content = data.get("content")
+    conversation_id = data.get("conversation_id")
+
+    if not content or not conversation_id:
+        return jsonify({"msg": "Faltan datos obligatorios"}), 400
+
+    new_message = ChatMessage(
+        conversation_id=conversation_id,
+        sender_id=current_user_id,
+        sender_type=role,
+        content=content
+    )
+
+    conv = Conversation.query.get(conversation_id)
+    if conv:
+        conv.last_message_at = datetime.now(timezone.utc)
+
+    db.session.add(new_message)
+    db.session.commit()
+
+    return jsonify(new_message.serialize()), 201
 
 # NO TOCAR
 

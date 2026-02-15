@@ -20,19 +20,18 @@ export const AdminEditBarberServices = () => {
     useEffect(() => {
         const initLoad = async () => {
             const headers = { "Authorization": `Bearer ${store.token}` };
-            
-            try {
-                const resBarbers = await fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/barbers`, { headers });
-                if (resBarbers.ok) setBarbers(await resBarbers.json());
-            } catch (error) {
-                console.error("Error cargando barberos:", error);
-            }
 
-            if (isEditing) {
-                try {
-                    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services/${id}`, { headers });
-                    if (res.ok) {
-                        const data = await res.json();
+            try {
+                const responseBarbers = await fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/barbers`, { headers });
+                if (responseBarbers.ok) {
+                    const barbersData = await responseBarbers.json();
+                    setBarbers(barbersData);
+                }
+
+                if (isEditing) {
+                    const responseService = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services/${id}`, { headers });
+                    if (responseService.ok) {
+                        const data = await responseService.json();
                         setForm({
                             name: data.name || "",
                             description: data.description || "",
@@ -40,14 +39,23 @@ export const AdminEditBarberServices = () => {
                             duration: data.duration || "",
                             barber_id: data.barber_id || ""
                         });
+                    } else {
+                        dispatch({
+                            type: "set-message",
+                            payload: { type: "error", msg: "No se pudo cargar el servicio" }
+                        });
                     }
-                } catch (error) {
-                    console.error("Error cargando servicio:", error);
                 }
+            } catch (error) {
+                console.error("Error en carga inicial:", error);
+                dispatch({
+                    type: "set-message",
+                    payload: { type: "error", msg: "Error de conexión con el servidor" }
+                });
             }
         };
         initLoad();
-    }, [id, isEditing, store.token]);
+    }, [id, isEditing, store.token, dispatch]);
 
     const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -57,7 +65,7 @@ export const AdminEditBarberServices = () => {
         const url = `${import.meta.env.VITE_BACKEND_URL}/barber_services${isEditing ? `/${id}` : ""}`;
 
         try {
-            const res = await fetch(url, {
+            const response = await fetch(url, {
                 method: method,
                 headers: {
                     "Content-Type": "application/json",
@@ -71,21 +79,26 @@ export const AdminEditBarberServices = () => {
                 })
             });
 
-            if (res.ok) {
+            if (response.ok) {
                 dispatch({
                     type: "set-message",
                     payload: { type: "success", msg: isEditing ? "Servicio actualizado" : "Servicio creado" }
                 });
                 navigate("/4dm1n1str4t10n");
             } else {
-                const errorData = await res.json();
-                dispatch({ type: "set-message", payload: { type: "error", msg: errorData.msg || "Error al guardar" } });
+                const errorData = await response.json();
+                dispatch({
+                    type: "set-message",
+                    payload: { type: "error", msg: errorData.msg || "Error al guardar el servicio" }
+                });
             }
         } catch (err) {
-            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
+            dispatch({
+                type: "set-message",
+                payload: { type: "error", msg: "Error de conexión con el servidor" }
+            });
         }
     };
-
     return (
         <div className="container mt-5">
             <h1 className="display-6 mb-4">{isEditing ? `Admin: editar servicio` : "Admin: nuevo servicio"}</h1>
