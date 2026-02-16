@@ -83,8 +83,19 @@ export const PrivateBarber = () => {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${store.token}` }
       });
-      if (response.ok) loadAll();
-    } catch (error) { console.error(error); }
+
+      const data = await response.json();
+
+      if (response.ok) {
+        dispatch({ type: "set-message", payload: data.message });
+        loadAll();
+      } else {
+        dispatch({ type: "set-message", payload: data.message || { type: "error", msg: "No se pudo borrar" } });
+      }
+    } catch (error) { 
+      console.error(error);
+      dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
+    }
   };
 
   const handleEditSchedule = (schedule) => {

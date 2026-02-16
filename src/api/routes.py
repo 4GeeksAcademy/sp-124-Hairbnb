@@ -11,6 +11,8 @@ from api.models import db, User, Barbershop, Owner, Barber, Schedule, BarberServ
 from datetime import datetime, timedelta, timezone
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
 from flask_cors import CORS
+from google import genai
+from google.genai import types
 
 
 api = Blueprint('api', __name__)
@@ -394,7 +396,8 @@ def update_barbershop(barbershop_id):
     barbershop.name = data.get("name", barbershop.name)
     barbershop.address = data.get("address", barbershop.address)
     barbershop.phone = data.get("phone", barbershop.phone)
-    barbershop.barbershop_description = data.get("barbershop_description", barbershop.barbershop_description)
+    barbershop.barbershop_description = data.get(
+        "barbershop_description", barbershop.barbershop_description)
     barbershop.barbershop_image = data.get(
         "barbershop_image", barbershop.barbershop_image)
 
@@ -1030,7 +1033,7 @@ def delete_schedule(schedule_id):
     if not schedule:
         return jsonify({"message": {"type": "error", "msg": "Horario no encontrado"}}), 404
 
-    if str(schedule.invitation.barber_id) != str(current_user_id):
+    if str(schedule.invitations.barber_id) != str(current_user_id):
         return jsonify({"message": {"type": "error", "msg": "No tienes permiso para borrar este horario"}}), 403
 
     db.session.delete(schedule)
@@ -1376,17 +1379,19 @@ def delete_appointment(appointment_id):
 
     return jsonify({"message": {"type": "success", "msg": "Reserva eliminada correctamente"}}), 200
 
+
 @api.route("/appointments/<int:appointment_id>/status", methods=["PUT"])
 @jwt_required()
 def change_appointment_status(appointment_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
     role = claims.get("role")
-    
+
     data = request.json
     new_status = data.get("status")
 
-    valid_statuses = ['pending', 'confirmed', 'completed', 'no_show', 'rejected']
+    valid_statuses = ['pending', 'confirmed',
+                      'completed', 'no_show', 'rejected']
     if new_status not in valid_statuses:
         return jsonify({"message": {"type": "error", "msg": "Estado no válido"}}), 400
 
@@ -1394,14 +1399,18 @@ def change_appointment_status(appointment_id):
     if not appointment:
         return jsonify({"message": {"type": "error", "msg": "Cita no encontrada"}}), 404
 
-    print(f"DEBUG: Identidad JWT: {current_user_id} (Tipo: {type(current_user_id)})")
-    print(f"DEBUG: Barber ID de la cita: {appointment.barber_id} (Tipo: {type(appointment.barber_id)})")
+    print(
+        f"DEBUG: Identidad JWT: {current_user_id} (Tipo: {type(current_user_id)})")
+    print(
+        f"DEBUG: Barber ID de la cita: {appointment.barber_id} (Tipo: {type(appointment.barber_id)})")
     print(f"DEBUG: Rol del usuario: {role}")
 
     try:
         user_id_int = int(current_user_id)
-        is_barber = (role == "barber" and int(appointment.barber_id) == user_id_int)
-        is_owner = (role == "owner" and int(appointment.barbershop.owner_id) == user_id_int)
+        is_barber = (role == "barber" and int(
+            appointment.barber_id) == user_id_int)
+        is_owner = (role == "owner" and int(
+            appointment.barbershop.owner_id) == user_id_int)
         is_admin = (role == "admin")
     except (ValueError, TypeError):
         return jsonify({"message": {"type": "error", "msg": "Error de autenticación: ID no válido"}}), 401
@@ -1419,6 +1428,7 @@ def change_appointment_status(appointment_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"message": {"type": "error", "msg": f"Error al actualizar: {str(e)}"}}), 500
+
 
 @api.route("/my-appointments", methods=["GET"])
 @jwt_required()
@@ -1546,7 +1556,7 @@ def create_conversation():
     owner_id = barbershop.owner_id
 
     existing_conv = Conversation.query.filter_by(
-        user_id=current_user_id, 
+        user_id=current_user_id,
         barbershop_id=barbershop_id
     ).first()
 
@@ -1569,7 +1579,7 @@ def create_conversation():
 @jwt_required()
 def get_conversation_messages(conv_id):
     current_user_id = str(get_jwt_identity())
-    
+
     conv = Conversation.query.get(conv_id)
     if not conv:
         return jsonify({"msg": "Conversación no encontrada"}), 404
@@ -1589,7 +1599,7 @@ def send_message():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
     role = claims.get("role")
-    
+
     data = request.json
     content = data.get("content")
     conversation_id = data.get("conversation_id")
@@ -1612,6 +1622,63 @@ def send_message():
     db.session.commit()
 
     return jsonify(new_message.serialize()), 201
+
+
+# ENDPOINTS IA
+
+
+@api.route('/chat', methods=['POST', 'OPTIONS'])
+def handle_chat():
+    if request.method == "OPTIONS":
+        return jsonify({"ok": True}), 200
+
+    try:
+        data = request.json
+        history = data.get("history", [])
+        display_name = data.get("userName", "estimado cliente")
+        is_registered = data.get("isRegistered", False)
+
+        barberias = Barbershop.query.all()
+        servicios = BarberService.query.all()
+        locales_str = ", ".join([b.name for b in barberias])
+        servicios_str = ", ".join([f"{s.name} ({s.price}€)" for s in servicios])
+
+        system_content = f"""
+        Eres el Concierge de Hairbnb.
+        CLIENTE ACTUAL: {display_name}.
+        ESTADO: {"Registrado" if is_registered else "Invitado (invitar a loguearse)"}.
+        
+        SEDES: {locales_str}.
+        SERVICIOS: {servicios_str}.
+
+        REGLAS:
+        - Máximo 2 frases.
+        - Sé amable pero directo.
+        """
+
+        client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        
+        gemini_contents = []
+        for msg in history:
+            gemini_contents.append({
+                "role": "user" if msg["role"] == "user" else "model",
+                "parts": [{"text": msg["content"]}]
+            })
+
+        response = client.models.generate_content(
+            model="gemini-3-flash-preview",
+            config={'system_instruction': system_content, 'temperature': 0.4},
+            contents=gemini_contents
+        )
+
+        return jsonify({"reply": response.text}), 200
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"reply": "Disculpe, tenemos un problema técnico."}), 200
+
+
+
 
 # NO TOCAR
 
