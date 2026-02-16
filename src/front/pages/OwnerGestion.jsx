@@ -82,7 +82,7 @@ export const OwnerGestion = () => {
         body: JSON.stringify(payload),
       });
 
-      const result = await res.json();
+      const result = await response.json();
       if (!response.ok) throw new Error(result.message?.msg || "Error enviando invitación");
 
       setInviteEmail("");

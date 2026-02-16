@@ -71,6 +71,8 @@ class Barbershop(db.Model):
             "barbershop_image": self.barbershop_image,
             "barbershop_description": self.barbershop_description
         }
+    
+    
 class Owner(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(nullable=False)

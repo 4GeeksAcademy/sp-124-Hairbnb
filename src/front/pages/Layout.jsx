@@ -3,6 +3,7 @@ import ScrollToTop from "../components/ScrollToTop"
 import { Navbar } from "../components/Navbar"
 import { Footer } from "../components/Footer"
 import { Message } from "../components/Message"
+import { Chatbot } from "../components/Chatbot"
 
 export const Layout = () => {
     return (
@@ -11,6 +12,7 @@ export const Layout = () => {
                 <Navbar />
                 <main className="content">
                     <Message />
+                    <Chatbot />
 
                     <Outlet />
                 </main>
