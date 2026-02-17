@@ -20,10 +20,22 @@ export const ServiceForm = () => {
     const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`)
-            .then(resp => resp.json())
-            .then(data => setBarbershops(data))
-            .catch(err => console.error(err));
+        const loadBarbershops = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setBarbershops(data);
+                } else {
+                    console.error("No se pudo cargar la lista de sedes. Status:", response.status);
+                }
+            } catch (error) {
+                console.error("Error de conexión al cargar las barberías:", error);
+            }
+        };
+
+        loadBarbershops();
     }, []);
 
     useEffect(() => {
@@ -70,19 +82,19 @@ export const ServiceForm = () => {
         const method = isEditing ? "PUT" : "POST";
 
         try {
-            const resp = await fetch(url, {
+            const response = await fetch(url, {
                 method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data)
             });
 
-            const result = await resp.json();
+            const result = await response.json();
 
             if (result.message) {
                 dispatch({ type: "set-message", payload: result.message });
             }
 
-            if (!resp.ok) return;
+            if (!response.ok) return;
 
             dispatch({
                 type: "set-services",
@@ -115,7 +127,7 @@ export const ServiceForm = () => {
                                     src={data.service_demo_image}
                                     alt="Preview"
                                     className="rounded shadow-sm"
-                                    style={{ width: "150px", height: "150px", objectFit: "cover"}}
+                                    style={{ width: "150px", height: "150px", objectFit: "cover" }}
                                 />
                                 <button
                                     type="button"
@@ -128,7 +140,7 @@ export const ServiceForm = () => {
                         ) : (
                             <div
                                 className="bg-light rounded d-flex align-items-center justify-content-center shadow-sm"
-                                style={{ width: "150px", height: "150px"}}
+                                style={{ width: "150px", height: "150px" }}
                             >
                                 {uploading ? (
                                     <div className="spinner-border text-primary" role="status">

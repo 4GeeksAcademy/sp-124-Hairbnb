@@ -12,7 +12,7 @@ export const PrivateOwner = () => {
       if (!store.token) return;
 
       try {
-        const res = await fetch(
+        const response = await fetch(
           `${import.meta.env.VITE_BACKEND_URL}/owners/barbershops`,
           {
             method: "GET",
@@ -23,9 +23,9 @@ export const PrivateOwner = () => {
           }
         );
 
-        if (!res.ok) throw new Error("No se pudieron cargar tus barberías");
+        if (!response.ok) throw new Error("No se pudieron cargar tus barberías");
 
-        const data = await res.json();
+        const data = await response.json();
         setBarbershops(data);
       } catch (error) {
         setBarbershops([]);
@@ -40,7 +40,7 @@ export const PrivateOwner = () => {
     if (!confirmar) return;
 
     try {
-      const resp = await fetch(
+      const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/barbershops/${id}`,
         {
           method: "DELETE",
@@ -51,7 +51,7 @@ export const PrivateOwner = () => {
         }
       );
 
-      const result = await resp.json();
+      const result = await response.json();
 
       if (result.message) {
         dispatch({
@@ -60,7 +60,7 @@ export const PrivateOwner = () => {
         });
       }
 
-      if (!resp.ok) return;
+      if (!response.ok) return;
 
       setBarbershops(barbershops.filter((b) => b.id !== id));
     } catch (error) {

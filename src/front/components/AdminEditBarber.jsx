@@ -18,93 +18,100 @@ export const AdminEditBarber = () => {
     });
 
     useEffect(() => {
-        const loadBarberData = async () => {
-            if (isEditing) {
-                try {
-                    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbers/${id}`, {
-                        method: "GET",
-                        headers: {
-                            "Authorization": `Bearer ${store.token}`
-                        }
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        setForm({
-                            name: data.name || "",
-                            email: data.email || "",
-                            phone: data.phone || "",
-                            password: "", 
-                            confirmPassword: ""
-                        });
-                    }
-                } catch (error) {
-                    console.error("Error cargando datos del barbero:", error);
-                }
-            }
-        };
-
-        loadBarberData();
-    }, [id, isEditing, store.token]);
-
-    const handleChange = e =>
-        setForm({ ...form, [e.target.name]: e.target.value });
-
-    const handleSubmit = async e => {
-        e.preventDefault();
-
-        if (form.password !== "" && form.password !== form.confirmPassword) {
-            dispatch({ 
-                type: "set-message", 
-                payload: { type: "error", msg: "Las contraseñas no coinciden" } 
-            });
-            return;
-        }
-
-        const method = isEditing ? "PUT" : "POST";
-        const url = isEditing 
-            ? `${import.meta.env.VITE_BACKEND_URL}/barbers/${id}`
-            : `${import.meta.env.VITE_BACKEND_URL}/barbers`;
+    const loadBarberData = async () => {
+        if (!isEditing) return;
 
         try {
-            const res = await fetch(url, {
-                method: method,
-                headers: { 
-                    "Content-Type": "application/json",
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbers/${id}`, {
+                method: "GET",
+                headers: {
                     "Authorization": `Bearer ${store.token}`
-                },
-                body: JSON.stringify({
-                    name: form.name,
-                    email: form.email,
-                    phone: form.phone,
-                    ...(form.password && { password: form.password })
-                })
+                }
             });
 
-            const data = await res.json();
-
-            if (!res.ok) {
+            if (response.ok) {
+                const data = await response.json();
+                setForm({
+                    name: data.name || "",
+                    email: data.email || "",
+                    phone: data.phone || "",
+                    password: "", 
+                    confirmPassword: ""
+                });
+            } else {
                 dispatch({ 
                     type: "set-message", 
-                    payload: data.message || { type: "error", msg: "Algo ha fallado" } 
+                    payload: { type: "error", msg: "No se pudo cargar la información del barbero" } 
                 });
-                return;
             }
-
-            dispatch({
-                type: "set-message",
-                payload: { type: "success", msg: isEditing ? "Barbero actualizado" : "Barbero creado" }
-            });
-            
-            navigate("/4dm1n1str4t10n");
-
-        } catch (err) {
-            dispatch({
-                type: "set-message",
-                payload: { type: "error", msg: "Error de conexión" }
+        } catch (error) {
+            console.error("Error cargando datos del barbero:", error);
+            dispatch({ 
+                type: "set-message", 
+                payload: { type: "error", msg: "Error de conexión al cargar barbero" } 
             });
         }
     };
 
+    loadBarberData();
+}, [id, isEditing, store.token, dispatch]);
+
+const handleChange = e =>
+    setForm({ ...form, [e.target.name]: e.target.value });
+
+const handleSubmit = async e => {
+    e.preventDefault();
+
+    if (form.password !== "" && form.password !== form.confirmPassword) {
+        dispatch({ 
+            type: "set-message", 
+            payload: { type: "error", msg: "Las contraseñas no coinciden" } 
+        });
+        return;
+    }
+
+    const method = isEditing ? "PUT" : "POST";
+    const url = isEditing 
+        ? `${import.meta.env.VITE_BACKEND_URL}/barbers/${id}`
+        : `${import.meta.env.VITE_BACKEND_URL}/barbers`;
+
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${store.token}`
+            },
+            body: JSON.stringify({
+                name: form.name,
+                email: form.email,
+                phone: form.phone,
+                ...(form.password && { password: form.password })
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            dispatch({
+                type: "set-message",
+                payload: { type: "success", msg: isEditing ? "Barbero actualizado" : "Barbero creado" }
+            });
+            navigate("/4dm1n1str4t10n");
+        } else {
+            dispatch({ 
+                type: "set-message", 
+                payload: { type: "error", msg: data.msg || "Algo ha fallado al guardar" } 
+            });
+        }
+
+    } catch (err) {
+        dispatch({
+            type: "set-message",
+            payload: { type: "error", msg: "Error de conexión con el servidor" }
+        });
+    }
+};
     return (
         <div className="container mt-5">
             <h1 className="display-6 mb-4">

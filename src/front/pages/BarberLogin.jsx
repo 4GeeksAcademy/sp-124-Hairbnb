@@ -21,7 +21,7 @@ export const BarberLogin = () => {
         }
 
         try {
-            const res = await fetch(
+            const response = await fetch(
                 `${import.meta.env.VITE_BACKEND_URL}/login/barber`,
                 {
                     method: "POST",
@@ -30,9 +30,9 @@ export const BarberLogin = () => {
                 }
             );
 
-            const data = await res.json();
+            const data = await response.json();
 
-            if (!res.ok) {
+            if (!response.ok) {
                 dispatch({
                     type: "set-message",
                     payload: { type: "error", msg: data.msg || "Credenciales incorrectas" }

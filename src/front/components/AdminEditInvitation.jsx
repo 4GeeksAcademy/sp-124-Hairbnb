@@ -16,18 +16,44 @@ export const AdminEditInvitation = () => {
     });
 
     useEffect(() => {
-        const loadData = async () => {
-            const headers = { "Authorization": `Bearer ${store.token}` };
+    const loadData = async () => {
+        const headers = { "Authorization": `Bearer ${store.token}` };
 
-            const [resB, resS] = await Promise.all([
-                fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/barbers`, { headers }),
-                fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/barbershops`, { headers })
-            ]);
-            if (resB.ok) setBarbers(await resB.json());
-            if (resS.ok) setShops(await resS.json());
-        };
-        loadData();
-    }, []);
+        try {
+            const responseBarbers = await fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/barbers`, { headers });
+            if (responseBarbers.ok) {
+                const barbersData = await responseBarbers.json();
+                setBarbers(barbersData);
+            } else {
+                console.error("Error al cargar barberos");
+            }
+
+            const responseShops = await fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/barbershops`, { headers });
+            if (responseShops.ok) {
+                const shopsData = await responseShops.json();
+                setShops(shopsData);
+            } else {
+                console.error("Error al cargar barberías");
+            }
+
+            if (!responseBarbers.ok || !responseShops.ok) {
+                dispatch({ 
+                    type: "set-message", 
+                    payload: { type: "error", msg: "Hubo un problema cargando los selectores" } 
+                });
+            }
+
+        } catch (error) {
+            console.error("Error de conexión:", error);
+            dispatch({ 
+                type: "set-message", 
+                payload: { type: "error", msg: "Error de conexión con el servidor" } 
+            });
+        }
+    };
+
+    loadData();
+}, [store.token, dispatch]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

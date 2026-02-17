@@ -11,7 +11,7 @@ export const AdminEditAppt = () => {
     const [phoneSearch, setPhoneSearch] = useState("");
     const [foundUser, setFoundUser] = useState(null);
     const [availableSlots, setAvailableSlots] = useState([]);
-    
+
     const [data, setData] = useState({
         user_id: "",
         barber_id: "",
@@ -25,115 +25,122 @@ export const AdminEditAppt = () => {
     useEffect(() => {
         const initLoad = async () => {
             const token = store.token;
-            
-            const resShops = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (resShops.ok) {
-                const shops = await resShops.json();
-                dispatch({ type: "set-barbershops", payload: shops });
-            }
-
-            if (isEditing) {
-                const resAppt = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments/${id}`, {
+            try {
+                const responseShops = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
-if (resAppt.ok) {
-    const appt = await resAppt.json();
-    
-    setFoundUser({
-        id: appt.user_id,
-        name: appt.user_name,
-    });
+                if (responseShops.ok) {
+                    const shops = await responseShops.json();
+                    dispatch({ type: "set-barbershops", payload: shops });
+                }
 
-    setData({
-        user_id: appt.user_id,
-        barber_id: appt.barber_id,
-        barbershop_id: appt.barbershop_id,
-        barber_service_id: appt.barber_service_id,
-        date: appt.date ? appt.date.split("T")[0] : "",
-        time: appt.date ? appt.date.split("T")[1].slice(0, 5) : "",
-        notes: appt.notes || ""
-    });
-}
+                if (isEditing) {
+                    const responseAppt = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments/${id}`, {
+                        headers: { "Authorization": `Bearer ${token}` }
+                    });
+                    if (responseAppt.ok) {
+                        const appt = await responseAppt.json();
+                        setFoundUser({ id: appt.user_id, name: appt.user_name });
+                        setData({
+                            user_id: appt.user_id,
+                            barber_id: appt.barber_id,
+                            barbershop_id: appt.barbershop_id,
+                            barber_service_id: appt.barber_service_id,
+                            date: appt.date ? appt.date.split("T")[0] : "",
+                            time: appt.date ? appt.date.split("T")[1].slice(0, 5) : "",
+                            notes: appt.notes || ""
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("Error en carga inicial:", error);
             }
         };
         initLoad();
-    }, [id, isEditing, store.token]);
+    }, [id, isEditing, store.token, dispatch]);
 
     useEffect(() => {
         if (!data.barbershop_id) return;
         const loadBarbers = async () => {
-            const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops/${data.barbershop_id}/barbers`, {
-                headers: { "Authorization": `Bearer ${store.token}` }
-            });
-            if (resp.ok) {
-                const barbersData = await resp.json();
-                dispatch({ type: "set-barbers", payload: barbersData.filter(b => b.status === "accepted") });
+            try {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops/${data.barbershop_id}/barbers`, {
+                    headers: { "Authorization": `Bearer ${store.token}` }
+                });
+                if (response.ok) {
+                    const barbersData = await response.json();
+                    dispatch({ type: "set-barbers", payload: barbersData.filter(b => b.status === "accepted") });
+                }
+            } catch (error) {
+                console.error("Error cargando barberos:", error);
             }
         };
         loadBarbers();
-    }, [data.barbershop_id]);
+    }, [data.barbershop_id, store.token, dispatch]);
 
     useEffect(() => {
         const fetchSlots = async () => {
             if (data.barber_id && data.barbershop_id && data.date && data.barber_service_id) {
-                const resp = await fetch(
-                    `${import.meta.env.VITE_BACKEND_URL}/barber_availability?barber_id=${data.barber_id}&barbershop_id=${data.barbershop_id}&date=${data.date}&service_id=${data.barber_service_id}`,
-                    { headers: { "Authorization": `Bearer ${store.token}` } }
-                );
-                if (resp.ok) setAvailableSlots(await resp.json());
+                try {
+                    const response = await fetch(
+                        `${import.meta.env.VITE_BACKEND_URL}/barber_availability?barber_id=${data.barber_id}&barbershop_id=${data.barbershop_id}&date=${data.date}&service_id=${data.barber_service_id}`,
+                        { headers: { "Authorization": `Bearer ${store.token}` } }
+                    );
+                    if (response.ok) {
+                        const slots = await response.json();
+                        setAvailableSlots(slots);
+                    }
+                } catch (error) {
+                    console.error("Error cargando slots:", error);
+                }
             }
         };
         fetchSlots();
-    }, [data.date, data.barber_id, data.barbershop_id, data.barber_service_id]);
-
-    useEffect(() => {
-        const loadServices = async () => {
-            const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`, {
-                headers: { "Authorization": `Bearer ${store.token}` }
-            });
-            if (resp.ok) dispatch({ type: "set-barber_services", payload: await resp.json() });
-        };
-        loadServices();
-    }, []);
-
-    const currentServices = store.barber_services?.filter(s => Number(s.barber_id) === Number(data.barber_id)) || [];
+    }, [data.date, data.barber_id, data.barbershop_id, data.barber_service_id, store.token]);
 
     const handleSearchUser = async () => {
         if (!phoneSearch) return;
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/search?phone=${phoneSearch}`, {
-            headers: { "Authorization": `Bearer ${store.token}` }
-        });
-        if (res.ok) {
-            const user = await res.json();
-            setFoundUser(user);
-            setData(prev => ({ ...prev, user_id: user.id }));
-        } else {
-            dispatch({ type: "set-message", payload: { type: "error", msg: "Usuario no encontrado" } });
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/search?phone=${phoneSearch}`, {
+                headers: { "Authorization": `Bearer ${store.token}` }
+            });
+            if (response.ok) {
+                const user = await response.json();
+                setFoundUser(user);
+                setData(prev => ({ ...prev, user_id: user.id }));
+            } else {
+                dispatch({ type: "set-message", payload: { type: "error", msg: "Usuario no encontrado" } });
+            }
+        } catch (error) {
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión al buscar usuario" } });
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         const payload = { ...data, date: `${data.date}T${data.time}:00` };
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments${isEditing ? `/${id}` : ""}`, {
-            method: isEditing ? "PUT" : "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${store.token}` },
-            body: JSON.stringify(payload)
-        });
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments${isEditing ? `/${id}` : ""}`, {
+                method: isEditing ? "PUT" : "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${store.token}` },
+                body: JSON.stringify(payload)
+            });
 
-        if (res.ok) {
-            dispatch({ type: "set-message", payload: { type: "success", msg: "Cita guardada correctamente" } });
-            navigate(-1);
+            if (response.ok) {
+                dispatch({ type: "set-message", payload: { type: "success", msg: "Cita guardada correctamente" } });
+                navigate(-1);
+            } else {
+                const errorData = await response.json();
+                dispatch({ type: "set-message", payload: { type: "error", msg: errorData.msg || "Error al guardar la cita" } });
+            }
+        } catch (error) {
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión con el servidor" } });
         }
     };
-
     return (
         <div className="container mt-4">
             <h3 className="mb-4 text-primary">{isEditing ? "Admin: Editar Cita" : "Admin: Nueva Cita"}</h3>
             <form onSubmit={handleSubmit} className="card p-4 shadow-sm">
-                
+
                 <div className="mb-3">
                     <label className="form-label fw-bold">Cliente</label>
                     {foundUser ? (

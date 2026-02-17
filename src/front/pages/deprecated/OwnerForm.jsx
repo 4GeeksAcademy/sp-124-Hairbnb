@@ -20,10 +20,22 @@ export const OwnerForm = () => {
     const isEditing = !!data.id;
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`)
-            .then(resp => resp.json())
-            .then(data => setBarbershops(data))
-            .catch(err => console.error(err));
+        const loadBarbershops = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setBarbershops(data);
+                } else {
+                    console.error("No se pudo obtener la lista de sedes");
+                }
+            } catch (error) {
+                console.error("Error de conexión:", error);
+            }
+        };
+
+        loadBarbershops();
     }, []);
 
     useEffect(() => {
@@ -56,13 +68,13 @@ export const OwnerForm = () => {
         const method = isEditing ? "PUT" : "POST";
 
         try {
-            const resp = await fetch(url, {
+            const response = await fetch(url, {
                 method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data)
             });
 
-            const result = await resp.json();
+            const result = await response.json();
 
             if (result.message) {
                 dispatch({ type: "set-message", payload: result.message });
@@ -70,7 +82,7 @@ export const OwnerForm = () => {
                 setTimeout(() => dispatch({ type: "set-message", payload: null }), 3000);
             }
 
-            if (!resp.ok) return;
+            if (!response.ok) return;
 
             dispatch({
                 type: "set-owners",

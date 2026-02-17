@@ -40,7 +40,7 @@ export const ScheduleForm = () => {
             ? `${import.meta.env.VITE_BACKEND_URL}/schedules/${editItem.id}`
             : `${import.meta.env.VITE_BACKEND_URL}/schedules`;
 
-        const resp = await fetch(url, {
+        const response = await fetch(url, {
             method: method,
             headers: {
                 "Content-Type": "application/json",
@@ -49,9 +49,9 @@ export const ScheduleForm = () => {
             body: JSON.stringify(formData)
         });
 
-        const data = await resp.json();
+        const data = await response.json();
 
-        if (resp.ok) {
+        if (response.ok) {
             dispatch({ type: "set-message", payload: { type: "success", msg: "Horario guardado correctamente" } });
             navigate(-1);
         } else {

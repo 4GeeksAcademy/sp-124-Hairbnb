@@ -15,7 +15,7 @@ export const ApptFormBarber = () => {
 
     const [data, setData] = useState({
         user_id: preData.user_id || "",
-        barber_id: store.userInfo?.id || "", 
+        barber_id: store.userInfo?.id || "",
         barbershop_id: preData.barbershop_id || "",
         barber_service_id: preData.barber_service_id || "",
         date: preData.date ? preData.date.split("T")[0] : "",
@@ -26,30 +26,30 @@ export const ApptFormBarber = () => {
     useEffect(() => {
         const loadServices = async () => {
             const token = store.token || localStorage.getItem("token");
-            const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`, {
+            const responseServices = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
-            if (resp.ok) {
-                const resData = await resp.json();
+            if (responseServices.ok) {
+                const resData = await responseServices.json();
                 dispatch({ type: "set-barber_services", payload: resData });
             }
         };
         loadServices();
-    }, []);
+    }, [dispatch]);
 
     useEffect(() => {
         const fetchSlots = async () => {
             if (data.barber_id && data.barbershop_id && data.date && data.barber_service_id) {
-                setAvailableSlots([]); 
-                
+                setAvailableSlots([]);
+
                 const url = `${import.meta.env.VITE_BACKEND_URL}/barber_availability?barber_id=${data.barber_id}&barbershop_id=${data.barbershop_id}&date=${data.date}&service_id=${data.barber_service_id}`;
-                
+
                 try {
-                    const resp = await fetch(url, { 
-                        headers: { "Authorization": `Bearer ${store.token}` } 
+                    const responseSlots = await fetch(url, {
+                        headers: { "Authorization": `Bearer ${store.token}` }
                     });
-                    if (resp.ok) {
-                        const slots = await resp.json();
+                    if (responseSlots.ok) {
+                        const slots = await responseSlots.json();
                         setAvailableSlots(slots);
                     }
                 } catch (error) {
@@ -58,7 +58,7 @@ export const ApptFormBarber = () => {
             }
         };
         fetchSlots();
-    }, [data.date, data.barber_id, data.barbershop_id, data.barber_service_id]);
+    }, [data.date, data.barber_id, data.barbershop_id, data.barber_service_id, store.token]);
 
     const currentServices = store.barber_services?.filter(s =>
         Number(s.barber_id) === Number(store.userInfo?.id)
@@ -67,20 +67,22 @@ export const ApptFormBarber = () => {
     const handleSearchUser = async () => {
         if (!phoneSearch) return;
         try {
-            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/search?phone=${phoneSearch}`, {
+            const responseUser = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/search?phone=${phoneSearch}`, {
                 headers: { "Authorization": `Bearer ${store.token}` }
             });
-            if (res.ok) {
-                const user = await res.json();
+            if (responseUser.ok) {
+                const user = await responseUser.json();
                 setFoundUser(user);
                 setData(prev => ({ ...prev, user_id: user.id }));
             }
-        } catch (error) { console.error(error); }
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         const payload = {
             user_id: Number(data.user_id),
             barber_id: Number(data.barber_id),
@@ -93,7 +95,7 @@ export const ApptFormBarber = () => {
         const url = `${import.meta.env.VITE_BACKEND_URL}/appointments${isEditing ? `/${preData.id}` : ""}`;
 
         try {
-            const res = await fetch(url, {
+            const response = await fetch(url, {
                 method: isEditing ? "PUT" : "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -102,16 +104,21 @@ export const ApptFormBarber = () => {
                 body: JSON.stringify(payload)
             });
 
-            const responseData = await res.json();
+            const responseData = await response.json();
 
-            if (res.ok) {
+            if (response.ok) {
                 dispatch({ type: "set-appointmentInfo", payload: null });
                 dispatch({ type: "set-message", payload: { "type": "success", "msg": "Cita guardada correctamente" } });
                 navigate(-1);
             } else {
-                dispatch({ type: "set-message", payload: { "type": "error", "msg": responseData.message?.msg || "Error al guardar" } });
+                dispatch({
+                    type: "set-message",
+                    payload: { "type": "error", "msg": responseData.message?.msg || "Error al guardar" }
+                });
             }
-        } catch (error) { console.error(error); }
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     if (store.role !== "barber") {
@@ -127,13 +134,13 @@ export const ApptFormBarber = () => {
         <div className="container mt-4">
             <h3 className="mb-4">{isEditing ? "Editar Cita" : "Nueva Cita (Barbero)"}</h3>
             <form onSubmit={handleSubmit} className="card p-4 shadow-sm border-0">
-                
+
                 <div className="mb-3">
                     <label className="form-label font-weight-bold">Cliente</label>
                     {foundUser ? (
                         <div className="d-flex justify-content-between align-items-center">
                             <span><strong>{foundUser.name} {foundUser.last_name}</strong></span>
-                            <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => {setFoundUser(null); setData({...data, user_id: ""})}}>Cambiar</button>
+                            <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => { setFoundUser(null); setData({ ...data, user_id: "" }) }}>Cambiar</button>
                         </div>
                     ) : (
                         <div className="input-group">
@@ -175,7 +182,7 @@ export const ApptFormBarber = () => {
                 <div className="row mb-4">
                     <div className="col-md-6 mb-3 mb-md-0">
                         <label className="form-label">Fecha</label>
-                        <input type="date" className="form-control" value={data.date} 
+                        <input type="date" className="form-control" value={data.date}
                             onChange={e => {
                                 setAvailableSlots([]);
                                 setData({ ...data, date: e.target.value, time: "" });

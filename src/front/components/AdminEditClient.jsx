@@ -6,7 +6,7 @@ export const AdminEditClient = () => {
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
     const { id } = useParams();
-    
+
     const isEditing = !!id;
 
     const [form, setForm] = useState({
@@ -22,34 +22,44 @@ export const AdminEditClient = () => {
 
     useEffect(() => {
         const loadClientData = async () => {
-            if (isEditing) {
-                try {
-                    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/${id}`, {
-                        method: "GET",
-                        headers: {
-                            "Authorization": `Bearer ${store.token}`
-                        }
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        setForm({
-                            name: data.name || "",
-                            last_name: data.last_name || "",
-                            email: data.email || "",
-                            phone: data.phone || "",
-                            notes: data.notes || "",
-                            password: "", 
-                            confirmPassword: ""
-                        });
+            if (!isEditing) return;
+
+            try {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/${id}`, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${store.token}`
                     }
-                } catch (error) {
-                    console.error("Error cargando datos del cliente:", error);
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setForm({
+                        name: data.name || "",
+                        last_name: data.last_name || "",
+                        email: data.email || "",
+                        phone: data.phone || "",
+                        notes: data.notes || "",
+                        password: "",
+                        confirmPassword: ""
+                    });
+                } else {
+                    dispatch({
+                        type: "set-message",
+                        payload: { type: "error", msg: "No se pudo cargar la información del cliente" }
+                    });
                 }
+            } catch (error) {
+                console.error("Error cargando datos del cliente:", error);
+                dispatch({
+                    type: "set-message",
+                    payload: { type: "error", msg: "Error de conexión al obtener datos" }
+                });
             }
         };
 
         loadClientData();
-    }, [id, isEditing, store.token]);
+    }, [id, isEditing, store.token, dispatch]);
 
     const handleChange = e =>
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -58,22 +68,22 @@ export const AdminEditClient = () => {
         e.preventDefault();
 
         if (form.password !== "" && form.password !== form.confirmPassword) {
-            dispatch({ 
-                type: "set-message", 
-                payload: { type: "error", msg: "Las contraseñas no coinciden" } 
+            dispatch({
+                type: "set-message",
+                payload: { type: "error", msg: "Las contraseñas no coinciden" }
             });
             return;
         }
 
         const method = isEditing ? "PUT" : "POST";
-        const url = isEditing 
+        const url = isEditing
             ? `${import.meta.env.VITE_BACKEND_URL}/users/${id}`
             : `${import.meta.env.VITE_BACKEND_URL}/users`;
 
         try {
-            const res = await fetch(url, {
+            const response = await fetch(url, {
                 method: method,
-                headers: { 
+                headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${store.token}`
                 },
@@ -87,27 +97,25 @@ export const AdminEditClient = () => {
                 })
             });
 
-            const data = await res.json();
+            const data = await response.json();
 
-            if (!res.ok) {
-                dispatch({ 
-                    type: "set-message", 
-                    payload: data.message || { type: "error", msg: "Error al procesar la solicitud" } 
+            if (response.ok) {
+                dispatch({
+                    type: "set-message",
+                    payload: { type: "success", msg: isEditing ? "Cliente actualizado" : "Cliente creado con éxito" }
                 });
-                return;
+                navigate("/4dm1n1str4t10n");
+            } else {
+                dispatch({
+                    type: "set-message",
+                    payload: { type: "error", msg: data.msg || "Error al procesar la solicitud" }
+                });
             }
-
-            dispatch({
-                type: "set-message",
-                payload: { type: "success", msg: isEditing ? "Cliente actualizado" : "Cliente creado con éxito" }
-            });
-            
-            navigate("/4dm1n1str4t10n");
 
         } catch (err) {
             dispatch({
                 type: "set-message",
-                payload: { type: "error", msg: "Error de conexión" }
+                payload: { type: "error", msg: "Error de conexión con el servidor" }
             });
         }
     };
@@ -121,26 +129,26 @@ export const AdminEditClient = () => {
             <form onSubmit={handleSubmit} className="card p-4 shadow-sm">
                 <label className="fw-bold">Nombre</label>
                 <input className="form-control mb-2" name="name" value={form.name} placeholder="Nombre" onChange={handleChange} required />
-                
+
                 <label className="fw-bold">Apellido</label>
                 <input className="form-control mb-2" name="last_name" value={form.last_name} placeholder="Apellido" onChange={handleChange} required />
-                
+
                 <label className="fw-bold">Email</label>
                 <input className="form-control mb-2" name="email" value={form.email} placeholder="Email" onChange={handleChange} required />
-                
+
                 <label className="fw-bold">Teléfono</label>
                 <input className="form-control mb-2" name="phone" value={form.phone} placeholder="Teléfono" onChange={handleChange} />
-                
+
                 <hr />
                 <label className="fw-bold">{isEditing ? "Nueva contraseña (dejar vacío para no cambiar)" : "Contraseña"}</label>
                 <input className="form-control mb-2" type="password" name="password" placeholder="********" onChange={handleChange} />
-                
+
                 <label className="fw-bold">Confirmar contraseña</label>
                 <input className="form-control mb-2" type="password" name="confirmPassword" placeholder="********" onChange={handleChange} />
-                
+
                 <label className="fw-bold">Notas:</label>
                 <textarea className="form-control mb-2" name="notes" value={form.notes} placeholder="Notas adicionales..." onChange={handleChange} rows="3" />
-                
+
                 <div className="d-flex gap-2 mt-3">
                     <button type="button" className="btn btn-outline-secondary" onClick={() => navigate("/4dm1n1str4t10n")}>
                         Cancelar

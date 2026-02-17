@@ -8,15 +8,27 @@ export const Services = () => {
     const { store, dispatch } = useGlobalReducer();
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`, {
-            headers: { "Authorization": `Bearer ${store.token}` }
-        })
-            .then(resp => resp.json())
-            .then(data => {
+    const loadBarberServices = async () => {
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`, {
+                headers: { "Authorization": `Bearer ${store.token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
                 dispatch({ type: "set-services", payload: data });
-            })
-            .catch(err => console.error(err));
-    }, []);
+            } else {
+                console.error("Error al cargar los servicios del barbero. Status:", response.status);
+            }
+        } catch (error) {
+            console.error("Error de red al intentar obtener los servicios:", error);
+        }
+    };
+
+    if (store.token) {
+        loadBarberServices();
+    }
+}, [dispatch, store.token]);
 
     const deleteService = async (id) => {
         const confirmar = window.confirm("¿Deseas eliminar este servicio?");

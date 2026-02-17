@@ -3,7 +3,7 @@ from typing import List
 from sqlalchemy import String, Boolean, ForeignKey
 from sqlalchemy import Time
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from datetime import time, datetime, timedelta
+from datetime import time, datetime, timedelta, timezone
 
 db = SQLAlchemy()
 
@@ -33,6 +33,7 @@ class User(db.Model):
     client_profile_image: Mapped[str] = mapped_column(String(255), nullable=True)
 
     appointments: Mapped[List["Appointment"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    conversations: Mapped[List["Conversation"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
     def serialize(self):
         return {
@@ -49,16 +50,22 @@ class User(db.Model):
 class Barbershop(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(nullable=False)
-    address: Mapped[str] = mapped_column(nullable=False)
+    address: Mapped[str] = mapped_column(nullable=True)
     phone: Mapped[str] = mapped_column(nullable=False, unique=True)
     owner_id: Mapped[int] = mapped_column(ForeignKey("owner.id"))
     barbershop_image: Mapped[str] = mapped_column(String(255), nullable=True)
+    barbershop_description: Mapped[str] = mapped_column(String(1500), nullable=True)
 
-    barbers: Mapped[List["Barber"]] = relationship(back_populates="barbershop",cascade="all, delete-orphan")
+    latitude: Mapped[float] = mapped_column(db.Float, nullable=True)
+    longitude: Mapped[float] = mapped_column(db.Float, nullable=True)
+    working_hours: Mapped[dict] = mapped_column(db.JSON, nullable=True)
+
+    barbers: Mapped[List["Barber"]] = relationship(back_populates="barbershop", cascade="all, delete-orphan")
     owner: Mapped["Owner"] = relationship(back_populates="barbershops")
     appointments: Mapped[List["Appointment"]] = relationship(back_populates="barbershop", cascade="all, delete-orphan")
     local = relationship("BarberBarbershop", back_populates="barbershop", cascade="all, delete-orphan")
-
+    conversations: Mapped[List["Conversation"]] = relationship(back_populates="barbershop", cascade="all, delete-orphan")
+    
     def serialize(self):
         return {
             "id": self.id,
@@ -66,9 +73,13 @@ class Barbershop(db.Model):
             "address": self.address,
             "phone": self.phone,
             "barbershop_image": self.barbershop_image,
+            "barbershop_description": self.barbershop_description,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "working_hours": self.working_hours
         }
-
-
+    
+    
 class Owner(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(nullable=False)
@@ -79,6 +90,7 @@ class Owner(db.Model):
 
     barbershops: Mapped[List["Barbershop"]] = relationship(
         back_populates="owner", cascade="all, delete-orphan")
+    conversations: Mapped[List["Conversation"]] = relationship(back_populates="owner", cascade="all, delete-orphan")
 
     def serialize(self):
         return {
@@ -249,5 +261,67 @@ class BarberBarbershop(db.Model):
             "barber_name": self.barber.name,
             "barbershop_name": self.barbershop.name,
             "barber_image": self.barber.barber_profile_image,
-            "ESTOY_VIVO": True
             }
+    
+
+class Conversation(db.Model):
+    __tablename__ = "conversation"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("owner.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    last_message_at: Mapped[datetime] = mapped_column(
+        default=lambda: datetime.now(timezone.utc), 
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
+    barbershop_id: Mapped[int] = mapped_column(ForeignKey("barbershop.id"), nullable=False)
+
+
+    user: Mapped["User"] = relationship(back_populates="conversations")
+    owner: Mapped["Owner"] = relationship(back_populates="conversations")
+    barbershop: Mapped["Barbershop"] = relationship(back_populates="conversations")
+
+    
+    chat_messages: Mapped[List["ChatMessage"]] = relationship(
+        back_populates="conversation", 
+        cascade="all, delete-orphan",
+        order_by="ChatMessage.timestamp"
+    )
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "owner_id": self.owner_id,
+            "user_name": self.user.name if self.user else "Usuario",
+            "owner_name": self.owner.name if self.owner else "Dueño",
+            "barbershop_name": self.barbershop.name,
+            "last_message_at": self.last_message_at.isoformat(),
+            "last_message": self.chat_messages[-1].content if self.chat_messages else None
+        }
+
+
+class ChatMessage(db.Model):
+    __tablename__ = "chat_message"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    conversation_id: Mapped[int] = mapped_column(ForeignKey("conversation.id"), nullable=False)
+    
+    sender_id: Mapped[int] = mapped_column(nullable=False) 
+    sender_type: Mapped[str] = mapped_column(String(10), nullable=False)
+    
+    content: Mapped[str] = mapped_column(String(500), nullable=False)
+    timestamp: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    is_read: Mapped[bool] = mapped_column(default=False)
+
+    conversation: Mapped["Conversation"] = relationship(back_populates="chat_messages")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "conversation_id": self.conversation_id,
+            "sender_id": self.sender_id,
+            "sender_type": self.sender_type,
+            "content": self.content,
+            "timestamp": self.timestamp.isoformat(),
+            "is_read": self.is_read
+        }

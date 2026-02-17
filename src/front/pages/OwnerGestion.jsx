@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
+import { MessagePage } from "../components/MessagesPage"
+import { Link } from "react-router-dom";
+
 
 export const OwnerGestion = () => {
   const { store, dispatch } = useGlobalReducer();
@@ -14,6 +17,16 @@ export const OwnerGestion = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [appointmentView, setAppointmentView] = useState("summary");
 
+  const dayTranslations = {
+    "Monday": "Lunes",
+    "Tuesday": "Martes",
+    "Wednesday": "Miércoles",
+    "Thursday": "Jueves",
+    "Friday": "Viernes",
+    "Saturday": "Sábado",
+    "Sunday": "Domingo"
+  };
+
   const getDayName = (dateString) => {
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const d = new Date(dateString);
@@ -22,11 +35,11 @@ export const OwnerGestion = () => {
 
   const loadBarbers = async () => {
     if (!barbershop?.id) return;
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops/${barbershop.id}/barbers`,
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops/${barbershop.id}/barbers`,
       { headers: { "Authorization": `Bearer ${store.token}` } });
 
-    if (res.ok) {
-      const data = await res.json();
+    if (response.ok) {
+      const data = await response.json();
       dispatch({ type: "set-barbers", payload: data });
       setBarbers(data.filter(b => b.status === "accepted"));
       setPending(data.filter(b => b.status === "pending"));
@@ -36,11 +49,11 @@ export const OwnerGestion = () => {
   const loadAppointments = async () => {
     if (!barbershop?.id || !store.token) return;
     try {
-      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments`, {
         headers: { "Authorization": `Bearer ${store.token}` }
       });
-      if (resp.ok) {
-        const data = await resp.json();
+      if (response.ok) {
+        const data = await response.json();
         dispatch({ type: "set-appointments", payload: data });
       }
     } catch (error) {
@@ -56,6 +69,7 @@ export const OwnerGestion = () => {
     if (!barbershop?.id || !store.token) return;
     if (activeTab === "barbers") loadBarbers();
     if (activeTab === "appointments") loadAppointments();
+
   }, [activeTab, barbershop?.id, store.token]);
 
   const handleInvite = async () => {
@@ -69,7 +83,7 @@ export const OwnerGestion = () => {
     };
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/invitations`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/invitations`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -78,8 +92,8 @@ export const OwnerGestion = () => {
         body: JSON.stringify(payload),
       });
 
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message?.msg || "Error enviando invitación");
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message?.msg || "Error enviando invitación");
 
       setInviteEmail("");
       loadBarbers();
@@ -92,11 +106,11 @@ export const OwnerGestion = () => {
   const handleDelete = async (id) => {
     if (!confirm("¿Seguro que quieres cancelar esta cita?")) return;
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments/${id}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${store.token}` }
       });
-      if (res.ok) {
+      if (response.ok) {
         const filteredApps = store.appointments.filter(a => a.id !== id);
         dispatch({ type: "set-appointments", payload: filteredApps });
         dispatch({ type: "set-message", payload: { type: "success", msg: "Cita eliminada" } });
@@ -120,11 +134,19 @@ export const OwnerGestion = () => {
     );
   }
 
-  console.log("barberos:", barbers);
   return (
     <div className="container mt-5">
-      <h1>Gestión de: {barbershop?.name}</h1>
 
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 className="mb-0">Gestión de: {barbershop?.name}</h1>
+
+        </div>
+        <Link to="/private/owner" className="btn btn-outline-secondary">
+          <i className="fa-solid fa-arrow-rotate-left me-2"></i>
+          Cambiar de barbería
+        </Link>
+      </div>
       <ul className="nav nav-tabs my-4">
         <li className="nav-item">
           <button className={`nav-link ${activeTab === "barbers" ? "active" : ""}`} onClick={() => setActiveTab("barbers")}>
@@ -134,6 +156,11 @@ export const OwnerGestion = () => {
         <li className="nav-item">
           <button className={`nav-link ${activeTab === "appointments" ? "active" : ""}`} onClick={() => setActiveTab("appointments")}>
             Citas
+          </button>
+        </li>
+        <li className="nav-item">
+          <button className={`nav-link ${activeTab === "messages" ? "active" : ""}`} onClick={() => setActiveTab("messages")}>
+            Mensajes
           </button>
         </li>
       </ul>
@@ -177,10 +204,10 @@ export const OwnerGestion = () => {
                       </div>
 
                       <div className="mt-3">
-                        <p className="small mb-2">
-                          Días de trabajo
+                        <p className="mb-2 text-secondary border-bottom pb-1">
+                          Horarios de trabajo
                         </p>
-                        <div className="d-flex flex-wrap">
+                        <div className="d-flex flex-column gap-1">
                           {b.schedules && b.schedules.length > 0 ? (
                             b.schedules
                               .sort((a, b) => {
@@ -188,15 +215,20 @@ export const OwnerGestion = () => {
                                 return order[a.day_of_week] - order[b.day_of_week];
                               })
                               .map(s => (
-                                <span
+                                <div
                                   key={s.id}
-                                  className="py-2"
+                                  className="d-flex justify-content-between py-1 px-2"
                                 >
-                                  {s.day_of_week.slice(0, 3)}: {s.start_time} - {s.end_time}
-                                </span>
+                                  <span className="fw-medium">
+                                    {dayTranslations[s.day_of_week] || s.day_of_week}:
+                                  </span>
+                                  <span className="text-muted">
+                                    {s.start_time.slice(0, 5)} - {s.end_time.slice(0, 5)}
+                                  </span>
+                                </div>
                               ))
                           ) : (
-                            <span>Sin días asignados</span>
+                            <span className="text-muted small italic">Sin días asignados</span>
                           )}
                         </div>
                       </div>
@@ -300,6 +332,11 @@ export const OwnerGestion = () => {
                 );
               })}
             </div>
+          </div>
+        )}
+        {activeTab === "messages" && (
+          <div className="messages-wrapper p-3">
+            <MessagePage />
           </div>
         )}
       </div>

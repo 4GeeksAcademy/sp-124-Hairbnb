@@ -7,23 +7,35 @@ export const Barbers = () => {
     const { store, dispatch } = useGlobalReducer();
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/barbers`)
-            .then(resp => resp.json())
-            .then(data => dispatch({ type: "set-barbers", payload: data }))
-            .catch(err => console.error(err));
-    }, []);
+    const loadBarbers = async () => {
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbers`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                dispatch({ type: "set-barbers", payload: data });
+            } else {
+                console.error("No se pudieron cargar los barberos. Status:", response.status);
+            }
+        } catch (error) {
+            console.error("Error de red al cargar barberos:", error);
+        }
+    };
+
+    loadBarbers();
+}, [dispatch]);
 
     const deleteBarber = async (id) => {
         const confirmar = window.confirm("¿Deseas eliminar este barbero?");
         if (!confirmar) return;
 
         try {
-            const resp = await fetch(
+            const response = await fetch(
                 `${import.meta.env.VITE_BACKEND_URL}/barbers/${id}`,
                 { method: "DELETE" }
             );
 
-            const result = await resp.json();
+            const result = await response.json();
 
             if (result.message) {
                 dispatch({
@@ -32,7 +44,7 @@ export const Barbers = () => {
                 });
             }
 
-            if (!resp.ok) return;
+            if (!response.ok) return;
 
             dispatch({
                 type: "set-barbers",

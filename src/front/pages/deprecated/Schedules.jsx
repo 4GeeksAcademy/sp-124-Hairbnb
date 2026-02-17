@@ -8,13 +8,23 @@ export const Schedules = () => {
     const { store, dispatch } = useGlobalReducer();
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules`)
-            .then(resp => resp.json())
-            .then(data => {
-                dispatch({ type: "set-schedules", payload: data });
-            })
-            .catch(err => console.error(err));
-    }, []);
+        const loadSchedules = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    dispatch({ type: "set-schedules", payload: data });
+                } else {
+                    console.error("Error al cargar los horarios. Status:", response.status);
+                }
+            } catch (error) {
+                console.error("Error de red al intentar obtener los horarios:", error);
+            }
+        };
+
+        loadSchedules();
+    }, [dispatch]);
 
     const deleteSchedule = async (id) => {
         const confirmar = window.confirm("¿Deseas eliminar este horario?");
