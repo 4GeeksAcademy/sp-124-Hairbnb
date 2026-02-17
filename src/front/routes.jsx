@@ -53,6 +53,7 @@ export const router = createBrowserRouter(
       <Route path="/barber_services_form" element={<BarberServiceForm />} />
       <Route path="/schedules_form" element={<ScheduleForm />} />
 
+      
       <Route path="/barber_appointment_form" element={<ApptFormBarber />} />
       <Route path="/client_appointment_form" element={<ApptFormClient />} />
       <Route path="/owner_appointment_form" element={<ApptFormOwner />} />
