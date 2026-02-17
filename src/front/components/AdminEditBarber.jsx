@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import 'react-phone-number-input/style.css';
+import PhoneInput from 'react-phone-number-input';
 
 export const AdminEditBarber = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -126,7 +128,18 @@ const handleSubmit = async e => {
                 <input className="form-control mb-2" name="email" value={form.email} placeholder="Email" onChange={handleChange} />
 
                 <label>Teléfono</label>
-                <input className="form-control mb-2" name="phone" value={form.phone} placeholder="Teléfono" onChange={handleChange} />
+                <PhoneInput
+                        international
+                        defaultCountry="ES"
+                        value={form.phone}
+                        onChange={(value) => setForm({ ...form, phone: value })}
+                        placeholder="Teléfono profesional"
+                        style={{
+                            "--PhoneInputCountrySelectArrow-display": "none",
+                            "display": "flex",
+                            "alignItems": "center"
+                        }}
+                    />
                 
                 <hr />
                 <label>{isEditing ? "Nueva contraseña (dejar vacío para no cambiar)" : "Contraseña"}</label>

@@ -102,7 +102,9 @@ export const Navbar = () => {
                                     <li>
                                         <Link className="dropdown-item" to={
                                             store.role === "owner" ? "/private/owner" :
-                                                store.role === "barber" ? "/private/barber" : "/private/client"
+                                                store.role === "barber" ? "/private/barber" : 
+                                                    store.role === "client" ? "/private/client" : 
+                                                        "/4dm1n1str4t10n"
                                         }>
                                             Panel principal
                                         </Link>

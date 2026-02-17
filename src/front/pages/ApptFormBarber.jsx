@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 
+
 export const ApptFormBarber = () => {
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { uploadToCloudinary } from "../utilities/cloudinary";
+import 'react-phone-number-input/style.css';
+import PhoneInput from 'react-phone-number-input';
 
 import { APILoader, PlacePicker } from '@googlemaps/extended-component-library/react';
 
@@ -119,7 +121,18 @@ export const BarbershopForm = () => {
 
           <div className="col-12 col-md-6">
             <label className="form-label">Teléfono</label>
-            <input className="form-control" name="phone" type="text" value={data.phone} onChange={handleChange} />
+            <PhoneInput
+                        international
+                        defaultCountry="ES"
+                        value={data.phone}
+                        onChange={(value) => setForm({ ...form, phone: value })}
+                        placeholder="Teléfono profesional"
+                        style={{
+                            "--PhoneInputCountrySelectArrow-display": "none",
+                            "display": "flex",
+                            "alignItems": "center"
+                        }}
+                    />
           </div>
 
           <div className="col-12">
