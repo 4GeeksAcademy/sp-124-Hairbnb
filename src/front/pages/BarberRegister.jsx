@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { uploadToCloudinary } from "../utilities/cloudinary";
+import 'react-phone-number-input/style.css';
+import PhoneInput from 'react-phone-number-input';
 
 export const BarberRegister = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -172,7 +174,20 @@ export const BarberRegister = () => {
                 <input className="form-control mb-2" name="email" value={form.email} placeholder="Email" onChange={handleChange} />
 
                 <label>Teléfono</label>
-                <input className="form-control mb-2" name="phone" value={form.phone} placeholder="Teléfono" onChange={handleChange} />
+                <div className="border rounded mb-2 bg-white px-2 py-1">
+                    <PhoneInput
+                        international
+                        defaultCountry="ES"
+                        value={form.phone}
+                        onChange={(value) => setForm({ ...form, phone: value })}
+                        placeholder="Teléfono profesional"
+                        style={{
+                            "--PhoneInputCountrySelectArrow-display": "none",
+                            "display": "flex",
+                            "alignItems": "center"
+                        }}
+                    />
+                </div>
 
                 <hr />
                 <label>{isEditing ? "Nueva contraseña (opcional)" : "Contraseña"}</label>

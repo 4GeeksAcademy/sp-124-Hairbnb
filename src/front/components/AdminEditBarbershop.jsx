@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { APILoader, PlacePicker } from '@googlemaps/extended-component-library/react';
+import 'react-phone-number-input/style.css';
+import PhoneInput from 'react-phone-number-input';
 
 export const AdminEditBarbershop = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -35,7 +37,7 @@ export const AdminEditBarbershop = () => {
                         phone: data.phone || "",
                         latitude: data.latitude || null,
                         longitude: data.longitude || null,
-                        working_hours: data.working_hours || form.working_hours,
+                        working_hours: data.working_hours || { "Lunes": "", "Martes": "", "Miércoles": "", "Jueves": "", "Viernes": "", "Sábado": "", "Domingo": "" },
                     });
                 } else {
                     dispatch({
@@ -52,13 +54,14 @@ export const AdminEditBarbershop = () => {
 
     const handlePlaceChange = (e) => {
         const place = e.target.value;
-        if (!place) return;
-        setForm(prev => ({
-            ...prev,
-            address: place.formattedAddress || place.displayName,
-            latitude: place.location.lat(),
-            longitude: place.location.lng()
-        }));
+        if (place && place.location) {
+            setForm(prev => ({
+                ...prev,
+                address: place.formattedAddress || place.displayName,
+                latitude: place.location.lat(),
+                longitude: place.location.lng()
+            }));
+        }
     };
 
     const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
@@ -66,8 +69,11 @@ export const AdminEditBarbershop = () => {
     const handleSubmit = async e => {
         e.preventDefault();
         
-        if (!form.latitude) {
-            dispatch({ type: "set-message", payload: { type: "error", msg: "Debes seleccionar una dirección válida del buscador" } });
+        if (!form.latitude || !form.longitude) {
+            dispatch({ 
+                type: "set-message", 
+                payload: { type: "error", msg: "Debes seleccionar una dirección de la lista de Google para obtener coordenadas." } 
+            });
             return;
         }
 
@@ -125,22 +131,26 @@ export const AdminEditBarbershop = () => {
 
                     <div className="col-md-6 mb-2">
                         <label className="fw-bold">Teléfono</label>
-                        <input className="form-control" name="phone" value={form.phone} onChange={handleChange} required />
+                        <div className="border rounded bg-white px-2 py-1" style={{ height: "38px", display: "flex", alignItems: "center" }}>
+                            <PhoneInput
+                                international
+                                defaultCountry="ES"
+                                value={form.phone}
+                                onChange={(value) => setForm({ ...form, phone: value })}
+                                placeholder="Teléfono profesional"
+                                style={{ width: "100%", "--PhoneInputCountrySelectArrow-display": "none" }}
+                            />
+                        </div>
                     </div>
                 </div>
 
                 <label className="fw-bold mt-2">Dirección (Buscador Google)</label>
                 <PlacePicker 
                     className="mb-1"
-                    ononPlaceChange={handlePlaceChange}
+                    onPlaceChange={handlePlaceChange}
                     placeholder={form.address || "Busca la calle..."}
                 />
-                {form.latitude && (
-                    <div className="mb-3">
-                        <small className="text-success fw-bold">Coordenadas fijadas: {form.latitude.toFixed(4)}, {form.longitude.toFixed(4)}</small>
-                    </div>
-                )}
-
+                
                 <label className="fw-bold mt-2">Horarios de Apertura</label>
                 <div className="row g-2 mb-3 p-2 border rounded bg-light">
                     {Object.keys(form.working_hours).map(day => (
@@ -150,7 +160,7 @@ export const AdminEditBarbershop = () => {
                                 className="form-control form-control-sm" 
                                 type="text" 
                                 placeholder="09:00-20:00"
-                                value={form.working_hours[day]} 
+                                value={form.working_hours[day] || ""} 
                                 onChange={(e) => setForm({
                                     ...form, 
                                     working_hours: {...form.working_hours, [day]: e.target.value}
