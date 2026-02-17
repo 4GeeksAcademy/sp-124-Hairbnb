@@ -96,69 +96,78 @@ export const MessagePage = () => {
         <div className="row bg-white border rounded shadow-sm mx-0 overflow-hidden" style={{ minHeight: "500px" }}>
             <div className="col-md-4 p-0 border-end" style={{ height: "500px", overflowY: "auto" }}>
                 <div className="p-3 bg-light border-bottom sticky-top">
-                    <h5 className="mb-0">Bandeja de Entrada</h5>
+                    <h5 className="mb-0 text-center">Bandeja de Entrada</h5>
                 </div>
                 <div className="list-group list-group-flush">
-                    {conversations.map(conv => (
-                        <button
-                            key={conv.id}
-                            onClick={() => setSelectedChat(conv)}
-                            className={`list-group-item list-group-item-action p-3 ${selectedChat?.id === conv.id ? "bg-primary text-white" : ""}`}
-                        >
-                            <div className="d-flex flex-column">
-                                <strong className="mb-1">
-                                    {isClient ? conv.barbershop_name : conv.user_name}
-                                </strong>
-
-                                {!isClient && (
-                                    <span className="align-self-start">
-                                        {conv.barbershop_name}
-                                    </span>
-                                )}
-                            </div>
-
-                            <div className={`small mt-1 ${selectedChat?.id === conv.id ? "text-white-50" : "text-muted"}`}>
-                                {conv.last_message || "Haz clic para chatear..."}
-                            </div>
-                        </button>
-                    ))}
+                    {conversations.length === 0 ? (
+                        <div className="p-4 text-center text-muted">
+                            
+                            Aún no hay mensajes
+                        </div>
+                    ) : (
+                        conversations.map(conv => (
+                            <button
+                                key={conv.id}
+                                onClick={() => setSelectedChat(conv)}
+                                className={`list-group-item list-group-item-action p-3 ${selectedChat?.id === conv.id ? "bg-primary text-white" : ""}`}
+                            >
+                                <div className="d-flex flex-column">
+                                    <strong className="mb-1">
+                                        {isClient ? conv.barbershop_name : conv.user_name}
+                                    </strong>
+                                    {!isClient && (
+                                        <span className="align-self-start">
+                                            {conv.barbershop_name}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className={`small mt-1 ${selectedChat?.id === conv.id ? "text-white-50" : "text-muted"}`}>
+                                    {conv.last_message || "Haz clic para chatear..."}
+                                </div>
+                            </button>
+                        ))
+                    )}
                 </div>
             </div>
 
             <div className="col-md-8 p-0 d-flex flex-column" style={{ height: "500px" }}>
                 {selectedChat ? (
                     <>
-
                         <div className="p-3 border-bottom bg-light">
-    {isClient ? (
-        <strong>{selectedChat.barbershop_name}</strong>
-    ) : (
-        <div>
-            <span className="d-block">Cliente:</span>
-            <strong>{selectedChat.user_name}</strong>
-            <span className="mx-2">|</span>
-            <span>
-                {selectedChat.barbershop_name}
-            </span>
-        </div>
-    )}
-</div>
+                            {isClient ? (
+                                <strong>{selectedChat.barbershop_name}</strong>
+                            ) : (
+                                <div>
+                                    <span className="d-block">Cliente:</span>
+                                    <strong>{selectedChat.user_name}</strong>
+                                    <span className="mx-2">|</span>
+                                    <span>{selectedChat.barbershop_name}</span>
+                                </div>
+                            )}
+                        </div>
                         <div className="p-3 flex-grow-1" style={{ overflowY: "auto" }}>
-                            {messages.map(msg => {
-                                const isMyMessage = msg.sender_type === store.role;
-                                return (
-                                    <div
-                                        key={msg.id}
-                                        className={`p-2 mb-2 border rounded ${isMyMessage ? "ms-auto bg-light border-secondary" : "me-auto bg-white"}`}
-                                        style={{ width: "fit-content", maxWidth: "80%" }}
-                                    >
-                                        <div>{msg.content}</div>
-                                        <small className="text-muted d-block text-end" style={{ fontSize: "10px" }}>
-                                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </small>
-                                    </div>
-                                );
-                            })}
+                            {messages.length === 0 ? (
+                                <div className="h-100 d-flex flex-column align-items-center justify-content-center text-muted">
+                                    <p>Aún no hay mensajes en esta conversación.</p>
+                                    <small>¡Escribe algo para comenzar!</small>
+                                </div>
+                            ) : (
+                                messages.map(msg => {
+                                    const isMyMessage = msg.sender_type === store.role;
+                                    return (
+                                        <div
+                                            key={msg.id}
+                                            className={`p-2 mb-2 border rounded ${isMyMessage ? "ms-auto bg-light border-secondary" : "me-auto bg-white"}`}
+                                            style={{ width: "fit-content", maxWidth: "80%" }}
+                                        >
+                                            <div>{msg.content}</div>
+                                            <small className="text-muted d-block text-end" style={{ fontSize: "10px" }}>
+                                                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </small>
+                                        </div>
+                                    );
+                                })
+                            )}
                             <div ref={scrollRef} />
                         </div>
                         <div className="p-3 border-top mt-auto bg-white">
@@ -175,11 +184,13 @@ export const MessagePage = () => {
                         </div>
                     </>
                 ) : (
-                    <div className="h-100 d-flex align-items-center justify-content-center text-muted">
-                        {isClient ? "Contacta con una barbería para empezar" : "Selecciona un cliente para responder"}
+                    <div className="h-100 d-flex align-items-center justify-content-center text-center p-4">
+                        <div>
+                            {isClient ? "Contacta con una barbería para empezar" : "Selecciona una conversación para responder"}
+                        </div>
                     </div>
                 )}
             </div>
         </div>
     );
-};
+}

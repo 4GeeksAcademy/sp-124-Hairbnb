@@ -348,17 +348,21 @@ def new_barbershop():
         return jsonify({"msg": "Acceso denegado: No tienes permisos"}), 403
 
     data = request.json
+    
+    if not data.get("name") or not data.get("address"):
+        return jsonify({"message": {"type": "error", "msg": "Nombre y dirección son obligatorios"}}), 400
+
     new_barbsh = Barbershop(
         name=data.get("name"),
         address=data.get("address"),
         phone=data.get("phone"),
         barbershop_description=data.get("barbershop_description"),
         barbershop_image=data.get("barbershop_image"),
+        latitude=data.get("latitude"),
+        longitude=data.get("longitude"),
+        working_hours=data.get("working_hours"),
         owner_id=int(current_user_id)
-
     )
-    if not data.get("name") or not data.get("address"):
-        return jsonify({"message": {"type": "error", "msg": "Nombre y dirección son obligatorios"}}), 400
 
     db.session.add(new_barbsh)
     db.session.commit()
@@ -393,17 +397,19 @@ def update_barbershop(barbershop_id):
         return jsonify({"msg": "Esta barbería no te pertenece"}), 403
 
     data = request.json
+    
     barbershop.name = data.get("name", barbershop.name)
     barbershop.address = data.get("address", barbershop.address)
     barbershop.phone = data.get("phone", barbershop.phone)
-    barbershop.barbershop_description = data.get(
-        "barbershop_description", barbershop.barbershop_description)
-    barbershop.barbershop_image = data.get(
-        "barbershop_image", barbershop.barbershop_image)
+    barbershop.barbershop_description = data.get("barbershop_description", barbershop.barbershop_description)
+    barbershop.barbershop_image = data.get("barbershop_image", barbershop.barbershop_image)
+    
+    barbershop.latitude = data.get("latitude", barbershop.latitude)
+    barbershop.longitude = data.get("longitude", barbershop.longitude)
+    barbershop.working_hours = data.get("working_hours", barbershop.working_hours)
 
     db.session.commit()
     return jsonify({"message": {"type": "success", "msg": f"Barberia {barbershop.name} actualizada"}}), 200
-
 
 @api.route("/barbershops/<int:shop_id>/barbers", methods=["GET"])
 @jwt_required()

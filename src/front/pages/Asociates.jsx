@@ -1,126 +1,210 @@
-import { useEffect, useState, useRef } from "react";
-import { Link } from "react-router-dom";
-import { GoogleMap, useJsApiLoader, Autocomplete } from "@react-google-maps/api";
-import defaultImage from "../../../public/DefaultImage.png";
-
-const libraries = ["places"];
-const center = { lat: 41.5033, lng: -5.7556 };
+import React, { useState, useEffect } from 'react';
+import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps';
+import { BarbershopDetails } from '../components/BarbershopDetails';
+import { useNavigate } from 'react-router-dom'; 
+import useGlobalReducer from '../hooks/useGlobalReducer';
+import noAvailable from '../../../public/DefaultImage.png'
 
 export const Asociates = () => {
-  const [barbershops, setBarbershops] = useState([]);
-  const [map, setMap] = useState(null);
-  const autocompleteRef = useRef(null);
+    const { store, dispatch } = useGlobalReducer(); 
+    const navigate = useNavigate();
+    const [barbershops, setBarbershops] = useState([]);
+    const [selectedId, setSelectedId] = useState(null);
+    const [viewDetailId, setViewDetailId] = useState(null);
+    const [mapCenter, setMapCenter] = useState({ lat: 41.503, lng: -5.741 });
 
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    libraries
-  });
+    
+    useEffect(() => {
+        const loadBarbershops = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setBarbershops(data);
+                }
+            } catch (error) {
+                console.error("Error cargando barberías:", error);
+            }
+        };
+        loadBarbershops();
+    }, []);
 
-  useEffect(() => {
-    const fetchBarbershops = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barbershops`);
+    const handleSelectBarber = (barbershops) => {
+        const lat = Number(barbershops.latitude);
+        const lng = Number(barbershops.longitude);
 
-        if (!response.ok) throw new Error("Error cargando barberías");
-
-        const data = await response.json();
-        setBarbershops(data);
-      } catch (error) {
-        console.error("Error al obtener las sedes:", error);
-        setBarbershops([]);
-      }
+        if (!isNaN(lat) && !isNaN(lng)) {
+            setSelectedId(barbershops.id);
+            setMapCenter({ lat, lng });
+        }
     };
-    fetchBarbershops();
-  }, []);
 
-  const onLoadAutocomplete = (autocomplete) => {
-    autocompleteRef.current = autocomplete;
-  };
+    const handleContact = async (barbershopId) => { 
+        if (!store.token) {
+            dispatch({
+                type: "set-message",
+                payload: { type: "danger", msg: "Debes iniciar sesión para contactar" }
+            });
+            return navigate("/login/client");
+        }
 
-  const onPlaceChanged = () => {
-    if (autocompleteRef.current !== null) {
-      const place = autocompleteRef.current.getPlace();
-      if (place.geometry) {
-        map.panTo(place.geometry.location);
-        map.setZoom(18);
-      }
-    }
-  };
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/conversations`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${store.token}`
+                },
+                body: JSON.stringify({
+                    barbershop_id: barbershopId
+                })
+            });
 
-  return (
-    <div
-      className="container-fluid px-4"
-      style={{
-        height: "calc(100vh - 160px)",
-        overflow: "hidden"
-      }}
-    >
-      <h1 className="mb-4">Todas las barberías</h1>
-      <div className="row h-100">
+            const data = await response.json();
+            if (response.ok) {
+                navigate("/private/client", { state: { activeChatId: data.id } });
+                dispatch({
+                    type: "set-message",
+                    payload: { type: "success", msg: "Conversación iniciada." }
+                });
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    };
 
-        <div
-          className="col-md-7 h-100 py-4"
-          style={{
-            overflowY: "auto",
-          }}
-        >
-          <div className="row g-3">
-            {barbershops.length === 0 && (
-              <p className="text-muted">No hay barberías registradas</p>
-            )}
 
-            {barbershops.map((barb) => (
-              <div className="col-12 col-lg-6" key={barb.id}>
-                <div className="card h-100 shadow-sm">
-                  <img
-                    src={barb.barbershop_image || defaultImage}
-                    className="card-img-top"
-                    style={{ height: "150px", objectFit: "cover", width: "100%" }}
-                    alt={`Imagen de ${barb.name}`}
-                  />
-                  <div className="card-body">
-                    <h5 className="card-title">{barb.name}</h5>
-                    <p className="card-text">
-                      <i className="fa-solid fa-phone me-2"></i>{barb.phone}<br />
-                      <i className="fa-solid fa-location-dot me-2"></i>{barb.address}
-                    </p>
-                  </div>
-                  <div className="d-flex mb-3 mx-auto gap-2">
-                    <Link to={`/barbershop/${barb.id}`}>Ver detalles</Link>
-                  </div>
+
+
+    return (
+        <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+            <div className="container-fluid p-0" style={{ height: 'calc(100vh - 65px)', display: 'flex', overflow: 'hidden' }}>
+
+                <div className="bg-white border-end shadow-sm" style={{ width: '40%', overflowY: 'auto', zIndex: 10 }}>
+                    <div className="p-4">
+                        <h2 className="h4 fw-bold mb-4">Barberías disponibles</h2>
+
+                        {barbershops.length === 0 && (
+                            <div className="text-center py-5">
+                                <div className="spinner-border text-primary" role="status"></div>
+                                <p className="mt-2 text-muted">Buscando locales...</p>
+                            </div>
+                        )}
+
+                        {barbershops.map(barber => (
+                            <div
+                                key={barber.id}
+                                className={`card mb-3 border-2 ${selectedId === barber.id ? 'border-dark' : 'border-light'}`}
+                                onClick={() => handleSelectBarber(barber)}
+                            >
+                                <div className="row g-0" style={{ maxHeight: '150px', overflow: 'hidden', objectFit: 'cover' }} >
+                                    <div className="col-4">
+                                        <img
+                                            src={barber.barbershop_image || noAvailable}
+                                            className="img-fluid contain"
+                                            alt={barber.name}
+                                        />
+                                    </div>
+                                    <div className="col-8">
+                                        <div className="card-body p-3">
+                                            <h5 className="card-title h6 mb-1">{barber.name}</h5>
+                                            <p className="mb-2">
+                                                <i className="fa-solid fa-location-dot"></i> {barber.address}
+                                            </p>
+                                            <div className="d-flex justify-content-between align-items-center mt-3">
+                                                <span>
+                                                    <i className="fa-solid fa-phone"></i> {barber.phone}
+                                                </span>
+                                                <button
+                                                    className="btn btn-primary btn-sm px-3 shadow-sm"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setViewDetailId(barber.id);
+                                                    }}
+                                                >
+                                                    Más detalles
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        <div className="col-md-5 h-100 py-4 d-flex flex-column">
-          {isLoaded ? (
-            <>
-              <Autocomplete onLoad={onLoadAutocomplete} onPlaceChanged={onPlaceChanged}>
-                <input
-                  type="text"
-                  placeholder="Buscar ubicación..."
-                  className="form-control mb-2"
-                />
-              </Autocomplete>
-              <div className="flex-grow-1">
-                <GoogleMap
-                  mapContainerStyle={{ width: "90%", height: "90%" }}
-                  center={center}
-                  zoom={14}
-                  onLoad={(map) => setMap(map)}
-                  options={{ gestureHandling: "greedy" }}
-                />
-              </div>
-            </>
-          ) : (
-            <p>Cargando mapa...</p>
-          )}
-        </div>
+                <div className="flex-grow-1 position-relative">
+                    <Map
+                        defaultCenter={mapCenter}
+                        defaultZoom={15}
+                        mapId="4f33f0e7f6ab915e"
+                        disableDefaultUI={false}
+                        gestureHandling={'greedy'}
+                    >
+                        {barbershops.map(barber => {
+                            const lat = Number(barber.latitude);
+                            const lng = Number(barber.longitude);
+                            if (isNaN(lat) || isNaN(lng)) return null;
 
-      </div>
-    </div>
-  );
+                            return (
+                                <AdvancedMarker
+                                    key={barber.id}
+                                    position={{ lat, lng }}
+                                    onClick={() => handleSelectBarber(barber)}
+                                >
+                                    <Pin
+                                        background={selectedId === barber.id ? '#e42828' : '#999999'}
+                                        glyphColor={'#fff'}
+                                        borderColor={'#000000'}
+                                        scale={selectedId === barber.id ? 1.3 : 1}
+                                    />
+                                </AdvancedMarker>
+                            );
+                        })}
+                    </Map>
+
+                    {viewDetailId && (
+                        
+                        <div className="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+                            style={{ zIndex: 999, backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+
+                            <div className="bg-white p-4 position-relative shadow-lg rounded"
+                                style={{ width: '90%', maxWidth: '500px', maxHeight: '85vh', overflowY: 'auto' }}>
+
+                                <button className="btn-close position-absolute top-0 end-0 m-3" onClick={() => setViewDetailId(null)}></button>
+
+                                {(() => {
+                                    const barber = barbershops.find(b => b.id === viewDetailId);
+                                    if (!barber) return null;
+
+                                    return (
+                                        <>
+                                            <img src={barber.barbershop_image || noAvailable} className="img-fluid rounded mb-3" alt={barber.name} />
+                                            <h3 className="h4 fw-bold">{barber.name}</h3>
+                                            <p className="text-muted"><i className="fa-solid fa-location-dot me-2"></i>{barber.address}</p>
+                                            <hr />
+                                            <p><strong>Teléfono:</strong> {barber.phone}</p>
+                                            <p><strong>Descripción:</strong> {barber.barbershop_description || "Sin descripción disponible."}</p>
+
+                                            {store.token && store.role === "client" && (
+                                                <div className="d-grid gap-2 mt-4">
+                                                    <button
+                                                        className="btn btn-primary btn-lg"
+                                                        onClick={() => handleContact(barber.id)}
+                                                    >
+                                                        <i className="fa-regular fa-paper-plane me-2"></i>
+                                                        Contactar ahora
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </>
+                                    );
+                                })()}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </APIProvider>
+    );
 };

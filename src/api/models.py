@@ -50,13 +50,17 @@ class User(db.Model):
 class Barbershop(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(nullable=False)
-    address: Mapped[str] = mapped_column(nullable=False)
+    address: Mapped[str] = mapped_column(nullable=True)
     phone: Mapped[str] = mapped_column(nullable=False, unique=True)
     owner_id: Mapped[int] = mapped_column(ForeignKey("owner.id"))
     barbershop_image: Mapped[str] = mapped_column(String(255), nullable=True)
     barbershop_description: Mapped[str] = mapped_column(String(1500), nullable=True)
 
-    barbers: Mapped[List["Barber"]] = relationship(back_populates="barbershop",cascade="all, delete-orphan")
+    latitude: Mapped[float] = mapped_column(db.Float, nullable=True)
+    longitude: Mapped[float] = mapped_column(db.Float, nullable=True)
+    working_hours: Mapped[dict] = mapped_column(db.JSON, nullable=True)
+
+    barbers: Mapped[List["Barber"]] = relationship(back_populates="barbershop", cascade="all, delete-orphan")
     owner: Mapped["Owner"] = relationship(back_populates="barbershops")
     appointments: Mapped[List["Appointment"]] = relationship(back_populates="barbershop", cascade="all, delete-orphan")
     local = relationship("BarberBarbershop", back_populates="barbershop", cascade="all, delete-orphan")
@@ -69,7 +73,10 @@ class Barbershop(db.Model):
             "address": self.address,
             "phone": self.phone,
             "barbershop_image": self.barbershop_image,
-            "barbershop_description": self.barbershop_description
+            "barbershop_description": self.barbershop_description,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "working_hours": self.working_hours
         }
     
     

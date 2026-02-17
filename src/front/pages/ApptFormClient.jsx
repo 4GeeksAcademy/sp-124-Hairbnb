@@ -1,22 +1,25 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 
 export const ApptFormClient = () => {
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const editData = location.state?.editAppt;
+    const isEditing = !!editData;
 
     const currentUser = store.userInfo || JSON.parse(localStorage.getItem("userInfo"));
-
     const [availableSlots, setAvailableSlots] = useState([]);
 
     const [data, setData] = useState({
-        barbershop_id: "",
-        barber_id: "",
-        barber_service_id: "",
-        date: "",
-        time: "",
-        notes: ""
+        barbershop_id: editData ? editData.barbershop_id : "",
+        barber_id: editData ? editData.barber_id : "",
+        barber_service_id: editData ? editData.barber_service_id : "",
+        date: editData ? editData.date.split("T")[0] : "",
+        time: editData ? editData.time || "" : "",
+        notes: editData ? editData.notes || "" : ""
     });
 
     useEffect(() => {
@@ -36,7 +39,6 @@ export const ApptFormClient = () => {
                     const servicesData = await responseServices.json();
                     dispatch({ type: "set-barber_services", payload: servicesData });
                 }
-
             } catch (error) {
                 console.error("Error inicializando datos de reserva:", error);
             }
@@ -67,8 +69,6 @@ export const ApptFormClient = () => {
     useEffect(() => {
         const fetchSlots = async () => {
             if (data.barber_id && data.barbershop_id && data.date && data.barber_service_id) {
-                setAvailableSlots([]);
-
                 const url = `${import.meta.env.VITE_BACKEND_URL}/barber_availability?barber_id=${data.barber_id}&barbershop_id=${data.barbershop_id}&date=${data.date}&service_id=${data.barber_service_id}`;
 
                 try {
@@ -76,7 +76,11 @@ export const ApptFormClient = () => {
                         headers: { "Authorization": `Bearer ${store.token}` }
                     });
                     if (responseSlots.ok) {
-                        const slots = await responseSlots.json();
+                        let slots = await responseSlots.json();
+                        if (isEditing && data.date === editData.date.split("T")[0] && !slots.includes(data.time)) {
+                            slots.push(data.time);
+                            slots.sort();
+                        }
                         setAvailableSlots(slots);
                     }
                 } catch (error) {
@@ -112,9 +116,13 @@ export const ApptFormClient = () => {
             notes: data.notes || ""
         };
 
+        const url = isEditing 
+            ? `${import.meta.env.VITE_BACKEND_URL}/appointments/${editData.id}`
+            : `${import.meta.env.VITE_BACKEND_URL}/appointments`;
+
         try {
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments`, {
-                method: "POST",
+            const response = await fetch(url, {
+                method: isEditing ? "PUT" : "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${store.token}`
@@ -125,19 +133,22 @@ export const ApptFormClient = () => {
             const responseData = await response.json();
 
             if (response.ok) {
-                dispatch({ type: "set-message", payload: { "type": "success", "msg": "¡Cita reservada con éxito!" } });
-                navigate(-1);
+                dispatch({ 
+                    type: "set-message", 
+                    payload: { "type": "success", "msg": isEditing ? "¡Cita actualizada!" : "¡Cita reservada con éxito!" } 
+                });
+                navigate("/private/client");
             } else {
                 dispatch({
                     type: "set-message",
-                    payload: { "type": "error", "msg": responseData.message?.msg || "Error en la reserva" }
+                    payload: { "type": "error", "msg": responseData.msg || "Error en la operación" }
                 });
             }
         } catch (error) {
-            console.error("Error en la petición de reserva:", error);
+            console.error("Error en la petición:", error);
         }
     };
-    
+
     if (store.role !== "client") {
         return (
             <div className="container mt-4">
@@ -149,7 +160,7 @@ export const ApptFormClient = () => {
 
     return (
         <div className="container mt-4">
-            <h2 className="text-center mb-4">Reserva tu Cita</h2>
+            <h2 className="text-center mb-4">{isEditing ? "Modificar mi Cita" : "Reserva tu Cita"}</h2>
             <form onSubmit={handleSubmit} className="card p-4 shadow-sm border-0">
 
                 <div className="mb-3 alert alert-light border">
@@ -214,12 +225,15 @@ export const ApptFormClient = () => {
                     <textarea className="form-control" rows="2" value={data.notes}
                         onChange={e => setData({ ...data, notes: e.target.value })} placeholder="¿Alguna instrucción especial?"></textarea>
                 </div>
-                <button type="button" className="btn btn-outline-secondary" onClick={() => navigate(-1)}>
-                    Cancelar
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={!data.time}>
-                    Confirmar mi Reserva
-                </button>
+                
+                <div className="d-flex justify-content-between">
+                    <button type="button" className="btn btn-outline-secondary" onClick={() => navigate(-1)}>
+                        Cancelar
+                    </button>
+                    <button type="submit" className="btn btn-primary" disabled={!data.time}>
+                        {isEditing ? "Guardar Cambios" : "Confirmar mi Reserva"}
+                    </button>
+                </div>
             </form>
         </div>
     );

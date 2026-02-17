@@ -5,7 +5,7 @@ import { MessagePage } from "../components/MessagesPage.jsx";
 import { useLocation } from "react-router-dom";
 
 export const PrivateClient = () => {
-    const { store } = useGlobalReducer();
+    const { store, dispatch } = useGlobalReducer();
     const [appointments, setAppointments] = useState([]);
     const [activeTab, setActiveTab] = useState("appointments");
     const navigate = useNavigate();
@@ -41,6 +41,38 @@ export const PrivateClient = () => {
         if (store.token) fetchAppts();
     }, [store.token]);
 
+
+    const handleCancelAppointment = async (apptId) => {
+        if (!confirm("¿Estás seguro de que deseas cancelar esta cita?")) return;
+
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments/${apptId}`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${store.token}` }
+            });
+
+            if (response.ok) {
+                setAppointments(appointments.filter(a => a.id !== apptId));
+
+                dispatch({
+                    type: "set-message",
+                    payload: { type: "success", msg: "Cita cancelada correctamente." }
+                });
+            } else {
+                dispatch({
+                    type: "set-message",
+                    payload: { type: "danger", msg: "Error al intentar cancelar la cita." }
+                });
+            }
+        } catch (err) {
+            console.error("Error al cancelar:", err);
+            dispatch({
+                type: "set-message",
+                payload: { type: "danger", msg: "Error de conexión con el servidor." }
+            });
+        }
+    };
+
     if (store.role !== "client") {
         return (
             <div className="container mt-4 text-center">
@@ -58,23 +90,23 @@ export const PrivateClient = () => {
                     <h2 className="mb-0">HOLA, {store.userInfo?.name.toUpperCase()}</h2>
                     <p className="text-muted">Gestiona tus citas y mensajes desde aquí</p>
                 </div>
-                <button className="btn btn-dark px-4 shadow-sm" onClick={() => navigate("/client_appointment_form")}>
-                    RESERVAR NUEVA CITA
+                <button className="btn btn-outline-secondary px-4" onClick={() => navigate("/client_appointment_form")}>
+                    Nueva cita
                 </button>
             </div>
 
             <ul className="nav nav-tabs mb-4">
                 <li className="nav-item">
-                    <button 
-                        className={`nav-link ${activeTab === "appointments" ? "active fw-bold" : "text-muted"}`} 
+                    <button
+                        className={`nav-link ${activeTab === "appointments" ? "active fw-bold" : "text-muted"}`}
                         onClick={() => setActiveTab("appointments")}
                     >
                         Mis Citas
                     </button>
                 </li>
                 <li className="nav-item">
-                    <button 
-                        className={`nav-link ${activeTab === "messages" ? "active fw-bold" : "text-muted"}`} 
+                    <button
+                        className={`nav-link ${activeTab === "messages" ? "active fw-bold" : "text-muted"}`}
                         onClick={() => setActiveTab("messages")}
                     >
                         Mensajes
@@ -108,6 +140,22 @@ export const PrivateClient = () => {
                                                 {appt.status.toUpperCase()}
                                             </span>
                                             <div className="mt-1 fw-bold fs-5">{appt.price} EUR</div>
+                                            <div className="mt-3 d-flex justify-content-md-end gap-2">
+                                                <button
+                                                    className="btn btn-sm btn-outline-primary"
+                                                    title="Editar cita"
+                                                    onClick={() => navigate("/client_appointment_form", { state: { editAppt: appt } })}
+                                                >
+                                                    <i className="fa-solid fa-pen-to-square"></i>
+                                                </button>
+                                                <button
+                                                    className="btn btn-sm btn-outline-danger"
+                                                    title="Cancelar cita"
+                                                    onClick={() => handleCancelAppointment(appt.id)}
+                                                >
+                                                    <i className="fa-solid fa-trash-can"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

@@ -17,6 +17,16 @@ export const OwnerGestion = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [appointmentView, setAppointmentView] = useState("summary");
 
+  const dayTranslations = {
+    "Monday": "Lunes",
+    "Tuesday": "Martes",
+    "Wednesday": "Miércoles",
+    "Thursday": "Jueves",
+    "Friday": "Viernes",
+    "Saturday": "Sábado",
+    "Sunday": "Domingo"
+  };
+
   const getDayName = (dateString) => {
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const d = new Date(dateString);
@@ -126,7 +136,7 @@ export const OwnerGestion = () => {
 
   return (
     <div className="container mt-5">
-      
+
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h1 className="mb-0">Gestión de: {barbershop?.name}</h1>
@@ -194,10 +204,10 @@ export const OwnerGestion = () => {
                       </div>
 
                       <div className="mt-3">
-                        <p className="small mb-2">
-                          Días de trabajo
+                        <p className="mb-2 text-secondary border-bottom pb-1">
+                          Horarios de trabajo
                         </p>
-                        <div className="d-flex flex-wrap">
+                        <div className="d-flex flex-column gap-1">
                           {b.schedules && b.schedules.length > 0 ? (
                             b.schedules
                               .sort((a, b) => {
@@ -205,15 +215,20 @@ export const OwnerGestion = () => {
                                 return order[a.day_of_week] - order[b.day_of_week];
                               })
                               .map(s => (
-                                <span
+                                <div
                                   key={s.id}
-                                  className="py-2"
+                                  className="d-flex justify-content-between py-1 px-2"
                                 >
-                                  {s.day_of_week.slice(0, 3)}: {s.start_time} - {s.end_time}
-                                </span>
+                                  <span className="fw-medium">
+                                    {dayTranslations[s.day_of_week] || s.day_of_week}:
+                                  </span>
+                                  <span className="text-muted">
+                                    {s.start_time.slice(0, 5)} - {s.end_time.slice(0, 5)}
+                                  </span>
+                                </div>
                               ))
                           ) : (
-                            <span>Sin días asignados</span>
+                            <span className="text-muted small italic">Sin días asignados</span>
                           )}
                         </div>
                       </div>

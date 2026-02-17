@@ -49,12 +49,10 @@ export const Navbar = () => {
                         <li className="nav-item">
                             <Link className="nav-link" to="/">Inicio</Link>
                         </li>
+                        <li className="nav-item">
+                            <Link className="nav-link" to="/asociates">Nuestros asociados</Link>
+                        </li>
 
-                        {(!store.token || store.role === "client") && (
-                            <li className="nav-item">
-                                <Link className="nav-link" to="/asociates">Nuestros asociados</Link>
-                            </li>
-                        )}
                         {store.token == "client" && (
                             <li className="nav-item">
                                 <Link
@@ -62,7 +60,7 @@ export const Navbar = () => {
                                     to="/private/client"
                                     state={{ activeTab: "messages" }}
                                 >
-                                    
+
                                     Mensajes
                                     {store.hasNewMessages && (
                                         <span className="badge rounded-pill bg-danger ms-1" style={{ fontSize: "0.5rem" }}>
