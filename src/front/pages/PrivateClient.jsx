@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { MessagePage } from "../components/MessagesPage.jsx";
 import { useLocation } from "react-router-dom";
+import { AIHair } from "./AIHair.jsx";
 
 export const PrivateClient = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -112,9 +113,18 @@ export const PrivateClient = () => {
                         Mensajes
                     </button>
                 </li>
+                <li className="nav-item">
+                    <button
+                        className={`nav-link ${activeTab === "ai_testing" ? "active fw-bold text-primary" : "text-muted"}`}
+                        onClick={() => setActiveTab("ai_testing")}
+                    >
+
+                        Probador de peinados
+                    </button>
+                </li>
             </ul>
 
-            {activeTab === "appointments" ? (
+            {activeTab === "appointments" && (
                 <div className="bg-white shadow-sm border rounded p-4">
                     <h5 className="mb-4 border-bottom pb-2">PRÓXIMAS CITAS</h5>
                     <div className="list-group list-group-flush">
@@ -168,8 +178,15 @@ export const PrivateClient = () => {
                         )}
                     </div>
                 </div>
-            ) : (
+            )}
+            {activeTab === "messages" && (
                 <MessagePage />
+            )}
+
+            {activeTab === "ai_testing" && (
+                <div className="animate__animated animate__fadeIn">
+                    <AIHair />
+                </div>
             )}
         </div>
     );

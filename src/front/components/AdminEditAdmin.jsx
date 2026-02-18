@@ -17,7 +17,7 @@ export const AdminEditAdmin = () => {
 
     useEffect(() => {
         const loadAdminData = async () => {
-            if (isEditing) {
+            if (isEditing && store.token) {
                 try {
                     const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/admins/${id}`, {
                         headers: { "Authorization": `Bearer ${store.token}` }
@@ -47,6 +47,7 @@ export const AdminEditAdmin = () => {
     const handleSubmit = async e => {
         e.preventDefault();
 
+        
         if (form.password !== form.confirmPassword) {
             dispatch({ type: "set-message", payload: { type: "error", msg: "Las contraseñas no coinciden" } });
             return;
@@ -83,6 +84,10 @@ export const AdminEditAdmin = () => {
             dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
         }
     };
+
+    if (store.role !== "admin") {
+        return <div className="container mt-5 text-center"><h3>Acceso restringido</h3></div>;
+    }
 
     return (
         <div className="container mt-5">

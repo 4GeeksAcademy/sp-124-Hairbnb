@@ -69,11 +69,13 @@ export const AdminEditClient = () => {
     const handleSubmit = async e => {
         e.preventDefault();
 
-        if (form.password !== "" && form.password !== form.confirmPassword) {
-            dispatch({
-                type: "set-message",
-                payload: { type: "error", msg: "Las contraseñas no coinciden" }
-            });
+        if (!isEditing && !form.password) {
+            dispatch({ type: "set-message", payload: { type: "error", msg: "La contraseña es obligatoria para nuevos clientes" } });
+            return;
+        }
+
+        if (form.password !== form.confirmPassword) {
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Las contraseñas no coinciden" } });
             return;
         }
 
@@ -140,17 +142,17 @@ export const AdminEditClient = () => {
 
                 <label className="fw-bold">Teléfono</label>
                 <PhoneInput
-                        international
-                        defaultCountry="ES"
-                        value={form.phone}
-                        onChange={(value) => setForm({ ...form, phone: value })}
-                        placeholder="Teléfono profesional"
-                        style={{
-                            "--PhoneInputCountrySelectArrow-display": "none",
-                            "display": "flex",
-                            "alignItems": "center"
-                        }}
-                    />
+                    international
+                    defaultCountry="ES"
+                    value={form.phone}
+                    onChange={(value) => setForm({ ...form, phone: value })}
+                    placeholder="Teléfono profesional"
+                    style={{
+                        "--PhoneInputCountrySelectArrow-display": "none",
+                        "display": "flex",
+                        "alignItems": "center"
+                    }}
+                />
 
                 <hr />
                 <label className="fw-bold">{isEditing ? "Nueva contraseña (dejar vacío para no cambiar)" : "Contraseña"}</label>

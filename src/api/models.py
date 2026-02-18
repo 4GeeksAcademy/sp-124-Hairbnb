@@ -3,6 +3,7 @@ from typing import List
 from sqlalchemy import String, Boolean, ForeignKey
 from sqlalchemy import Time
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import Optional
 from datetime import time, datetime, timedelta, timezone
 
 db = SQLAlchemy()
@@ -34,6 +35,7 @@ class User(db.Model):
 
     appointments: Mapped[List["Appointment"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     conversations: Mapped[List["Conversation"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    ai_images: Mapped[List["AIImage"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
     def serialize(self):
         return {
@@ -161,8 +163,9 @@ class BarberService(db.Model):
         ForeignKey("barber.id"), nullable=False)
 
     name: Mapped[str] = mapped_column(String(100), nullable=False)
-    price: Mapped[int] = mapped_column(nullable=False)
+    price: Mapped[float] = mapped_column(nullable=False)
     duration: Mapped[int] = mapped_column(nullable=False)
+    service_description: Mapped[str] = mapped_column(String(500), nullable=True)
     service_demo_image: Mapped[str] = mapped_column(String(255), nullable=True)
 
     barber: Mapped["Barber"] = relationship(back_populates="barber_services")
@@ -177,6 +180,7 @@ class BarberService(db.Model):
             "duration": self.duration,
             "barber_id": self.barber_id,
             "barber_name": self.barber.name,
+            "service_description": self.service_description,
             "service_demo_image": self.service_demo_image,  
         }
 
@@ -324,4 +328,28 @@ class ChatMessage(db.Model):
             "content": self.content,
             "timestamp": self.timestamp.isoformat(),
             "is_read": self.is_read
+        }
+    
+class AIImage(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    
+    original_url: Mapped[str] = mapped_column(String(500), nullable=False)
+    result_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    cloudinary_public_id: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    
+    lightx_order_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    
+    status: Mapped[str] = mapped_column(String(20), default="pending") # pending, processing, completed, failed
+
+    user: Mapped["User"] = relationship(back_populates="ai_images")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "original_url": self.original_url,
+            "result_url": self.result_url,
+            "status": self.status,
+            "lightx_order_id": self.lightx_order_id,
         }

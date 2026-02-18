@@ -62,6 +62,7 @@ export const AdminEditInvitation = () => {
 
         const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/invitations`, {
             method: "POST",
+    
             headers: { 
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${store.token}`

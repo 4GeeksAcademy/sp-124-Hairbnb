@@ -62,11 +62,16 @@ export const AdminEditOwner = () => {
     const handleSubmit = async e => {
         e.preventDefault();
 
-        if (form.password !== "" && form.password !== form.confirmPassword) {
+        if (!isEditing && !form.password) {
             dispatch({
                 type: "set-message",
-                payload: { type: "error", msg: "Las contraseñas no coinciden" }
+                payload: { type: "error", msg: "La contraseña es obligatoria para nuevas cuentas de dueño." }
             });
+            return;
+        }
+
+        if (form.password !== form.confirmPassword) {
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Las contraseñas no coinciden" } });
             return;
         }
 
@@ -127,17 +132,17 @@ export const AdminEditOwner = () => {
 
                 <label className="fw-bold">Teléfono</label>
                 <PhoneInput
-                        international
-                        defaultCountry="ES"
-                        value={form.phone}
-                        onChange={(value) => setForm({ ...form, phone: value })}
-                        placeholder="Teléfono profesional"
-                        style={{
-                            "--PhoneInputCountrySelectArrow-display": "none",
-                            "display": "flex",
-                            "alignItems": "center"
-                        }}
-                    />
+                    international
+                    defaultCountry="ES"
+                    value={form.phone}
+                    onChange={(value) => setForm({ ...form, phone: value })}
+                    placeholder="Teléfono profesional"
+                    style={{
+                        "--PhoneInputCountrySelectArrow-display": "none",
+                        "display": "flex",
+                        "alignItems": "center"
+                    }}
+                />
 
                 <hr />
                 <label className="fw-bold">{isEditing ? "Cambiar contraseña (opcional)" : "Contraseña"}</label>

@@ -22,6 +22,16 @@ export const AdminEditAppt = () => {
         notes: ""
     });
 
+    
+    const currentServices = (() => {
+        if (!data.barber_id || !store.barbers) return [];
+        const barber = store.barbers.find(b => 
+            (b.barber?.id?.toString() === data.barber_id.toString()) || 
+            (b.id?.toString() === data.barber_id.toString())
+        );
+        return barber?.barber_services || barber?.services || [];
+    })();
+
     useEffect(() => {
         const initLoad = async () => {
             const token = store.token;
@@ -41,6 +51,10 @@ export const AdminEditAppt = () => {
                     if (responseAppt.ok) {
                         const appt = await responseAppt.json();
                         setFoundUser({ id: appt.user_id, name: appt.user_name });
+                        
+                        const datePart = appt.date ? appt.date.split("T")[0] : "";
+                        const timePart = appt.date ? appt.date.split("T")[1].slice(0, 5) : "";
+                        
                         setData({
                             user_id: appt.user_id,
                             barber_id: appt.barber_id,

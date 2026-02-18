@@ -125,7 +125,7 @@ export const BarbershopForm = () => {
                         international
                         defaultCountry="ES"
                         value={data.phone}
-                        onChange={(value) => setData({ ...form, phone: value })}
+                        onChange={(value) => setData({ ...data, phone: value })}
                         placeholder="Teléfono profesional"
                         style={{
                             "--PhoneInputCountrySelectArrow-display": "none",
@@ -139,7 +139,6 @@ export const BarbershopForm = () => {
             <label className="form-label">Dirección (Selecciona de la lista)</label>
             <PlacePicker
               placeholder={data.address || "Busca la dirección..."}
-              ononPlaceChange={handlePlaceChange}
               onPlaceChange={handlePlaceChange}
             />
           </div>

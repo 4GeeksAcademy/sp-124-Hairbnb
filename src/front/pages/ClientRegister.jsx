@@ -11,6 +11,7 @@ export const ClientRegister = () => {
 
     const isEditing = !!store.token;
     const [uploading, setUploading] = useState(false);
+    const [step, setStep] = useState(1); 
 
     const [form, setForm] = useState({
         name: "",
@@ -29,9 +30,7 @@ export const ClientRegister = () => {
                 try {
                     const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/${store.userInfo.id}`, {
                         method: "GET",
-                        headers: {
-                            "Authorization": `Bearer ${store.token}`
-                        }
+                        headers: { "Authorization": `Bearer ${store.token}` }
                     });
                     if (response.ok) {
                         const data = await response.json();
@@ -51,23 +50,26 @@ export const ClientRegister = () => {
                 }
             }
         };
-
         loadClientData();
     }, [isEditing, store.token, store.userInfo?.id]);
 
-    const handleChange = e =>
-        setForm({ ...form, [e.target.name]: e.target.value });
+    const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+
+    const nextStep = (e) => {
+        e.preventDefault();
+        if (!form.email || !form.password) {
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Email y contraseña son obligatorios" } });
+            return;
+        }
+        if (form.password !== form.confirmPassword) {
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Las contraseñas no coinciden" } });
+            return;
+        }
+        setStep(2);
+    };
 
     const handleSubmit = async e => {
         e.preventDefault();
-
-        if (form.password !== "" && form.password !== form.confirmPassword) {
-            dispatch({
-                type: "set-message",
-                payload: { type: "error", msg: "Las contraseñas no coinciden" }
-            });
-            return;
-        }
 
         const method = isEditing ? "PUT" : "POST";
         const url = isEditing
@@ -95,40 +97,26 @@ export const ClientRegister = () => {
             const data = await response.json();
 
             if (!response.ok) {
-                dispatch({
-                    type: "set-message",
-                    payload: data.message || { type: "error", msg: "Algo ha fallado" }
-                });
+                dispatch({ type: "set-message", payload: { type: "error", msg: data.msg || "Algo ha fallado" } });
                 return;
             }
 
             if (isEditing) {
                 dispatch({ type: "set-userInfo", payload: data.user || { ...store.userInfo, ...form } });
-                dispatch({
-                    type: "set-message",
-                    payload: { type: "success", msg: "Perfil actualizado correctamente" }
-                });
+                dispatch({ type: "set-message", payload: { type: "success", msg: "Perfil actualizado correctamente" } });
                 navigate("/private/client");
             } else {
-                dispatch({
-                    type: "set-message",
-                    payload: { type: "success", msg: "Cuenta de cliente creada" }
-                });
+                dispatch({ type: "set-message", payload: { type: "success", msg: "¡Cuenta creada! Ya puedes iniciar sesión" } });
                 navigate("/login/client");
             }
-
         } catch (err) {
-            dispatch({
-                type: "set-message",
-                payload: { type: "error", msg: "Error de conexión" }
-            });
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
         }
     };
 
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
         setUploading(true);
         const imageUrl = await uploadToCloudinary(file);
         if (imageUrl) {
@@ -138,78 +126,99 @@ export const ClientRegister = () => {
     };
 
     return (
-        <div className="container mt-5">
-            <h1 className="display-6 mb-4">
-                {isEditing ? "Mis datos personales" : "Crear cuenta como cliente"}
-            </h1>
+        <div className="container mt-5 d-flex justify-content-center">
+            <div className="card w-75">
+                <h1 className="h3 mb-4 text-center">
+                    {isEditing ? "Mis datos personales" : "Crear cuenta de cliente"}
+                </h1>
 
-            <form onSubmit={handleSubmit}>
-                <div className="mb-4 text-center">
-                    <label className="form-label d-block text-start">Foto de Perfil</label>
-                    <div className="d-flex flex-column align-items-center">
-                        {form.client_profile_image ? (
-                            <img
-                                src={form.client_profile_image}
-                                className="rounded-circle mb-3 shadow"
-                                style={{ width: "150px", height: "150px", objectFit: "cover"}}
-                            />
-                        ) : (
-                            <div
-                                className="rounded-circle mb-3 bg-light d-flex align-items-center justify-content-center border"
-                                style={{ width: "150px", height: "150px"}}
-                            >
-                                <i className="fa-solid fa-user fa-4x"></i>
-                            </div>
-                        )}
-
-                        <input
-                            type="file"
-                            className="form-control form-control-sm"
-                            style={{ maxWidth: "300px" }}
-                            onChange={handleFileChange}
-                            accept="image/*"
-                            disabled={uploading}
-                        />
-                        {uploading && <small className="text-primary mt-2 fw-bold">Subiendo foto...</small>}
+                {!isEditing && (
+                    <div className="progress mb-4">
+                        <div className="progress-bar bg-primary" style={{ width: step === 1 ? "50%" : "100%" }}></div>
                     </div>
-                </div>
-                <label>Nombre</label>
-                <input className="form-control mb-2" name="name" value={form.name} placeholder="Nombre" onChange={handleChange} />
+                )}
 
-                <label>Apellido</label>
-                <input className="form-control mb-2" name="last_name" value={form.last_name} placeholder="Apellido" onChange={handleChange} />
+                <form onSubmit={(!isEditing && step === 1) ? nextStep : handleSubmit}>
+                    
+                    {(step === 1 || isEditing) && (
+                        <div>
+                            <h5 className="mb-3">
+                                {isEditing ? "Datos de la cuenta" : "Información de inicio de sesión"}
+                            </h5>
+                            
+                            <label className="form-label">Email</label>
+                            <input className="form-control mb-3" name="email" value={form.email} type="email" placeholder="nombre@ejemplo.com" onChange={handleChange} required />
 
-                <label>Email</label>
-                <input className="form-control mb-2" name="email" value={form.email} placeholder="Email" onChange={handleChange} />
+                            <label className="form-label">{isEditing ? "Nueva contraseña (opcional)" : "Establece una contraseña"}</label>
+                            <input className="form-control mb-3" type="password" minLength="8" name="password" placeholder="Mínimo 8 caracteres" onChange={handleChange} required={!isEditing} />
 
-                <label>Teléfono</label>
-                <PhoneInput
-                        international
-                        defaultCountry="ES"
-                        value={form.phone}
-                        onChange={(value) => setForm({ ...form, phone: value })}
-                        placeholder="Teléfono profesional"
-                        style={{
-                            "--PhoneInputCountrySelectArrow-display": "none",
-                            "display": "flex",
-                            "alignItems": "center"
-                        }}
-                    />
+                            <label className="form-label">Confirma tu contraseña</label>
+                            <input className="form-control mb-3" type="password" minLength="8" name="confirmPassword" placeholder="Repite la contraseña" onChange={handleChange} required={!isEditing} />
+                            
+                            {!isEditing && (
+                                <button type="submit" className="btn btn-primary py-2">
+                                    Siguiente: Datos de perfil 
+                                    <i className="fa-solid fa-chevron-right ms-2"></i>
+                                </button>
+                            )}
+                        </div>
+                    )}
 
-                <hr />
-                <label>{isEditing ? "Nueva contraseña (dejar vacío para no cambiar)" : "Contraseña"}</label>
-                <input className="form-control mb-2" type="password" minLength="8" name="password" placeholder="********" onChange={handleChange} />
+                    {(step === 2 || isEditing) && (
+                        <div>
+                            <h5 className="mb-3">
+                                {isEditing ? "Información personal" : "2. Completa tu perfil"}
+                            </h5>
+                            
+                            <div className="mb-4 text-center">
+                                {form.client_profile_image ? (
+                                    <img src={form.client_profile_image} className="rounded-circle mb-3 border border-3 border-primary" style={{ width: "120px", height: "120px", objectFit: "cover"}} />
+                                ) : (
+                                    <div className="rounded-circle mb-3 d-flex align-items-center justify-content-center border mx-auto" style={{ width: "120px", height: "120px"}}>
+                                        <i className="fa-solid fa-camera fa-2x text-primary"></i>
+                                    </div>
+                                )}
+                                <input type="file" className="form-control form-control-sm mx-auto" style={{ maxWidth: "250px" }} onChange={handleFileChange} accept="image/*" disabled={uploading} />
+                                {uploading && <small className="text-danger d-block mt-2">Subiendo imagen...</small>}
+                            </div>
 
-                <label>Confirmar contraseña</label>
-                <input className="form-control mb-2" type="password" minLength="8" name="confirmPassword" placeholder="********" onChange={handleChange} />
+                            <div className="row">
+                                <div className="col-md-6 mb-3">
+                                    <label className="form-label">Nombre</label>
+                                    <input className="form-control" name="name" value={form.name} placeholder="Tu nombre" onChange={handleChange} required />
+                                </div>
+                                <div className="col-md-6 mb-3">
+                                    <label className="form-label">Apellido</label>
+                                    <input className="form-control" name="last_name" value={form.last_name} placeholder="Tu apellido" onChange={handleChange} required />
+                                </div>
+                            </div>
 
-                <label>Notas adicionales</label>
-                <textarea className="form-control mb-2" name="notes" value={form.notes} placeholder="Notas (alergias, preferencias...)" onChange={handleChange} />
+                            <label className="form-label">Teléfono móvil</label>
+                            <div className="border rounded mb-3 bg-white px-2 py-1">
+                                <PhoneInput
+                                    international
+                                    defaultCountry="ES"
+                                    value={form.phone}
+                                    onChange={(v) => setForm({ ...form, phone: v })}
+                                    style={{ display: "flex", alignItems: "center" }}
+                                />
+                            </div>
 
-                <button className="btn btn-outline-primary mt-3">
-                    {isEditing ? "Actualizar perfil" : "Crear cuenta"}
-                </button>
-            </form>
+                            <label className="form-label">Notas adicionales (opcional)</label>
+                            <textarea className="form-control mb-4" name="notes" value={form.notes} rows="2" placeholder="Ej: Alergias" onChange={handleChange} />
+
+                            <div className="d-flex gap-2">
+                                {!isEditing && (
+                                    <button type="button" className="btn btn-outline-secondary" onClick={() => setStep(1)}>Atrás</button>
+                                )}
+                                <button type="submit" className="btn btn-secondary">
+                                    {isEditing ? "Actualizar perfil" : "Finalizar y Crear Cuenta"}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </form>
+            </div>
         </div>
     );
 };

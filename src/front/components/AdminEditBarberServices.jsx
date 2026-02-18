@@ -61,6 +61,19 @@ export const AdminEditBarberServices = () => {
 
     const handleSubmit = async e => {
         e.preventDefault();
+
+        const barberIdParsed = parseInt(form.barber_id);
+        const priceParsed = parseFloat(form.price);
+        const durationParsed = parseInt(form.duration);
+
+        if (isNaN(barberIdParsed) || isNaN(priceParsed) || isNaN(durationParsed)) {
+            dispatch({
+                type: "set-message",
+                payload: { type: "error", msg: "Precio, duración y barbero son obligatorios y deben ser números" }
+            });
+            return;
+        }
+
         const method = isEditing ? "PUT" : "POST";
         const url = `${import.meta.env.VITE_BACKEND_URL}/barber_services${isEditing ? `/${id}` : ""}`;
 
@@ -72,10 +85,11 @@ export const AdminEditBarberServices = () => {
                     "Authorization": `Bearer ${store.token}`
                 },
                 body: JSON.stringify({
-                    ...form,
-                    price: parseFloat(form.price),
-                    duration: parseInt(form.duration),
-                    barber_id: parseInt(form.barber_id)
+                    name: form.name,
+                    description: form.description,
+                    price: priceParsed,
+                    duration: durationParsed,
+                    barber_id: barberIdParsed
                 })
             });
 
@@ -89,16 +103,14 @@ export const AdminEditBarberServices = () => {
                 const errorData = await response.json();
                 dispatch({
                     type: "set-message",
-                    payload: { type: "error", msg: errorData.msg || "Error al guardar el servicio" }
+                    payload: { type: "error", msg: errorData.message?.msg || "Error al guardar" }
                 });
             }
         } catch (err) {
-            dispatch({
-                type: "set-message",
-                payload: { type: "error", msg: "Error de conexión con el servidor" }
-            });
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
         }
     };
+
     return (
         <div className="container mt-5">
             <h1 className="display-6 mb-4">{isEditing ? `Admin: editar servicio` : "Admin: nuevo servicio"}</h1>
@@ -128,6 +140,10 @@ export const AdminEditBarberServices = () => {
                         <label className="fw-bold">Duración (minutos)</label>
                         <input type="number" className="form-control" name="duration" value={form.duration} onChange={handleChange} placeholder="Ej: 30" required />
                     </div>
+                </div>
+                <div className="mb-3">
+                    <label className="fw-bold">Descripción</label>
+                    <textarea className="form-control" name="description" value={form.description} onChange={handleChange} placeholder="Describe el servicio..." />
                 </div>
 
                 <div className="d-flex gap-2 mt-3">

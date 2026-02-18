@@ -10,6 +10,7 @@ export const AdminEditBarbershop = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const isEditing = !!id;
+    const [owners, setOwners] = useState([]);
 
     const [form, setForm] = useState({
         name: "",
@@ -19,6 +20,24 @@ export const AdminEditBarbershop = () => {
         longitude: null,
         working_hours: { "Lunes": "", "Martes": "", "Miércoles": "", "Jueves": "", "Viernes": "", "Sábado": "", "Domingo": "" }
     });
+
+
+    useEffect(() => {
+        const fetchOwners = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/owners`, {
+                    headers: { "Authorization": `Bearer ${store.token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setOwners(data);
+                }
+            } catch (error) {
+                console.error("Error cargando dueños:", error);
+            }
+        };
+        fetchOwners();
+    }, [store.token]);
 
     useEffect(() => {
         const loadBarbershopData = async () => {
@@ -68,11 +87,11 @@ export const AdminEditBarbershop = () => {
 
     const handleSubmit = async e => {
         e.preventDefault();
-        
+
         if (!form.latitude || !form.longitude) {
-            dispatch({ 
-                type: "set-message", 
-                payload: { type: "error", msg: "Debes seleccionar una dirección de la lista de Google para obtener coordenadas." } 
+            dispatch({
+                type: "set-message",
+                payload: { type: "error", msg: "Debes seleccionar una dirección de la lista de Google para obtener coordenadas." }
             });
             return;
         }
@@ -117,7 +136,7 @@ export const AdminEditBarbershop = () => {
     return (
         <div className="container mt-5">
             <APILoader apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY} />
-            
+
             <h1 className="display-6 mb-4 text-primary">
                 {isEditing ? `Admin: editar barbería` : "Admin: nueva barbería"}
             </h1>
@@ -128,7 +147,24 @@ export const AdminEditBarbershop = () => {
                         <label className="fw-bold">Nombre de la Barbería</label>
                         <input className="form-control" name="name" value={form.name} onChange={handleChange} required />
                     </div>
-
+                    <div className="col-md-12 mb-3">
+                        <label className="fw-bold text-primary">Asignar a un Dueño (Owner)</label>
+                        <select
+                            className="form-select border-primary"
+                            name="owner_id"
+                            value={form.owner_id}
+                            onChange={handleChange}
+                            required
+                        >
+                            <option value="">Selecciona un dueño...</option>
+                            {owners.map(owner => (
+                                <option key={owner.id} value={owner.id}>
+                                    {owner.name} {owner.last_name} ({owner.email})
+                                </option>
+                            ))}
+                        </select>
+                        <small className="text-muted">Este local quedará vinculado a la cuenta de este usuario.</small>
+                    </div>
                     <div className="col-md-6 mb-2">
                         <label className="fw-bold">Teléfono</label>
                         <div className="border rounded bg-white px-2 py-1" style={{ height: "38px", display: "flex", alignItems: "center" }}>
@@ -145,26 +181,26 @@ export const AdminEditBarbershop = () => {
                 </div>
 
                 <label className="fw-bold mt-2">Dirección (Buscador Google)</label>
-                <PlacePicker 
+                <PlacePicker
                     className="mb-1"
                     onPlaceChange={handlePlaceChange}
                     placeholder={form.address || "Busca la calle..."}
                 />
-                
+
                 <label className="fw-bold mt-2">Horarios de Apertura</label>
                 <div className="row g-2 mb-3 p-2 border rounded bg-light">
                     {Object.keys(form.working_hours).map(day => (
                         <div key={day} className="col-6 col-sm-4 col-md-3">
                             <label className="small mb-0">{day}</label>
-                            <input 
-                                className="form-control form-control-sm" 
-                                type="text" 
+                            <input
+                                className="form-control form-control-sm"
+                                type="text"
                                 placeholder="09:00-20:00"
-                                value={form.working_hours[day] || ""} 
+                                value={form.working_hours[day] || ""}
                                 onChange={(e) => setForm({
-                                    ...form, 
-                                    working_hours: {...form.working_hours, [day]: e.target.value}
-                                })} 
+                                    ...form,
+                                    working_hours: { ...form.working_hours, [day]: e.target.value }
+                                })}
                             />
                         </div>
                     ))}

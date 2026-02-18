@@ -1,212 +1,191 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from "react-router-dom";
+import useGlobalReducer from "../hooks/useGlobalReducer";
 import "../styles/Chatbot.css";
 
 export const Chatbot = () => {
+  const { store, dispatch } = useGlobalReducer();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [currentMenu, setCurrentMenu] = useState("inicio");
-  const [messages, setMessages] = useState([
-    { role: 'assistant', content: '¡Hola! Bienvenido a Hairbnb. Para ayudarte mejor, dime: ¿Cuál es tu perfil?' }
-  ]);
+  const [messages, setMessages] = useState([]);
   const scrollRef = useRef(null);
+
+useEffect(() => {
+    if (isOpen) {
+        setMessages([]); 
+        iniciarChat();
+    }
+}, [store.token, store.role]);
+
+const iniciarChat = () => {
+    setIsTyping(true);
+    setTimeout(() => {
+        let saludo = "";
+        let menuDestino = "inicio";
+
+        if (store.token) {
+            const nombre = store.username || "Usuario";
+            saludo = `¡Genial! Ya te he reconocido, ${nombre}. Tienes perfil de ${store.role}. ¿Qué quieres gestionar?`;
+            
+            if (store.role === 'admin') menuDestino = "admin_menu";
+            else if (store.role === 'owner') menuDestino = "owner_menu";
+            else if (store.role === 'barber') menuDestino = "barber_menu";
+            else menuDestino = "cliente_menu";
+        } else {
+            saludo = "¡Hola! Bienvenido a Hairbnb. No has iniciado sesión en nuestra plataforma";
+            menuDestino = "inicio";
+        }
+
+        setMessages([{ role: 'assistant', content: saludo }]);
+        setCurrentMenu(menuDestino);
+        setIsTyping(false);
+    }, 600);
+};
 
   const menus = {
     inicio: {
-      intro: "¡Hola! Es un placer saludarte. Para empezar, dime: ¿cuál es tu perfil en Hairbnb?",
       options: [
-        { label: "Aún no estoy registrado", next: "sin_cuenta" },
-        { label: "Ya tengo mi cuenta", next: "con_cuenta" }
+        { label: "Quiero registrarme", next: "registro_opciones" },
+        { label: "Ir a iniciar sesión", next: "login_opciones" },
+        { label: "¿Qué me ofrece Hairbnb?", next: "info"}
       ]
     },
 
-    sin_cuenta: {
-      intro:"Prueba a registrarte y descubrir todo lo que Hairbnb puede hacer por tí. ¿Cuál es tu perfil?",
+    info: {
+      intro: "Hairbnb es la plataforma líder en gestión de barberías. Conectamos a los mejores profesionales con clientes que buscan un estilo impecable. ¿Qué perfil te interesa conocer?",
       options: [
-        { label: "Soy cliente", next: "cliente_menu" },
-        { label: "Soy dueño", next: "owner_menu" },
-        { label: "Soy barbero", next: "barber_menu" }
+        { label: "Soy cliente", resp: "Como cliente podrás descubrir barberías cerca de ti, ver los trabajos de cada barbero y reservar tu cita en segundos sin llamadas.", next: "info_acciones" },
+        { label: "Soy profesional", resp: "Si eres barbero o dueño, te ofrecemos herramientas para gestionar tu agenda, servicios, empleados y aumentar tu visibilidad.", next: "info_acciones" },
+        { label: "Volver", next: "inicio" }
       ]
     },
 
-    con_cuenta: {
-      intro:"Tener una cuenta es la mejor decisión. Dime, ¿cuál es tu perfil?",
+    info_acciones: {
+      intro: "¿Te gustaría empezar ahora mismo?",
       options: [
-        { label: "Soy cliente", next: "cliente_menu" },
-        { label: "Soy dueño", next: "owner_menu" },
-        { label: "Soy barbero", next: "barber_menu" }
+        { label: "¡Quiero registrarme!", next: "registro_opciones" },
+        { label: "Ya tengo cuenta, vamos a iniciar sesión", next: "login_opciones" },
+        { label: "Solo quiero mirar barberías", action: () => navigate("/asociates") },
+        { label: "Volver", next: "inicio" }
+      ]
+    },
+
+    login_opciones: {
+        intro: "Selecciona tu portal de acceso:",
+        options: [
+            { label: "Soy cliente", action: () => navigate("/login/client") },
+            { label: "Soy barbero", action: () => navigate("/login/barber") },
+            { label: "Soy dueño", action: () => navigate("/login/owner") },
+            { label: "Volver", next: "inicio" }
+        ]
+    },
+
+    registro_opciones: {
+      intro: "¿Qué tipo de cuenta quieres crear?",
+      options: [
+        { label: "Cliente", action: () => navigate("/signup/client") },
+        { label: "Barbero", action: () => navigate("/signup/barber") },
+        { label: "Dueño de local", action: () => navigate("/signup/owner") },
+        { label: "Volver", next: "inicio" }
       ]
     },
 
     cliente_menu: {
-      intro: "¡Genial! Como cliente tienes todo a mano. ¿En qué puedo ayudarte hoy?",
+      intro: "Acceso rápido para clientes:",
       options: [
-        { label: "Reservar una cita", next: "cliente_reservar" },
-        { label: "Buscar barberías", next: "cliente_barberias" },
-        { label: "Mi cuenta", next: "cliente_cuenta" },
-        { label: "Volver al inicio", next: "inicio" }
-      ]
-    },
-    cliente_reservar: {
-      intro: "Reservar es muy sencillo, pero entiendo que puedan surgir dudas. ¿Qué necesitas saber?",
-      options: [
-        {
-          label: "¿Cómo reservo?",
-          resp: "Es fácil: elige la barbería, selecciona a tu barbero y el servicio. Confirmas la hora y ¡listo!",
-          next: "cliente_menu"
-        },
-        {
-          label: "Cambiar o cancelar",
-          resp: "No te preocupes. En tu perfil, dentro de 'Mis Citas', puedes modificar o cancelar cualquier reserva.",
-          next: "cliente_menu"
-        },
-        { label: "Volver", next: "cliente_menu" }
-      ]
-    },
-    cliente_barberias: {
-      intro: "Tenemos barberías increíbles. ¿Cómo quieres encontrar la tuya?",
-      options: [
-        {
-          label: "Ver el mapa",
-          resp: "En la sección 'Nuestros asociados' tienes un mapa con todos ellos. ¡Seguro que hay uno cerca de ti!",
-          next: "cliente_menu"
-        },
-        {
-          label: "Precios y servicios",
-          resp: "Cada barbería tiene sus propios precios. Los verás detallados al reservar.",
-          next: "cliente_menu"
-        },
-        { label: "Volver", next: "cliente_menu" }
+        { label: "Mi Perfil", action: () => navigate("/private/client") },
+        { label: "Nueva Cita", action: () => navigate("/client_appointment_form") },
+        { label: "Cerrar Sesión", action: () => handleLogout() }
       ]
     },
 
     owner_menu: {
-      intro: "Hola. Aquí tienes las herramientas para gestionar tu negocio. ¿Qué área quieres revisar?",
+      intro: "Panel de Dueño:",
       options: [
-        { label: "Mis barberías", next: "owner_sedes" },
-        { label: "Mi equipo", next: "owner_barberos" },
-        { label: "Reservas", next: "owner_reservas" },
-        { label: "Volver al inicio", next: "inicio" }
-      ]
-    },
-    owner_sedes: {
-      intro: "Tener tus sedes actualizadas es clave. ¿Qué quieres hacer?",
-      options: [
-        {
-          label: "Añadir sede",
-          resp: "Usa el botón 'Nueva barbería' en tu panel de control. Solo rellena los datos y aparecerás en el mapa.",
-          next: "owner_menu"
-        },
-        {
-          label: "Editar información",
-          resp: "Puedes cambiar fotos, horarios o teléfonos entrando en la ficha de cada sede desde tu panel.",
-          next: "owner_menu"
-        },
-        { label: "Volver", next: "owner_menu" }
+        { label: "Panel Principal", action: () => navigate("/private/owner") },
+        { label: "Gestionar Negocio", action: () => navigate("/private/owner/gestion") },
+        { label: "Añadir Barbería", action: () => navigate("/barbershops_form") },
+        { label: "Cerrar Sesión", action: () => handleLogout() }
       ]
     },
 
     barber_menu: {
-      intro: "¡Hola! Vamos a dejar tu perfil a punto. ¿Qué quieres configurar ahora?",
+      intro: "Panel Profesional:",
       options: [
-        { label: "Mis horarios", next: "barber_horarios" },
-        { label: "Mis servicios", next: "barber_servicios" },
-        { label: "Volver al inicio", next: "inicio" }
+        { label: "Mi Agenda", action: () => navigate("/private/barber") },
+        { label: "Configurar Horarios", action: () => navigate("/schedules_form") },
+        { label: "Añadir Servicio", action: () => navigate("/barber_services_form") },
+        { label: "Cerrar Sesión", action: () => handleLogout() }
       ]
     },
-    barber_horarios: {
-      intro: "Organizar bien tu tiempo es fundamental. ¿Cómo te ayudo con tu agenda?",
-      options: [
-        {
-          label: "Configurar mi jornada",
-          resp: "Puedes poner tus horas de entrada, salida y descansos para cada día desde tu perfil profesional.",
-          next: "barber_menu"
-        },
-        {
-          label: "Días libres",
-          resp: "Marca tus vacaciones o días libres en el calendario para que nadie pueda reservarte esas fechas.",
-          next: "barber_menu"
-        },
-        { label: "Volver", next: "barber_menu" }
-      ]
-    },
-    barber_servicios: {
-      intro: "Tus servicios son lo que te define. ¿Quieres hacer algún cambio?",
-      options: [
-        {
-          label: "Precios y tiempos",
-          resp: "Entra en 'Servicios' para ajustar cuánto cobras y cuánto tardas en cada trabajo. Se actualizará al instante.",
-          next: "barber_menu"
-        },
-        { label: "Volver", next: "barber_menu" }
-      ]
+
+    admin_menu: {
+        intro: "Opciones de administrador:",
+        options: [
+            { label: "Ir a la página principal", action: () => navigate("/4dm1n1str4t10n") },
+            { label: "Cerrar Sesión", action: () => handleLogout() }
+        ]
     }
   };
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages, isTyping, isOpen]);
+  const handleLogout = () => {
+    dispatch({ type: "logout" });
+    setMessages(prev => [...prev, { role: 'assistant', content: "Sesión cerrada. ¡Hasta pronto!" }]);
+    setCurrentMenu("inicio");
+  };
 
   const handleOptionClick = (opcion) => {
-    const isBackOption = opcion.label.toLowerCase().includes("volver");
-
-    if (!isBackOption) {
-      setMessages(prev => [...prev, { role: 'user', content: opcion.label }]);
+    if (opcion.action) {
+      opcion.action();
+      setIsOpen(false);
+      return;
     }
 
-    setIsTyping(true);
+    const isBack = opcion.label.toLowerCase().includes("volver");
+    if (!isBack) setMessages(prev => [...prev, { role: 'user', content: opcion.label }]);
 
+    setIsTyping(true);
     setTimeout(() => {
       setIsTyping(false);
-      let botResponse = "";
-      const nextMenuData = menus[opcion.next];
-
-      if (opcion.resp) {
-        botResponse = opcion.resp;
-      } else if (nextMenuData) {
-        botResponse = nextMenuData.intro;
-      }
-
-      if (botResponse) {
-        setMessages(prev => [...prev, { role: 'assistant', content: botResponse }]);
-      }
-
+      let botResponse = opcion.resp || menus[opcion.next]?.intro;
+      if (botResponse) setMessages(prev => [...prev, { role: 'assistant', content: botResponse }]);
       setCurrentMenu(opcion.next);
     }, 600);
   };
 
   return (
     <div className={`chat-wrapper ${isOpen ? 'open' : ''}`}>
-      <button className="chat-toggle shadow-lg" onClick={() => setIsOpen(!isOpen)}>
+      <button className="chat-toggle" onClick={() => setIsOpen(!isOpen)}>
         {isOpen ? <i className="fa-solid fa-xmark"></i> : <i className="fa-solid fa-scissors"></i>}
       </button>
 
       {isOpen && (
-        <div className="chat-window border-0 shadow-lg">
-          <div className="chat-header bg-dark text-white p-3">
-            <span>Hairbnb Assistant</span>
+        <div className="chat-window">
+          <div className="chat-header p-3 d-flex justify-content-between align-items-center">
+            <span>ChatBnb</span>
           </div>
 
-          <div className="chat-body p-3 bg-white" ref={scrollRef} style={{ height: "280px", overflowY: "auto" }}>
+          <div className="chat-body p-3 bg-white" ref={scrollRef} style={{ height: "320px", overflowY: "auto" }}>
             {messages.map((msg, i) => (
-              <div key={i} className={`msg-bubble shadow-sm mb-2 ${msg.role === 'user' ? 'bg-outline-primary ms-auto' : 'bg-light text-dark me-auto border'}`}>
-                {msg.content}
+              <div key={i} className={`d-flex mb-3 ${msg.role === 'user' ? 'justify-content-end' : 'justify-content-start'}`}>
+                <div className={`p-2 px-3 rounded-3 shadow-sm ${msg.role === 'user' ? 'bg-primary text-white' : 'bg-light border text-dark'}`} style={{ maxWidth: "85%", fontSize: "0.85rem" }}>
+                  {msg.content}
+                </div>
               </div>
             ))}
-            {isTyping && (
-              <div className="text-muted small mb-2">Escribiendo...</div>
-            )}
+            {isTyping && <div className="text-muted small mb-2 text-center">Analizando solicitud...</div>}
           </div>
 
           <div className="chat-footer p-3 bg-light border-top">
-            <div className="d-flex flex-column gap-2">
-              {!isTyping && menus[currentMenu].options.map((opt, index) => (
+            <div className="d-flex flex-wrap gap-2">
+              {!isTyping && menus[currentMenu]?.options.map((opt, index) => (
                 <button
                   key={index}
-                  className="btn btn-sm btn-white border shadow-sm text-start"
+                  className="btn btn-sm btn-outline-dark bg-white shadow-sm"
                   onClick={() => handleOptionClick(opt)}
-                  style={{ borderRadius: '10px' }}
+                  style={{ borderRadius: '15px' }}
                 >
                   {opt.label}
                 </button>
