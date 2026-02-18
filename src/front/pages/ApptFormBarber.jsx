@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 
-
 export const ApptFormBarber = () => {
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
@@ -36,14 +35,15 @@ export const ApptFormBarber = () => {
             }
         };
         loadServices();
-    }, [dispatch]);
+    }, [dispatch, store.token]);
 
     useEffect(() => {
         const fetchSlots = async () => {
-            if (data.barber_id && data.barbershop_id && data.date && data.barber_service_id) {
-                setAvailableSlots([]);
+            const currentBarberId = data.barber_id || store.userInfo?.id;
 
-                const url = `${import.meta.env.VITE_BACKEND_URL}/barber_availability?barber_id=${data.barber_id}&barbershop_id=${data.barbershop_id}&date=${data.date}&service_id=${data.barber_service_id}`;
+            if (currentBarberId && data.barbershop_id && data.date && data.barber_service_id) {
+                setAvailableSlots([]);
+                const url = `${import.meta.env.VITE_BACKEND_URL}/barber_availability?barber_id=${currentBarberId}&barbershop_id=${data.barbershop_id}&date=${data.date}&service_id=${data.barber_service_id}`;
 
                 try {
                     const responseSlots = await fetch(url, {
@@ -59,7 +59,7 @@ export const ApptFormBarber = () => {
             }
         };
         fetchSlots();
-    }, [data.date, data.barber_id, data.barbershop_id, data.barber_service_id, store.token]);
+    }, [data.date, data.barber_id, data.barbershop_id, data.barber_service_id, store.token, store.userInfo?.id]);
 
     const currentServices = store.barber_services?.filter(s =>
         Number(s.barber_id) === Number(store.userInfo?.id)
@@ -84,9 +84,11 @@ export const ApptFormBarber = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        const barberId = data.barber_id || store.userInfo?.id;
+
         const payload = {
             user_id: Number(data.user_id),
-            barber_id: Number(data.barber_id),
+            barber_id: Number(barberId),
             barbershop_id: Number(data.barbershop_id),
             barber_service_id: Number(data.barber_service_id),
             date: `${data.date}T${data.time}:00`,
@@ -135,11 +137,10 @@ export const ApptFormBarber = () => {
         <div className="container mt-4">
             <h3 className="mb-4">{isEditing ? "Editar Cita" : "Nueva Cita (Barbero)"}</h3>
             <form onSubmit={handleSubmit} className="card p-4 shadow-sm border-0">
-
                 <div className="mb-3">
                     <label className="form-label font-weight-bold">Cliente</label>
                     {foundUser ? (
-                        <div className="d-flex justify-content-between align-items-center">
+                        <div className="d-flex justify-content-between align-items-center p-2 bg-light rounded">
                             <span><strong>{foundUser.name} {foundUser.last_name}</strong></span>
                             <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => { setFoundUser(null); setData({ ...data, user_id: "" }) }}>Cambiar</button>
                         </div>
@@ -206,12 +207,14 @@ export const ApptFormBarber = () => {
                     </div>
                 </div>
 
-                <button type="button" className="btn btn-outline-secondary" onClick={() => navigate(-1)}>
-                    Cancelar
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={!data.user_id || !data.time}>
-                    {isEditing ? "Actualizar Reserva" : "Confirmar Reserva"}
-                </button>
+                <div className="d-flex gap-2">
+                    <button type="button" className="btn btn-outline-secondary" onClick={() => navigate(-1)}>
+                        Cancelar
+                    </button>
+                    <button type="submit" className="btn btn-primary" disabled={!data.user_id || !data.time}>
+                        {isEditing ? "Actualizar Reserva" : "Confirmar Reserva"}
+                    </button>
+                </div>
             </form>
         </div>
     );

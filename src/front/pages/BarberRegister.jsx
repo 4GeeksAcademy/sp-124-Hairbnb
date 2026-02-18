@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { uploadToCloudinary } from "../utilities/cloudinary";
-import 'react-phone-number-input/style.css';
-import PhoneInput from 'react-phone-number-input';
 
 export const BarberRegister = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -134,22 +132,22 @@ export const BarberRegister = () => {
                 )}
 
                 <form onSubmit={(!isEditing && step === 1) ? nextStep : handleSubmit}>
-                    
+
                     {(step === 1 || isEditing) && (
                         <div>
                             <h5 className="mb-3">{isEditing ? "Datos de la cuenta" : "Información de inicio de sesión"}</h5>
                             <label className="form-label">Email</label>
                             <input className="form-control mb-3" name="email" value={form.email} type="email" placeholder="nombre@ejemplo.com" onChange={handleChange} required />
-                            
+
                             <label className="form-label">{isEditing ? "Nueva contraseña (opcional)" : "Establece una contraseña"}</label>
                             <input className="form-control mb-3" type="password" name="password" minLength="8" placeholder="Mínimo 8 caracteres" onChange={handleChange} required={!isEditing} />
 
                             <label className="form-label">Confirmar contraseña</label>
                             <input className="form-control mb-3" type="password" name="confirmPassword" minLength="8" placeholder="Repite la contraseña" onChange={handleChange} required={!isEditing} />
-                            
+
                             {!isEditing && (
                                 <button type="submit" className="btn btn-danger py-2">
-                                    Siguiente: Datos de perfil 
+                                    Siguiente: Datos de perfil
                                     <i className="fa-solid fa-arrow-right ms-2"></i>
                                 </button>
                             )}
@@ -161,7 +159,7 @@ export const BarberRegister = () => {
                             <h5 className="mb-3">
                                 {isEditing ? "Información profesional" : "Paso 2: Tu perfil"}
                             </h5>
-                            
+
                             <div className="text-center mb-4">
                                 <label className="form-label d-block text-start">Foto de Perfil</label>
                                 {form.barber_profile_image ? (
@@ -180,12 +178,17 @@ export const BarberRegister = () => {
 
                             <label className="form-label">Teléfono</label>
                             <div className="border rounded mb-4 bg-white px-2 py-1">
-                                <PhoneInput
-                                    international
-                                    defaultCountry="ES"
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Ej: 600123456"
+                                    maxLength="9"
                                     value={form.phone}
-                                    onChange={(v) => setForm({ ...form, phone: v })}
-                                    style={{ display: "flex", alignItems: "center" }}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/\D/g, "");
+                                        setForm({ ...form, phone: val });
+                                    }}
+                                
                                 />
                             </div>
 

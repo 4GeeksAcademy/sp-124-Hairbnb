@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { uploadToCloudinary } from "../utilities/cloudinary";
-import 'react-phone-number-input/style.css';
-import PhoneInput from 'react-phone-number-input';
+
 
 import { APILoader, PlacePicker } from '@googlemaps/extended-component-library/react';
 
@@ -121,18 +120,17 @@ export const BarbershopForm = () => {
 
           <div className="col-12 col-md-6">
             <label className="form-label">Teléfono</label>
-            <PhoneInput
-                        international
-                        defaultCountry="ES"
-                        value={data.phone}
-                        onChange={(value) => setData({ ...data, phone: value })}
-                        placeholder="Teléfono profesional"
-                        style={{
-                            "--PhoneInputCountrySelectArrow-display": "none",
-                            "display": "flex",
-                            "alignItems": "center"
-                        }}
-                    />
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Ej: 600123456"
+              maxLength="9"
+              value={data.phone}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, "");
+                setData({ ...data, phone: val });
+              }}
+            />
           </div>
 
           <div className="col-12">
@@ -144,26 +142,26 @@ export const BarbershopForm = () => {
           </div>
 
           <div className="col-12">
-  <label className="form-label">Horarios (L-D)</label>
-  <div className="row g-2 border p-2 rounded">
+            <label className="form-label">Horarios (L-D)</label>
+            <div className="row g-2 border p-2 rounded">
 
-    {["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map(day => (
-      <div key={day} className="col-6 col-md-3">
-        <small className="fw-bold">{day}</small>
-        <input
-          className="form-control form-control-sm"
-          type="text"
-          placeholder="09:00-20:00"
-          value={data.working_hours[day] || ""} 
-          onChange={(e) => setData(prev => ({
-            ...prev,
-            working_hours: { ...prev.working_hours, [day]: e.target.value }
-          }))}
-        />
-      </div>
-    ))}
-  </div>
-</div>
+              {["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map(day => (
+                <div key={day} className="col-6 col-md-3">
+                  <small className="fw-bold">{day}</small>
+                  <input
+                    className="form-control form-control-sm"
+                    type="text"
+                    placeholder="09:00-20:00"
+                    value={data.working_hours[day] || ""}
+                    onChange={(e) => setData(prev => ({
+                      ...prev,
+                      working_hours: { ...prev.working_hours, [day]: e.target.value }
+                    }))}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
 
           <div className="col-12">
             <label className="form-label">Descripción</label>

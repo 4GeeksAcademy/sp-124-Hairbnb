@@ -14,7 +14,8 @@ from flask_cors import CORS
 from google import genai
 from google.genai import types
 import requests
-
+import calendar
+import base64
 
 api = Blueprint('api', __name__)
 
@@ -345,7 +346,8 @@ def new_barbershop():
     if not data.get("name") or not data.get("address"):
         return jsonify({"message": {"type": "error", "msg": "Nombre y dirección son obligatorios"}}), 400
 
-    owner_id = data.get("owner_id", current_user_id) if role == "admin" else current_user_id
+    owner_id = data.get(
+        "owner_id", current_user_id) if role == "admin" else current_user_id
     new_barbsh = Barbershop(
         name=data.get("name"),
         address=data.get("address"),
@@ -1043,13 +1045,10 @@ def delete_schedule(schedule_id):
     if claims.get("role") != "admin" and str(schedule.invitations.barber_id) != str(current_user_id):
         return jsonify({"msg": "No tienes permiso"}), 403
 
-
     db.session.delete(schedule)
     db.session.commit()
 
     return jsonify({"message": {"type": "success", "msg": "Horario eliminado correctamente"}}), 200
-
-
 
 
 # ENDPOINTS DE BARBERO Y SUS SERVICIOS
@@ -1087,12 +1086,13 @@ def new_barber_service():
     price = data.get("price")
     duration = data.get("duration")
     service_demo_image = data.get("service_demo_image")
-    service_description=data.get("service_description")
+    service_description = data.get("service_description")
 
     if not all([name, price, duration]):
         return jsonify({"message": {"type": "error", "msg": "Faltan datos: nombre, precio y duración son obligatorios"}}), 400
 
-    existing = BarberService.query.filter_by(barber_id=barber_id, name=name).first()
+    existing = BarberService.query.filter_by(
+        barber_id=barber_id, name=name).first()
     if existing:
         return jsonify({"message": {"type": "error", "msg": "Este barbero ya tiene un servicio con ese nombre"}}), 400
 
@@ -1125,7 +1125,6 @@ def edit_barber_service(barber_service_id):
     bs = BarberService.query.get(barber_service_id)
     if not bs:
         return jsonify({"message": {"type": "error", "msg": "No encontrado"}}), 404
-
 
     is_admin = claims.get("role") == "admin"
     is_owner = str(bs.barber_id) == str(current_barber_id)
@@ -1334,7 +1333,7 @@ def edit_appointment(appointment_id):
         return jsonify({"message": {"type": "error", "msg": "No tienes permiso para editar esta cita"}}), 403
 
     data = request.json
-    
+
     bs_id = data.get("barber_service_id", appointment.barber_service_id)
     barber_service = BarberService.query.get(bs_id)
     if not barber_service:
@@ -1344,7 +1343,8 @@ def edit_appointment(appointment_id):
         if 'T' in data.get('date', ''):
             new_start_date = datetime.fromisoformat(data['date'])
         elif 'date' in data and 'time' in data:
-            new_start_date = datetime.strptime(f"{data['date']} {data['time']}", "%Y-%m-%d %H:%M")
+            new_start_date = datetime.strptime(
+                f"{data['date']} {data['time']}", "%Y-%m-%d %H:%M")
         else:
             new_start_date = appointment.date
     except Exception:
@@ -1391,7 +1391,7 @@ def edit_appointment(appointment_id):
     appointment.barber_id = barber_service.barber_id
     appointment.barber_service_id = barber_service.id
     appointment.notes = data.get("notes", appointment.notes)
-    
+
     if is_admin and "user_id" in data:
         appointment.user_id = data.get("user_id")
 
@@ -1401,7 +1401,6 @@ def edit_appointment(appointment_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"message": {"type": "error", "msg": str(e)}}), 500
-
 
 
 @api.route("/appointments/<int:appointment_id>", methods=["DELETE"])
@@ -1416,8 +1415,10 @@ def delete_appointment(appointment_id):
         return jsonify({"message": {"type": "error", "msg": "Reserva no encontrada"}}), 404
 
     is_admin = (role == "admin")
-    is_owner_of_appointment = (str(appointment.user_id) == str(current_user_id))
-    is_barber_of_appointment = (str(appointment.barber_id) == str(current_user_id))
+    is_owner_of_appointment = (
+        str(appointment.user_id) == str(current_user_id))
+    is_barber_of_appointment = (
+        str(appointment.barber_id) == str(current_user_id))
 
     if not (is_admin or is_owner_of_appointment or is_barber_of_appointment):
         return jsonify({"message": {"type": "error", "msg": "No tienes permiso para borrar esta reserva"}}), 403
@@ -1426,6 +1427,7 @@ def delete_appointment(appointment_id):
     db.session.commit()
 
     return jsonify({"message": {"type": "success", "msg": "Reserva eliminada correctamente"}}), 200
+
 
 @api.route("/appointments/<int:appointment_id>/status", methods=["PUT"])
 @jwt_required()
@@ -1438,7 +1440,7 @@ def change_appointment_status(appointment_id):
     new_status = data.get("status")
 
     valid_statuses = ['pending', 'confirmed',
-                      'completed', 'no_show', 'rejected']
+                      'completed', 'no_show']
     if new_status not in valid_statuses:
         return jsonify({"message": {"type": "error", "msg": "Estado no válido"}}), 400
 
@@ -1503,7 +1505,7 @@ def get_availability():
 
     try:
         date_obj = datetime.strptime(date_str, "%Y-%m-%d")
-        day_name = date_obj.strftime('%A')
+        day_name = calendar.day_name[date_obj.weekday()]
     except:
         return jsonify({"msg": "Fecha inválida"}), 400
 
@@ -1516,6 +1518,7 @@ def get_availability():
     if not relation:
         return jsonify([]), 200
 
+    print(f"Buscando horario para el día: '{day_name}'")
     new_schedule = Schedule.query.filter_by(
         barber_barbershop_id=relation.id,
         day_of_week=day_name
@@ -1538,7 +1541,7 @@ def get_availability():
             date_obj.date(), datetime.min.time()),
         Appointment.date <= datetime.combine(
             date_obj.date(), datetime.max.time()),
-        Appointment.status.in_(['pending', 'confirmed', 'completed'])
+        Appointment.status.in_(['pending', 'confirmed'])
     ).all()
 
     valid_slots = []
@@ -1580,7 +1583,7 @@ def get_conversations():
     elif role == "user" or role == "client":
         query = query.filter_by(user_id=current_user_id)
     elif role == "admin":
-        pass    
+        pass
     else:
         return jsonify({"msg": "Rol no autorizado para ver chats"}), 403
 
@@ -1680,7 +1683,7 @@ def send_message():
 @jwt_required()
 def delete_message(message_id):
     claims = get_jwt()
-    
+
     if claims.get("role") != "admin":
         return jsonify({"message": {"type": "error", "msg": "Solo el administrador puede eliminar mensajes"}}), 403
 
@@ -1701,7 +1704,7 @@ def delete_message(message_id):
 @jwt_required()
 def delete_conversation(conv_id):
     claims = get_jwt()
-    
+
     if claims.get("role") != "admin":
         return jsonify({"message": {"type": "error", "msg": "No tienes permisos de administrador para borrar el chat completo"}}), 403
 
@@ -1716,6 +1719,50 @@ def delete_conversation(conv_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"message": {"type": "error", "msg": str(e)}}), 500
+
+
+# ENDPOINTS DE IA
+
+@api.route('/edit-hair', methods=['POST'])
+@jwt_required()
+def edit_hair():
+    STABILITY_API_KEY = os.getenv("STABILITY_API_KEY")
+
+    if 'image' not in request.files:
+        return jsonify({"msg": "No se subió imagen"}), 400
+
+    file = request.files['image']
+    user_prompt = request.form.get("prompt", "modern haircut")
+
+    try:
+        url = "https://api.stability.ai/v2beta/stable-image/edit/search-and-replace"
+
+        response = requests.post(
+            url,
+            headers={
+                "Authorization": f"Bearer {STABILITY_API_KEY}",
+                "Accept": "image/*"
+            },
+            files={
+                "image": file.read()
+            },
+            data={
+                "search_prompt": "long hair and hair on shoulders, beard and moustaches",
+                "prompt": f"{user_prompt}, realistic, hyperrealistic, clean background",
+                "output_format": "webp"
+            }
+        )
+
+        if response.status_code == 200:
+            image_base64 = base64.b64encode(response.content).decode('utf-8')
+            return jsonify({
+                "result": f"data:image/webp;base64,{image_base64}"
+            }), 200
+        else:
+            return jsonify({"msg": "Error en IA v2", "error": response.text}), response.status_code
+
+    except Exception as e:
+        return jsonify({"msg": "Error en el servidor", "error": str(e)}), 500
 
 
 # NO TOCAR

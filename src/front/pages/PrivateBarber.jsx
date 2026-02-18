@@ -3,17 +3,35 @@ import useGlobalReducer from "../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
 import notAvailable from "../../../public/NoDisponible.png"
 
+
 export const PrivateBarber = () => {
   const { store, dispatch } = useGlobalReducer();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("appointments");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const [year, month, day] = selectedDate.split("-").map(Number);
+  const dayNameEn = new Date(year, month - 1, day).toLocaleDateString('en-US', { weekday: 'long' });
+  const clientHistory = store.appointments?.filter(a =>
+    ["completed", "no_show"].includes(a.status) &&
+    (a.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.phone?.includes(searchTerm))
+  ) || [];
+
   const dayNamesES = {
-    "Monday": "Lunes", "Tuesday": "Martes", "Wednesday": "Miércoles",
-    "Thursday": "Jueves", "Friday": "Viernes", "Saturday": "Sábado", "Sunday": "Domingo"
-  };
+  "Monday": "Lunes",
+  "Tuesday": "Martes",
+  "Wednesday": "Miércoles",
+  "Thursday": "Jueves",
+  "Friday": "Viernes",
+  "Saturday": "Sábado",
+  "Sunday": "Domingo"
+};
+
+  const [phoneSearch, setPhoneSearch] = useState("");
+  const [foundUser, setFoundUser] = useState(null);
 
   const loadAll = async () => {
     if (!store.token || !store.userInfo?.id) return;
@@ -51,6 +69,24 @@ export const PrivateBarber = () => {
         type: "set-message",
         payload: { type: "error", msg: "Fallo al sincronizar los datos del perfil" }
       });
+    }
+  };
+  const handleSearchUser = async () => {
+    if (!phoneSearch) return;
+
+    try {
+      const responseUser = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/search?phone=${encodeURIComponent(phoneSearch)}`, {
+        headers: { "Authorization": `Bearer ${store.token}` }
+      });
+
+      if (responseUser.ok) {
+        const user = await responseUser.json();
+        setFoundUser(user);
+      } else {
+        dispatch({ type: "set-message", payload: { type: "error", msg: "Cliente no encontrado" } });
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -92,7 +128,7 @@ export const PrivateBarber = () => {
       } else {
         dispatch({ type: "set-message", payload: data.message || { type: "error", msg: "No se pudo borrar" } });
       }
-    } catch (error) { 
+    } catch (error) {
       console.error(error);
       dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
     }
@@ -227,7 +263,6 @@ export const PrivateBarber = () => {
     );
   }
 
-  const dayNameEn = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
   const confirmedAppts = store.appointments?.filter(a =>
     a.status === "confirmed" &&
     a.date.split("T")[0] === selectedDate &&
@@ -255,6 +290,11 @@ export const PrivateBarber = () => {
         </li>
         <li className="nav-item">
           <button className={`nav-link ${activeTab === "invitations" ? "active" : ""}`} onClick={() => setActiveTab("invitations")}>Solicitudes</button>
+        </li>
+        <li className="nav-item">
+          <button className={`nav-link ${activeTab === "clients" ? "active" : ""}`} onClick={() => setActiveTab("clients")}>
+            Historial Clientes
+          </button>
         </li>
       </ul>
 
@@ -350,6 +390,17 @@ export const PrivateBarber = () => {
                                 <i className="fas fa-check-double"></i>
                               </button>
 
+                              <button
+                                className="btn btn-sm btn-outline-danger"
+                                onClick={() => {
+                                  if (window.confirm("¿Marcar como No Presentado? Esto quedará en el historial del cliente.")) {
+                                    updateAppointmentStatus(a.id, 'no_show');
+                                  }
+                                }}
+                                title="Cliente no se ha presentado (No-Show)"
+                              >
+                                <i className="fas fa-user-slash"></i>
+                              </button>
                               <button
                                 className="btn btn-sm btn-outline-secondary"
                                 onClick={() => {
@@ -560,6 +611,143 @@ export const PrivateBarber = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+        {activeTab === "clients" && (
+          <div className="p-3 bg-white border rounded shadow-sm">
+            <h4 className="mb-4">Historial por Cliente</h4>
+
+            <div className="mb-3">
+              <label className="form-label font-weight-bold">Buscar Cliente por Teléfono</label>
+              {foundUser ? (
+                <div className="d-flex justify-content-between align-items-center p-3 border rounded bg-light">
+                  <div>
+                    <i className="fa-solid fa-user-check text-success me-2"></i>
+                    <strong className="h5 mb-0">{foundUser.name} {foundUser.last_name}</strong>
+                    <div className="ms-4">{foundUser.email}</div>
+                    <div className="ms-4 mt-2 d-flex gap-3">
+                      {(() => {
+                        const noShows = store.appointments?.filter(a =>
+                          Number(a.user_id) === Number(foundUser.id) && a.status === "no_show"
+                        ).length || 0;
+
+                        const completed = store.appointments?.filter(a =>
+                          Number(a.user_id) === Number(foundUser.id) && a.status === "completed"
+                        ).length || 0;
+
+                        return (
+                          <>
+                            <span>
+                              <i className="fa-solid fa-circle-exclamation me-1"></i>
+                              Ausencias: {noShows}
+                            </span>
+                            <span>
+                              <i className="fa-solid fa-scissors me-1"></i>
+                              Servicios realizados: {completed}
+                            </span>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-outline-danger btn-sm"
+                    onClick={() => {
+                      setFoundUser(null);
+                      setPhoneSearch("");
+                    }}
+                  >
+                    <i className="fa-solid fa-xmark me-1"></i> Borrar búsqueda
+                  </button>
+                </div>
+              ) : (
+                <div className="d-flex gap-2">
+                  <div className="flex-grow-1 border rounded bg-white px-2 shadow-sm">
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Ej: 600111222"
+                      maxLength="9"
+                      value={phoneSearch}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "");
+                        setPhoneSearch(val);
+                      }}
+                      style={{
+                        height: "45px",
+                        display: "block",
+                        width: "100%"
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-dark px-4"
+                    onClick={handleSearchUser}
+                    disabled={!phoneSearch}
+                  >
+                    <i className="fa-solid fa-magnifying-glass me-2"></i> Buscar
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <hr className="my-4" />
+
+            {!foundUser ? (
+              <div className="text-center py-5 text-muted bg-light rounded">
+                <i className="fa-solid fa-address-book fa-3x mb-3 opacity-25"></i>
+                <p>Introduce el teléfono del cliente para ver su historial completo,<br /> servicios frecuentes y ausencias.</p>
+              </div>
+            ) : (
+              <div className="table-responsive">
+                <h5 className="mb-3 text-secondary">Registro de actividad</h5>
+                <table className="table table-hover align-middle">
+                  <thead className="table-dark">
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Servicio</th>
+                      <th>Barbería</th>
+                      <th>Estado</th>
+                      <th className="text-end">Precio</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {store.appointments?.filter(a =>
+                      Number(a.user_id) === Number(foundUser.id) &&
+                      ["completed", "no_show", "confirmed"].includes(a.status)
+                    ).length > 0 ? (
+                      store.appointments
+                        .filter(a => Number(a.user_id) === Number(foundUser.id))
+                        .sort((a, b) => new Date(b.date) - new Date(a.date))
+                        .map(h => (
+                          <tr key={h.id}>
+                            <td>
+                              <div className="fw-bold">{new Date(h.date).toLocaleDateString()}</div>
+                              <div className="small text-muted">{h.date.split("T")[1].slice(0, 5)}h</div>
+                            </td>
+                            <td>{h.service_name}</td>
+                            <td className="small">{h.barbershop_name}</td>
+                            <td>
+                              <span className={`badge rounded-pill ${h.status === 'completed' ? 'bg-success' :
+                                h.status === 'no_show' ? 'bg-danger' : 'bg-warning text-dark'
+                                }`}>
+                                {h.status.toUpperCase().replace("_", " ")}
+                              </span>
+                            </td>
+                            <td className="fw-bold text-end">{h.price}€</td>
+                          </tr>
+                        ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="text-center py-4">Este cliente no tiene citas registradas en el sistema.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

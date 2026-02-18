@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { APILoader, PlacePicker } from '@googlemaps/extended-component-library/react';
-import 'react-phone-number-input/style.css';
-import PhoneInput from 'react-phone-number-input';
+
 
 export const AdminEditBarbershop = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -168,13 +167,17 @@ export const AdminEditBarbershop = () => {
                     <div className="col-md-6 mb-2">
                         <label className="fw-bold">Teléfono</label>
                         <div className="border rounded bg-white px-2 py-1" style={{ height: "38px", display: "flex", alignItems: "center" }}>
-                            <PhoneInput
-                                international
-                                defaultCountry="ES"
+                            <input
+                                type="text"
+                                className="form-control mb-2"
+                                name="phone"
                                 value={form.phone}
-                                onChange={(value) => setForm({ ...form, phone: value })}
-                                placeholder="Teléfono profesional"
-                                style={{ width: "100%", "--PhoneInputCountrySelectArrow-display": "none" }}
+                                placeholder="600123456"
+                                maxLength="9"
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, "");
+                                    setForm({ ...form, phone: val });
+                                }}
                             />
                         </div>
                     </div>

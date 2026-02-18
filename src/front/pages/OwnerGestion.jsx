@@ -28,10 +28,11 @@ export const OwnerGestion = () => {
   };
 
   const getDayName = (dateString) => {
-    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const d = new Date(dateString);
-    return days[d.getDay()];
-  };
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const [year, month, day] = dateString.split("-").map(Number);
+  const d = new Date(year, month - 1, day); 
+  return days[d.getDay()];
+};
 
   const loadBarbers = async () => {
     if (!barbershop?.id) return;
@@ -280,7 +281,9 @@ export const OwnerGestion = () => {
                 ).sort((a, b) => a.date.localeCompare(b.date));
 
                 const currentDayName = getDayName(selectedDate);
-                const todaySchedule = b.schedules?.find(s => s.day_of_week === currentDayName);
+const todaySchedule = b.schedules?.find(s => 
+  s.day_of_week.trim() === currentDayName
+);
 
                 return (
                   <div key={b.id} style={{ minWidth: "300px", maxWidth: "300px" }}>

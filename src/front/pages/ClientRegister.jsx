@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { uploadToCloudinary } from "../utilities/cloudinary";
-import 'react-phone-number-input/style.css';
-import PhoneInput from 'react-phone-number-input';
 
 export const ClientRegister = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -11,7 +9,7 @@ export const ClientRegister = () => {
 
     const isEditing = !!store.token;
     const [uploading, setUploading] = useState(false);
-    const [step, setStep] = useState(1); 
+    const [step, setStep] = useState(1);
 
     const [form, setForm] = useState({
         name: "",
@@ -139,13 +137,13 @@ export const ClientRegister = () => {
                 )}
 
                 <form onSubmit={(!isEditing && step === 1) ? nextStep : handleSubmit}>
-                    
+
                     {(step === 1 || isEditing) && (
                         <div>
                             <h5 className="mb-3">
                                 {isEditing ? "Datos de la cuenta" : "Información de inicio de sesión"}
                             </h5>
-                            
+
                             <label className="form-label">Email</label>
                             <input className="form-control mb-3" name="email" value={form.email} type="email" placeholder="nombre@ejemplo.com" onChange={handleChange} required />
 
@@ -154,10 +152,10 @@ export const ClientRegister = () => {
 
                             <label className="form-label">Confirma tu contraseña</label>
                             <input className="form-control mb-3" type="password" minLength="8" name="confirmPassword" placeholder="Repite la contraseña" onChange={handleChange} required={!isEditing} />
-                            
+
                             {!isEditing && (
                                 <button type="submit" className="btn btn-primary py-2">
-                                    Siguiente: Datos de perfil 
+                                    Siguiente: Datos de perfil
                                     <i className="fa-solid fa-chevron-right ms-2"></i>
                                 </button>
                             )}
@@ -169,12 +167,12 @@ export const ClientRegister = () => {
                             <h5 className="mb-3">
                                 {isEditing ? "Información personal" : "2. Completa tu perfil"}
                             </h5>
-                            
+
                             <div className="mb-4 text-center">
                                 {form.client_profile_image ? (
-                                    <img src={form.client_profile_image} className="rounded-circle mb-3 border border-3 border-primary" style={{ width: "120px", height: "120px", objectFit: "cover"}} />
+                                    <img src={form.client_profile_image} className="rounded-circle mb-3 border border-3 border-primary" style={{ width: "120px", height: "120px", objectFit: "cover" }} />
                                 ) : (
-                                    <div className="rounded-circle mb-3 d-flex align-items-center justify-content-center border mx-auto" style={{ width: "120px", height: "120px"}}>
+                                    <div className="rounded-circle mb-3 d-flex align-items-center justify-content-center border mx-auto" style={{ width: "120px", height: "120px" }}>
                                         <i className="fa-solid fa-camera fa-2x text-primary"></i>
                                     </div>
                                 )}
@@ -195,12 +193,17 @@ export const ClientRegister = () => {
 
                             <label className="form-label">Teléfono móvil</label>
                             <div className="border rounded mb-3 bg-white px-2 py-1">
-                                <PhoneInput
-                                    international
-                                    defaultCountry="ES"
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Ej: 600123456"
+                                    maxLength="9"
                                     value={form.phone}
-                                    onChange={(v) => setForm({ ...form, phone: v })}
-                                    style={{ display: "flex", alignItems: "center" }}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/\D/g, "");
+                                        setForm({ ...form, phone: val });
+                                    }}
+                                    style={{ width: "100%" }}
                                 />
                             </div>
 

@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-import 'react-phone-number-input/style.css';
-import PhoneInput from 'react-phone-number-input';
 
 export const AdminEditOwner = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -131,16 +129,16 @@ export const AdminEditOwner = () => {
                 <input className="form-control mb-2" name="email" value={form.email} onChange={handleChange} required />
 
                 <label className="fw-bold">Teléfono</label>
-                <PhoneInput
-                    international
-                    defaultCountry="ES"
+                <input
+                    type="text"
+                    className="form-control"
+                    name="phone"
                     value={form.phone}
-                    onChange={(value) => setForm({ ...form, phone: value })}
-                    placeholder="Teléfono profesional"
-                    style={{
-                        "--PhoneInputCountrySelectArrow-display": "none",
-                        "display": "flex",
-                        "alignItems": "center"
+                    placeholder="Ej: 600123456"
+                    maxLength="9"
+                    onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "");
+                        setForm({ ...form, phone: val });
                     }}
                 />
 

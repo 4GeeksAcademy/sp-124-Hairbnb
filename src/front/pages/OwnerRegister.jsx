@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { uploadToCloudinary } from "../utilities/cloudinary";
-import 'react-phone-number-input/style.css';
-import PhoneInput from 'react-phone-number-input';
 
 export const OwnerRegister = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -132,11 +130,11 @@ export const OwnerRegister = () => {
                 )}
 
                 <form onSubmit={(!isEditing && step === 1) ? nextStep : handleSubmit}>
-                    
+
                     {(step === 1 || isEditing) && (
                         <div>
                             <h5 className="mb-3 text-secondary">{isEditing ? "Datos de la cuenta" : "Información de inicio de sesión"}</h5>
-                            
+
                             <label className="form-label">Email Corporativo</label>
                             <input className="form-control mb-3" name="email" value={form.email} type="email" placeholder="nombre@ejemplo.com" onChange={handleChange} required />
 
@@ -145,7 +143,7 @@ export const OwnerRegister = () => {
 
                             <label className="form-label">Confirmar contraseña</label>
                             <input className="form-control mb-3" type="password" minLength="8" name="confirmPassword" placeholder="Repite la contraseña" onChange={handleChange} required={!isEditing} />
-                            
+
                             {!isEditing && (
                                 <button type="submit" className="btn btn-dark py-2">
                                     Siguiente: Datos de perfil
@@ -158,12 +156,12 @@ export const OwnerRegister = () => {
                     {(step === 2 || isEditing) && (
                         <div>
                             <h5 className="mb-3">{isEditing ? "Información profesional" : "2. Información del propietario"}</h5>
-                            
+
                             <div className="mb-4 text-center">
                                 {form.owner_profile_image ? (
-                                    <img src={form.owner_profile_image} className="rounded mb-3" style={{ width: "140px", height: "140px", objectFit: "cover"}} />
+                                    <img src={form.owner_profile_image} className="rounded mb-3" style={{ width: "140px", height: "140px", objectFit: "cover" }} />
                                 ) : (
-                                    <div className="rounded mb-3 d-flex align-items-center justify-content-center border border-secondary mx-auto" style={{ width: "140px", height: "140px"}}>
+                                    <div className="rounded mb-3 d-flex align-items-center justify-content-center border border-secondary mx-auto" style={{ width: "140px", height: "140px" }}>
                                         <i className="fa-solid fa-building-user fa-3x text-secondary"></i>
                                     </div>
                                 )}
@@ -176,12 +174,17 @@ export const OwnerRegister = () => {
 
                             <label className="form-label">Teléfono de contacto</label>
                             <div className="border rounded mb-4 bg-white px-2 py-1">
-                                <PhoneInput
-                                    international
-                                    defaultCountry="ES"
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Ej: 600123456"
+                                    maxLength="9"
                                     value={form.phone}
-                                    onChange={(v) => setForm({ ...form, phone: v })}
-                                    style={{ display: "flex", alignItems: "center" }}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/\D/g, "");
+                                        setForm({ ...form, phone: val });
+                                    }}
+                                    style={{ width: "100%" }}
                                 />
                             </div>
 
