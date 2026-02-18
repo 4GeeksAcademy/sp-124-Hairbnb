@@ -92,9 +92,9 @@ export const ClientRegister = () => {
                 })
             });
 
-            const data = await res.json();
+            const data = await response.json();
 
-            if (!res.ok) {
+            if (!response.ok) {
                 dispatch({
                     type: "set-message",
                     payload: data.message || { type: "error", msg: "Algo ha fallado" }

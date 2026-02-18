@@ -125,7 +125,7 @@ export const BarbershopForm = () => {
                         international
                         defaultCountry="ES"
                         value={data.phone}
-                        onChange={(value) => setForm({ ...form, phone: value })}
+                        onChange={(value) => setData({ ...form, phone: value })}
                         placeholder="Teléfono profesional"
                         style={{
                             "--PhoneInputCountrySelectArrow-display": "none",
