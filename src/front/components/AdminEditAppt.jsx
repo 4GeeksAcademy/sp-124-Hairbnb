@@ -11,6 +11,8 @@ export const AdminEditAppt = () => {
     const [phoneSearch, setPhoneSearch] = useState("");
     const [foundUser, setFoundUser] = useState(null);
     const [availableSlots, setAvailableSlots] = useState([]);
+    const [daysAvailability, setDaysAvailability] = useState({});
+    const [startDate, setStartDate] = useState(new Date());
 
     const [data, setData] = useState({
         user_id: "",
@@ -22,7 +24,32 @@ export const AdminEditAppt = () => {
         notes: ""
     });
 
-    
+    const getDaysArray = (start) => {
+        return Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(start);
+            d.setDate(d.getDate() + i);
+            return d;
+        });
+    };
+    const days = getDaysArray(startDate);
+    const handlePrevWeek = () => {
+        const newDate = new Date(startDate);
+        newDate.setDate(newDate.getDate() - 7);
+        setStartDate(newDate);
+    };
+    const handleNextWeek = () => {
+        const newDate = new Date(startDate);
+        newDate.setDate(newDate.getDate() + 7);
+        setStartDate(newDate);
+    };
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const isPast = (date) => {
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        return d < today;
+    };
+
     const currentServices = (() => {
         if (!data.barber_id || !store.barbers) return [];
         const barber = store.barbers.find(b => 
@@ -51,10 +78,6 @@ export const AdminEditAppt = () => {
                     if (responseAppt.ok) {
                         const appt = await responseAppt.json();
                         setFoundUser({ id: appt.user_id, name: appt.user_name });
-                        
-                        const datePart = appt.date ? appt.date.split("T")[0] : "";
-                        const timePart = appt.date ? appt.date.split("T")[1].slice(0, 5) : "";
-                        
                         setData({
                             user_id: appt.user_id,
                             barber_id: appt.barber_id,
@@ -66,12 +89,10 @@ export const AdminEditAppt = () => {
                         });
                     }
                 }
-            } catch (error) {
-                console.error("Error en carga inicial:", error);
-            }
+            } catch (error) { console.error(error); }
         };
         initLoad();
-    }, [id, isEditing, store.token, dispatch]);
+    }, [id, isEditing, store.token]);
 
     useEffect(() => {
         if (!data.barbershop_id) return;
@@ -84,12 +105,10 @@ export const AdminEditAppt = () => {
                     const barbersData = await response.json();
                     dispatch({ type: "set-barbers", payload: barbersData.filter(b => b.status === "accepted") });
                 }
-            } catch (error) {
-                console.error("Error cargando barberos:", error);
-            }
+            } catch (error) { console.error(error); }
         };
         loadBarbers();
-    }, [data.barbershop_id, store.token, dispatch]);
+    }, [data.barbershop_id, store.token]);
 
     useEffect(() => {
         const fetchSlots = async () => {
@@ -99,17 +118,34 @@ export const AdminEditAppt = () => {
                         `${import.meta.env.VITE_BACKEND_URL}/barber_availability?barber_id=${data.barber_id}&barbershop_id=${data.barbershop_id}&date=${data.date}&service_id=${data.barber_service_id}`,
                         { headers: { "Authorization": `Bearer ${store.token}` } }
                     );
-                    if (response.ok) {
-                        const slots = await response.json();
-                        setAvailableSlots(slots);
-                    }
-                } catch (error) {
-                    console.error("Error cargando slots:", error);
-                }
+                    if (response.ok) setAvailableSlots(await response.json());
+                } catch (error) { console.error(error); }
             }
         };
         fetchSlots();
-    }, [data.date, data.barber_id, data.barbershop_id, data.barber_service_id, store.token]);
+    }, [data.date, data.barber_id, data.barber_service_id]);
+
+    useEffect(() => {
+        const checkWeek = async () => {
+            if (!data.barber_id || !data.barber_service_id || !data.barbershop_id) return;
+            const map = {};
+            const promises = days.map(async (day) => {
+                const dateStr = day.toISOString().split('T')[0];
+                if (isPast(day)) return;
+                try {
+                    const url = `${import.meta.env.VITE_BACKEND_URL}/barber_availability?barber_id=${data.barber_id}&barbershop_id=${data.barbershop_id}&date=${dateStr}&service_id=${data.barber_service_id}`;
+                    const resp = await fetch(url, { headers: { "Authorization": `Bearer ${store.token}` } });
+                    if (resp.ok) {
+                        const slots = await resp.json();
+                        map[dateStr] = slots.length > 0;
+                    }
+                } catch (e) { }
+            });
+            await Promise.all(promises);
+            setDaysAvailability(map);
+        };
+        checkWeek();
+    }, [startDate, data.barber_id, data.barber_service_id]);
 
     const handleSearchUser = async () => {
         if (!phoneSearch) return;
@@ -121,12 +157,8 @@ export const AdminEditAppt = () => {
                 const user = await response.json();
                 setFoundUser(user);
                 setData(prev => ({ ...prev, user_id: user.id }));
-            } else {
-                dispatch({ type: "set-message", payload: { type: "error", msg: "Usuario no encontrado" } });
             }
-        } catch (error) {
-            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión al buscar usuario" } });
-        }
+        } catch (error) { console.error(error); }
     };
 
     const handleSubmit = async (e) => {
@@ -138,24 +170,16 @@ export const AdminEditAppt = () => {
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${store.token}` },
                 body: JSON.stringify(payload)
             });
-
-            if (response.ok) {
-                dispatch({ type: "set-message", payload: { type: "success", msg: "Cita guardada correctamente" } });
-                navigate(-1);
-            } else {
-                const errorData = await response.json();
-                dispatch({ type: "set-message", payload: { type: "error", msg: errorData.msg || "Error al guardar la cita" } });
-            }
-        } catch (error) {
-            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión con el servidor" } });
-        }
+            if (response.ok) navigate(-1);
+        } catch (error) { console.error(error); }
     };
+
     return (
         <div className="container mt-4">
             <h3 className="mb-4 text-primary">{isEditing ? "Admin: Editar Cita" : "Admin: Nueva Cita"}</h3>
             <form onSubmit={handleSubmit} className="card p-4 shadow-sm">
-
-                <div className="mb-3">
+                
+                <div className={`mb-3 ${isEditing ? 'd-none' : ''}`}>
                     <label className="form-label fw-bold">Cliente</label>
                     {foundUser ? (
                         <div className="alert alert-info d-flex justify-content-between align-items-center">
@@ -171,13 +195,13 @@ export const AdminEditAppt = () => {
                 </div>
 
                 <label className="form-label fw-bold">Sede (Barbería)</label>
-                <select className="form-select mb-3" value={data.barbershop_id} onChange={e => setData({ ...data, barbershop_id: e.target.value, barber_id: "", barber_service_id: "" })}>
+                <select className="form-select mb-3" value={data.barbershop_id} onChange={e => setData({ ...data, barbershop_id: e.target.value, barber_id: "", barber_service_id: "", date: "", time: "" })}>
                     <option value="">Selecciona sede...</option>
                     {store.barbershops?.map(shop => <option key={shop.id} value={shop.id}>{shop.name}</option>)}
                 </select>
 
                 <label className="form-label fw-bold">Barbero</label>
-                <select className="form-select mb-3" value={data.barber_id} onChange={e => setData({ ...data, barber_id: e.target.value, barber_service_id: "" })} disabled={!data.barbershop_id}>
+                <select className="form-select mb-3" value={data.barber_id} onChange={e => setData({ ...data, barber_id: e.target.value, barber_service_id: "", date: "", time: "" })} disabled={!data.barbershop_id}>
                     <option value="">Selecciona un barbero...</option>
                     {store.barbers?.map(b => (
                         <option key={b.id} value={b.barber?.id || b.id}>{b.barber?.name || b.name}</option>
@@ -185,33 +209,63 @@ export const AdminEditAppt = () => {
                 </select>
 
                 <label className="form-label fw-bold">Servicio</label>
-                <select className="form-select mb-3" value={data.barber_service_id} onChange={e => setData({ ...data, barber_service_id: e.target.value })} disabled={!data.barber_id}>
+                <select className="form-select mb-3" value={data.barber_service_id} onChange={e => setData({ ...data, barber_service_id: e.target.value, date: "", time: "" })} disabled={!data.barber_id}>
                     <option value="">Elegir servicio...</option>
                     {currentServices.map(s => <option key={s.id} value={s.id}>{s.name} - {s.price}€</option>)}
                 </select>
 
-                <div className="row mb-3">
-                    <div className="col-6">
-                        <label className="form-label fw-bold">Fecha</label>
-                        <input type="date" className="form-control" value={data.date} onChange={e => setData({ ...data, date: e.target.value })} />
+                <div className="mb-4">
+                    <label className="form-label fw-bold">Fecha de la cita</label>
+                    <div className="d-flex align-items-center justify-content-between mb-3 bg-light p-2 rounded border">
+                        <button type="button" className="btn btn-sm btn-outline-primary" onClick={handlePrevWeek}><i className="fas fa-chevron-left"></i></button>
+                        <div className="d-flex overflow-hidden gap-2 text-center">
+                            {days.map((day, index) => {
+                                const dateStr = day.toISOString().split('T')[0];
+                                const isActive = data.date === dateStr;
+                                const isPastDay = isPast(day);
+                                const hasSlots = daysAvailability[dateStr];
+                                const isFull = !isPastDay && daysAvailability.hasOwnProperty(dateStr) && !hasSlots;
+                                const isDisabled = isPastDay || isFull;
+
+                                return (
+                                    <div key={index}
+                                        onClick={() => { if (!isDisabled) setData({ ...data, date: dateStr, time: "" }); }}
+                                        style={{ cursor: isDisabled ? 'not-allowed' : 'pointer', minWidth: '85px' }}
+                                        className={`p-2 rounded transition-all border ${isActive ? 'bg-primary text-white border-primary shadow' : isFull ? 'bg-secondary-subtle text-secondary opacity-75' : isPastDay ? 'bg-light text-muted border-light' : 'bg-white border-secondary-subtle'}`}
+                                    >
+                                        <small className="d-block text-uppercase" style={{ fontSize: '0.65rem', fontWeight: 'bold' }}>{day.toLocaleDateString('es-ES', { weekday: 'short' })}</small>
+                                        <strong className="d-block fs-5">{day.getDate()}</strong>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <button type="button" className="btn btn-sm btn-outline-primary" onClick={handleNextWeek}><i className="fas fa-chevron-right"></i></button>
                     </div>
-                    <div className="col-6">
-                        <label className="form-label fw-bold">Hora</label>
-                        <select className="form-select" value={data.time} onChange={e => setData({ ...data, time: e.target.value })} disabled={availableSlots.length === 0}>
-                            <option value="">{availableSlots.length > 0 ? "Selecciona hora" : "Sin disponibilidad"}</option>
-                            {availableSlots.map(slot => <option key={slot} value={slot}>{slot}</option>)}
-                        </select>
+
+                    <div className="mt-3">
+                        <div className="d-flex flex-wrap gap-2">
+                            {availableSlots.length > 0 ? (
+                                availableSlots.map(slot => (
+                                    <button key={slot} type="button" onClick={() => setData({ ...data, time: slot })}
+                                        className={`btn btn-sm px-3 py-2 rounded-pill border ${data.time === slot ? 'btn-primary shadow-sm' : 'btn-outline-secondary bg-white'}`}>
+                                        {slot}
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="w-100 text-center py-2 bg-light rounded"><small className="text-muted">Sin turnos disponibles</small></div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
                 <div className="mb-3">
-                    <label className="form-label fw-bold">Notas</label>
+                    <label className="form-label">Notas</label>
                     <textarea className="form-control" value={data.notes} onChange={e => setData({ ...data, notes: e.target.value })} placeholder="Ej: El cliente llega 5 min tarde"></textarea>
                 </div>
 
                 <div className="d-flex gap-2">
                     <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>Cancelar</button>
-                    <button type="submit" className="btn btn-success flex-grow-1" disabled={!data.user_id || !data.time}>Guardar Cita</button>
+                    <button type="submit" className="btn btn-success" disabled={!data.user_id || !data.time}>Guardar Cita</button>
                 </div>
             </form>
         </div>
