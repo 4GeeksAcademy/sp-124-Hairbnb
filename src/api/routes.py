@@ -764,18 +764,7 @@ def get_barber_invitations():
             BarberBarbershop.status.in_(["pending", "accepted"])
         ).all()
 
-    return jsonify([
-        {
-            "id": invite.id,
-            "barbershop": {
-                "id": invite.barbershop.id,
-                "name": invite.barbershop.name
-            },
-            "status": invite.status
-        }
-        for invite in invitations
-    ]), 200
-
+    return jsonify([invite.serialize() for invite in invitations]), 200
 
 @api.route("/invitations", methods=["POST"])
 @jwt_required()
@@ -866,7 +855,7 @@ def delete_barber_invitations(invitation_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
 
-    if role != "admin" and (str(current_user_id) != str(invite.barber_id)):
+    if claims.role != "admin" and (str(current_user_id) != str(invite.barber_id)):
         return jsonify({"message": "No autorizado"}), 403
 
     invite = BarberBarbershop.query.filter_by(
@@ -1049,6 +1038,31 @@ def delete_schedule(schedule_id):
     db.session.commit()
 
     return jsonify({"message": {"type": "success", "msg": "Horario eliminado correctamente"}}), 200
+
+
+@api.route("/schedules/by_invitation/<int:invitation_id>", methods=["GET"])
+@jwt_required()
+def get_schedules_by_invitation(invitation_id):
+    try:
+        schedules = Schedule.query.filter_by(barber_barbershop_id=invitation_id).all()
+        
+        return jsonify([s.serialize() for s in schedules]), 200
+    except Exception as e:
+        return jsonify({"msg": str(e)}), 500
+
+
+@api.route("/schedules/by_invitation/<int:invitation_id>", methods=["DELETE"])
+@jwt_required()
+def delete_schedules_by_invitation(invitation_id):
+    try:
+        schedules = Schedule.query.filter_by(barber_barbershop_id=invitation_id).all()
+        for s in schedules:
+            db.session.delete(s)
+        db.session.commit()
+        return jsonify({"msg": "Horarios antiguos eliminados"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": str(e)}), 500
 
 
 # ENDPOINTS DE BARBERO Y SUS SERVICIOS
@@ -1724,45 +1738,50 @@ def delete_conversation(conv_id):
 # ENDPOINTS DE IA
 
 @api.route('/edit-hair', methods=['POST'])
-@jwt_required()
 def edit_hair():
-    STABILITY_API_KEY = os.getenv("STABILITY_API_KEY")
+    stability_key = os.getenv("STABILITY_API_KEY")
+    
+    if not stability_key:
+        return jsonify({"msg": "Error: API Key no configurada en el servidor"}), 500
 
+    # 2. Recogemos los datos que vienen del frontend
     if 'image' not in request.files:
-        return jsonify({"msg": "No se subió imagen"}), 400
+        return jsonify({"msg": "No se ha subido ninguna imagen"}), 400
+        
+    image = request.files['image']
+    prompt = request.form.get('prompt')
+    search_prompt = request.form.get('search_prompt', 'hair') # Por defecto busca 'hair'
 
-    file = request.files['image']
-    user_prompt = request.form.get("prompt", "modern haircut")
-
+    # 3. Llamada a Stability AI
     try:
-        url = "https://api.stability.ai/v2beta/stable-image/edit/search-and-replace"
-
         response = requests.post(
-            url,
+            "https://api.stability.ai/v2beta/stable-image/edit/search-and-replace",
             headers={
-                "Authorization": f"Bearer {STABILITY_API_KEY}",
-                "Accept": "image/*"
+                "authorization": f"Bearer {stability_key}",
+                "accept": "image/*"
             },
-            files={
-                "image": file.read()
-            },
+            files={"image": (image.filename, image.read(), image.content_type)},
             data={
-                "search_prompt": "long hair and hair on shoulders, beard and moustaches",
-                "prompt": f"{user_prompt}, realistic, hyperrealistic, clean background",
+                "prompt": prompt,
+                "search_prompt": search_prompt,
                 "output_format": "webp"
-            }
+            },
         )
 
         if response.status_code == 200:
+            # Convertimos la imagen recibida a Base64 para enviarla al Frontend
             image_base64 = base64.b64encode(response.content).decode('utf-8')
             return jsonify({
                 "result": f"data:image/webp;base64,{image_base64}"
             }), 200
         else:
-            return jsonify({"msg": "Error en IA v2", "error": response.text}), response.status_code
+            # Si Stability da error, lo capturamos
+            error_data = response.json()
+            return jsonify({"msg": f"Error de IA: {error_data.get('errors')}"}), response.status_code
 
     except Exception as e:
-        return jsonify({"msg": "Error en el servidor", "error": str(e)}), 500
+        print(f"Error en el servidor: {str(e)}")
+        return jsonify({"msg": "Fallo en la conexión con el servicio de IA"}), 500
 
 
 # NO TOCAR

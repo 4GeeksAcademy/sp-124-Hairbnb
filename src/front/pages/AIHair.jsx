@@ -4,17 +4,18 @@ import useGlobalReducer from "../hooks/useGlobalReducer";
 export const AIHair = () => {
     const { store } = useGlobalReducer();
     const [file, setFile] = useState(null);
-    const [prompt, setPrompt] = useState("Modern fade haircut, professional style");
+    const [prompt, setPrompt] = useState("");
     const [status, setStatus] = useState("idle");
     const [resultImage, setResultImage] = useState(null);
 
     const handleProcess = async () => {
-        if (!file) return;
+        if (!file || !prompt) return;
         setStatus("processing");
 
         const formData = new FormData();
         formData.append("image", file);
-        formData.append("prompt", prompt);
+        formData.append("prompt", prompt); // Ej: "platinum blonde pompadour"
+        formData.append("search_prompt", "hair and beard"); // Esto le dice qué buscar para sustituir
 
         try {
             const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/edit-hair`, {
@@ -27,6 +28,7 @@ export const AIHair = () => {
 
             if (!resp.ok) throw new Error("Error en la respuesta de la IA");
 
+            // Stability suele devolver la imagen directamente (blob) o una URL de Cloudinary si lo tienes así
             const data = await resp.json();
             setResultImage(data.result);
             setStatus("completed");
@@ -38,20 +40,20 @@ export const AIHair = () => {
 
     return (
         <div className="card shadow-sm p-4 border-0">
-            <h3 className="fw-bold"><i className="fa-solid fa-wand-magic-sparkles text-primary me-2"></i>AI Barber Lab</h3>
-            <p className="text-muted">Visualiza tu cambio antes de pasar por la tijera.</p>
+            <h3 className="fw-bold text-primary"><i className="fa-solid fa-wand-magic-sparkles me-2"></i>AI Hair Styler</h3>
+            <p className="text-muted">Stability AI V2: Search & Replace</p>
 
             <div className="mb-3">
-                <label className="form-label small fw-bold">1. ¿Qué estilo quieres probar?</label>
+                <label className="form-label small fw-bold">1. ¿Qué peinado o barba quieres?</label>
                 <input 
                     type="text" 
                     className="form-control mb-3" 
-                    placeholder="Ej: buzz cut, lumberjack beard..." 
+                    placeholder="Ej: buzz cut, curly hair, blue hair..." 
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                 />
                 
-                <label className="form-label small fw-bold">2. Sube tu foto (de frente)</label>
+                <label className="form-label small fw-bold">2. Sube tu foto (mejor si el fondo es liso)</label>
                 <input 
                     type="file" 
                     className="form-control" 

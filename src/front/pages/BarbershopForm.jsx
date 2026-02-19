@@ -2,14 +2,23 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { uploadToCloudinary } from "../utilities/cloudinary";
-
-
 import { APILoader, PlacePicker } from '@googlemaps/extended-component-library/react';
 
 export const BarbershopForm = () => {
   const { store, dispatch } = useGlobalReducer();
   const navigate = useNavigate();
   const [uploading, setUploading] = useState(false);
+
+  // Horario inicial por defecto para evitar errores de undefined
+  const defaultHours = {
+    Lunes: { m_start: "", m_end: "", a_start: "", a_end: "" },
+    Martes: { m_start: "", m_end: "", a_start: "", a_end: "" },
+    Miércoles: { m_start: "", m_end: "", a_start: "", a_end: "" },
+    Jueves: { m_start: "", m_end: "", a_start: "", a_end: "" },
+    Viernes: { m_start: "", m_end: "", a_start: "", a_end: "" },
+    Sábado: { m_start: "", m_end: "", a_start: "", a_end: "" },
+    Domingo: { m_start: "", m_end: "", a_start: "", a_end: "" }
+  };
 
   const [data, setData] = useState({
     id: null,
@@ -20,9 +29,10 @@ export const BarbershopForm = () => {
     barbershop_image: "",
     latitude: null,
     longitude: null,
-    working_hours: { "Lunes": "", "Martes": "", "Miércoles": "", "Jueves": "", "Viernes": "", "Sábado": "", "Domingo": "" }
+    working_hours: defaultHours
   });
 
+  // CARGAR DATOS AL EDITAR
   useEffect(() => {
     if (store.barbershopInfo) {
       setData({
@@ -34,7 +44,10 @@ export const BarbershopForm = () => {
         barbershop_image: store.barbershopInfo.barbershop_image || "",
         latitude: store.barbershopInfo.latitude || null,
         longitude: store.barbershopInfo.longitude || null,
-        working_hours: store.barbershopInfo.working_hours || data.working_hours
+        // Si vienen horarios de la DB, los usamos. Si no, usamos los default.
+        working_hours: store.barbershopInfo.working_hours && Object.keys(store.barbershopInfo.working_hours).length > 0
+          ? store.barbershopInfo.working_hours
+          : defaultHours
       });
     }
   }, [store.barbershopInfo]);
@@ -42,7 +55,6 @@ export const BarbershopForm = () => {
   const handlePlaceChange = (e) => {
     const place = e.target.value;
     if (place && place.location) {
-
       setData(prev => ({
         ...prev,
         address: place.formattedAddress || place.displayName,
@@ -65,6 +77,16 @@ export const BarbershopForm = () => {
 
   const handleChange = (e) => {
     setData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleHourChange = (day, field, value) => {
+    setData(prev => ({
+      ...prev,
+      working_hours: {
+        ...prev.working_hours,
+        [day]: { ...prev.working_hours[day], [field]: value }
+      }
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -91,7 +113,7 @@ export const BarbershopForm = () => {
       });
 
       if (response.ok) {
-        dispatch({ type: "set-message", payload: { type: "success", msg: "Guardado" } });
+        dispatch({ type: "set-message", payload: { type: "success", msg: "Barbería guardada correctamente" } });
         navigate(-1);
       }
     } catch (err) {
@@ -104,22 +126,22 @@ export const BarbershopForm = () => {
   }
 
   return (
-    <div className="container">
+    <div className="container pb-5">
       <APILoader apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY} />
       <div className="d-flex justify-content-between align-items-center my-4">
         <h1 className="display-6">{data.id ? "Editar barbería" : "Añadir barbería"}</h1>
         <button type="button" className="btn btn-outline-secondary" onClick={() => navigate(-1)}>Volver</button>
       </div>
 
-      <form className="mx-auto p-4" onSubmit={handleSubmit}>
+      <form className="mx-auto" onSubmit={handleSubmit}>
         <div className="row g-3">
           <div className="col-12 col-md-6">
-            <label className="form-label">Nombre</label>
-            <input className="form-control" name="name" type="text" value={data.name} onChange={handleChange} />
+            <label className="form-label fw-bold">Nombre</label>
+            <input className="form-control" name="name" type="text" value={data.name} onChange={handleChange} required />
           </div>
 
           <div className="col-12 col-md-6">
-            <label className="form-label">Teléfono</label>
+            <label className="form-label fw-bold">Teléfono</label>
             <input
               type="text"
               className="form-control"
@@ -130,11 +152,12 @@ export const BarbershopForm = () => {
                 const val = e.target.value.replace(/\D/g, "");
                 setData({ ...data, phone: val });
               }}
+              required
             />
           </div>
 
           <div className="col-12">
-            <label className="form-label">Dirección (Selecciona de la lista)</label>
+            <label className="form-label fw-bold">Dirección</label>
             <PlacePicker
               placeholder={data.address || "Busca la dirección..."}
               onPlaceChange={handlePlaceChange}
@@ -142,35 +165,87 @@ export const BarbershopForm = () => {
           </div>
 
           <div className="col-12">
-            <label className="form-label">Horarios (L-D)</label>
-            <div className="row g-2 border p-2 rounded">
-
+            <label className="form-label fw-bold">Horarios de Apertura</label>
+            <div className="bg-light p-3 rounded border">
+              {/* Usamos un array fijo para asegurar el orden cronológico */}
               {["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map(day => (
-                <div key={day} className="col-6 col-md-3">
-                  <small className="fw-bold">{day}</small>
-                  <input
-                    className="form-control form-control-sm"
-                    type="text"
-                    placeholder="09:00-20:00"
-                    value={data.working_hours[day] || ""}
-                    onChange={(e) => setData(prev => ({
-                      ...prev,
-                      working_hours: { ...prev.working_hours, [day]: e.target.value }
-                    }))}
-                  />
+                <div key={day} className="row mb-3 align-items-center border-bottom pb-2">
+                  <div className="col-12 col-md-2">
+                    <span className="fw-bold">{day}</span>
+                  </div>
+
+                  {/* Bloque Mañana */}
+                  <div className="col-6 col-md-5 d-flex align-items-center gap-2">
+                    <div className="form-check form-switch">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        // Verificamos si existe la propiedad antes de acceder
+                        checked={!!(data.working_hours[day] && data.working_hours[day].m_start)}
+                        onChange={(e) => {
+                          if (!e.target.checked) {
+                            handleHourChange(day, "m_start", "");
+                            handleHourChange(day, "m_end", "");
+                          } else {
+                            handleHourChange(day, "m_start", "09:00");
+                            handleHourChange(day, "m_end", "14:00");
+                          }
+                        }}
+                      />
+                    </div>
+                    <small className="text-muted">Mañana:</small>
+                    <input type="time" className="form-control form-control-sm"
+                      value={(data.working_hours[day] && data.working_hours[day].m_start) || ""}
+                      disabled={!(data.working_hours[day] && data.working_hours[day].m_start)}
+                      onChange={(e) => handleHourChange(day, "m_start", e.target.value)} />
+                    <input type="time" className="form-control form-control-sm"
+                      value={(data.working_hours[day] && data.working_hours[day].m_end) || ""}
+                      disabled={!(data.working_hours[day] && data.working_hours[day].m_start)}
+                      onChange={(e) => handleHourChange(day, "m_end", e.target.value)} />
+                  </div>
+
+                  {/* Bloque Tarde */}
+                  <div className="col-6 col-md-5 d-flex align-items-center gap-2">
+                    <div className="form-check form-switch">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        checked={!!(data.working_hours[day] && data.working_hours[day].a_start)}
+                        onChange={(e) => {
+                          if (!e.target.checked) {
+                            handleHourChange(day, "a_start", "");
+                            handleHourChange(day, "a_end", "");
+                          } else {
+                            handleHourChange(day, "a_start", "16:00");
+                            handleHourChange(day, "a_end", "20:00");
+                          }
+                        }}
+                      />
+                    </div>
+                    <small className="text-muted">Tarde:</small>
+                    <input type="time" className="form-control form-control-sm"
+                      value={(data.working_hours[day] && data.working_hours[day].a_start) || ""}
+                      disabled={!(data.working_hours[day] && data.working_hours[day].a_start)}
+                      onChange={(e) => handleHourChange(day, "a_start", e.target.value)} />
+                    <input type="time" className="form-control form-control-sm"
+                      value={(data.working_hours[day] && data.working_hours[day].a_end) || ""}
+                      disabled={!(data.working_hours[day] && data.working_hours[day].a_start)}
+                      onChange={(e) => handleHourChange(day, "a_end", e.target.value)} />
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="col-12">
-            <label className="form-label">Descripción</label>
-            <textarea className="form-control" name="barbershop_description" type="text" value={data.barbershop_description} onChange={handleChange} />
+            <label className="form-label fw-bold">Descripción</label>
+            <textarea className="form-control" name="barbershop_description" rows="3" value={data.barbershop_description} onChange={handleChange} />
           </div>
 
-          <div className="col-12 text-center mb-3">
+          <div className="col-12 text-center mb-3 mt-3">
+            <label className="form-label d-block fw-bold text-start">Imagen de la Barbería</label>
             {data.barbershop_image && (
-              <img src={data.barbershop_image} alt="Preview" className="img-thumbnail mb-2" style={{ maxHeight: "200px" }} />
+              <img src={data.barbershop_image} alt="Preview" className="img-thumbnail mb-2" style={{ maxHeight: "180px" }} />
             )}
             <input type="file" className="form-control" onChange={handleFileChange} accept="image/*" disabled={uploading} />
             {uploading && <small className="text-primary fw-bold">Subiendo imagen...</small>}
@@ -178,9 +253,9 @@ export const BarbershopForm = () => {
         </div>
 
         <div className="mt-4 d-flex justify-content-around">
-          <button type="button" onClick={() => navigate(-1)} className="btn btn-outline-secondary">Cancelar</button>
-          <button type="submit" className="btn btn-primary" disabled={uploading}>
-            {uploading ? "Subiendo..." : (data.id ? "Actualizar" : "Crear")}
+          <button type="button" onClick={() => navigate(-1)} className="btn btn-outline-secondary px-4">Cancelar</button>
+          <button type="submit" className="btn btn-primary px-5" disabled={uploading}>
+            {uploading ? "Subiendo..." : (data.id ? "Actualizar Barbería" : "Crear Barbería")}
           </button>
         </div>
       </form>
