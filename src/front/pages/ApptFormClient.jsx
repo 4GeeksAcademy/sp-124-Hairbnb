@@ -22,6 +22,30 @@ export const ApptFormClient = () => {
         notes: editData ? editData.notes || "" : ""
     });
 
+    const [startDate, setStartDate] = useState(new Date());
+
+    const getDaysArray = (start) => {
+        return Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(start);
+            d.setDate(d.getDate() + i);
+            return d;
+        });
+    };
+
+    const days = getDaysArray(startDate);
+
+    const handlePrevWeek = () => {
+        const newDate = new Date(startDate);
+        newDate.setDate(newDate.getDate() - 7);
+        setStartDate(newDate);
+    };
+
+    const handleNextWeek = () => {
+        const newDate = new Date(startDate);
+        newDate.setDate(newDate.getDate() + 7);
+        setStartDate(newDate);
+    };
+
     useEffect(() => {
         const loadInitialData = async () => {
             const token = store.token || localStorage.getItem("token");
@@ -116,7 +140,7 @@ export const ApptFormClient = () => {
             notes: data.notes || ""
         };
 
-        const url = isEditing 
+        const url = isEditing
             ? `${import.meta.env.VITE_BACKEND_URL}/appointments/${editData.id}`
             : `${import.meta.env.VITE_BACKEND_URL}/appointments`;
 
@@ -133,9 +157,9 @@ export const ApptFormClient = () => {
             const responseData = await response.json();
 
             if (response.ok) {
-                dispatch({ 
-                    type: "set-message", 
-                    payload: { "type": "success", "msg": isEditing ? "¡Cita actualizada!" : "¡Cita reservada con éxito!" } 
+                dispatch({
+                    type: "set-message",
+                    payload: { "type": "success", "msg": isEditing ? "¡Cita actualizada!" : "¡Cita reservada con éxito!" }
                 });
                 navigate("/private/client");
             } else {
@@ -147,6 +171,46 @@ export const ApptFormClient = () => {
         } catch (error) {
             console.error("Error en la petición:", error);
         }
+    };
+
+    const [daysAvailability, setDaysAvailability] = useState({});
+
+    useEffect(() => {
+        const checkMultipleDays = async () => {
+            if (!data.barber_id || !data.barbershop_id || !data.barber_service_id) return;
+
+            const availabilityMap = {};
+
+            const promises = days.map(async (day) => {
+                const dateStr = day.toISOString().split('T')[0];
+                if (isPast(day)) return; 
+
+                try {
+                    const url = `${import.meta.env.VITE_BACKEND_URL}/barber_availability?barber_id=${data.barber_id}&barbershop_id=${data.barbershop_id}&date=${dateStr}&service_id=${data.barber_service_id}`;
+                    const resp = await fetch(url, { headers: { "Authorization": `Bearer ${store.token}` } });
+                    if (resp.ok) {
+                        const slots = await resp.json();
+                        availabilityMap[dateStr] = slots.length > 0;
+                    }
+                } catch (e) {
+                    console.error("Error chequeando día", dateStr);
+                }
+            });
+
+            await Promise.all(promises);
+            setDaysAvailability(availabilityMap);
+        };
+
+        checkMultipleDays();
+    }, [startDate, data.barber_id, data.barber_service_id]);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const isPast = (date) => {
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        return d < today;
     };
 
     if (store.role !== "client") {
@@ -194,29 +258,99 @@ export const ApptFormClient = () => {
                     ))}
                 </select>
 
-                <div className="row mb-3">
-                    <div className="col-md-6">
-                        <label className="form-label">Día</label>
-                        <input type="date" className="form-control" required value={data.date}
-                            onChange={e => {
-                                setAvailableSlots([]);
-                                setData({ ...data, date: e.target.value, time: "" });
-                            }} />
+                <div className="mb-4">
+                    <label className="form-label fw-bold">Selecciona el momento ideal</label>
+
+                    <div className="d-flex align-items-center justify-content-between mb-3 bg-light p-2 rounded border">
+                        <button type="button" className="btn btn-sm btn-outline-primary" onClick={handlePrevWeek}>
+                            <i className="fas fa-chevron-left"></i> Anterior
+                        </button>
+
+                        <div className="d-flex overflow-hidden gap-2 text-center">
+                            {days.map((day, index) => {
+                                const dateString = day.toISOString().split('T')[0];
+                                const isActive = data.date === dateString;
+                                const isPastDay = isPast(day);
+
+                                const hasSlots = daysAvailability[dateString];
+                                const isFullOrClosed = !isPastDay && daysAvailability.hasOwnProperty(dateString) && !hasSlots;
+                                const isDisabled = isPastDay || isFullOrClosed;
+
+                                return (
+                                    <div
+                                        key={index}
+                                        onClick={() => {
+                                            if (isDisabled) return;
+                                            setAvailableSlots([]);
+                                            setData({ ...data, date: dateString, time: "" });
+                                        }}
+                                        style={{
+                                            cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                            minWidth: '85px',
+                                            position: 'relative'
+                                        }}
+                                        className={`p-2 rounded transition-all border ${isActive
+                                                ? 'bg-primary text-white border-primary shadow'
+                                                : isFullOrClosed
+                                                    ? 'bg-secondary-subtle text-secondary border-secondary-subtle opacity-75'
+                                                    : isPastDay
+                                                        ? 'bg-light text-muted border-light'
+                                                        : 'bg-white border-secondary-subtle'
+                                            }`}
+                                    >
+                                        <small className="d-block text-uppercase" style={{ fontSize: '0.65rem', fontWeight: 'bold' }}>
+                                            {day.toLocaleDateString('es-ES', { weekday: 'short' })}
+                                        </small>
+                                        <strong className="d-block fs-5">{day.getDate()}</strong>
+
+                                        {isFullOrClosed && (
+                                            <span className="badge bg-secondary p-1" style={{ fontSize: '0.5rem', position: 'absolute', top: '-5px', right: '-5px' }}>
+                                                
+                                            </span>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <button type="button" className="btn btn-sm btn-outline-primary" onClick={handleNextWeek}>
+                            Siguiente <i className="fas fa-chevron-right"></i>
+                        </button>
                     </div>
-                    <div className="col-md-6">
-                        <label className="form-label">Hora disponible</label>
-                        <select
-                            className="form-select"
-                            required
-                            value={data.time}
-                            disabled={availableSlots.length === 0}
-                            onChange={e => setData({ ...data, time: e.target.value })}
-                        >
-                            <option value="">{availableSlots.length > 0 ? "Selecciona hora..." : "Elige fecha y servicio"}</option>
-                            {availableSlots.map(slot => (
-                                <option key={slot} value={slot}>{slot}</option>
-                            ))}
-                        </select>
+
+                    <div className="mt-3">
+                        <label className="form-label small text-muted">
+    Horas disponibles para el {
+        data.date 
+        ? data.date.split("-").reverse().join("/") 
+        : "..."
+    }
+</label>
+                        <div className="d-flex flex-wrap gap-2">
+                            {availableSlots.length > 0 ? (
+                                availableSlots.map(slot => (
+                                    <button
+                                        key={slot}
+                                        type="button"
+                                        onClick={() => setData({ ...data, time: slot })}
+                                        className={`btn btn-sm px-3 py-2 rounded-pill border ${data.time === slot
+                                            ? 'btn-primary shadow-sm'
+                                            : 'btn-outline-secondary bg-white'
+                                            }`}
+                                    >
+                                        {slot}
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="w-100 text-center py-3 border rounded border-dashed bg-light">
+                                    <small className="text-muted">
+                                        {data.date
+                                            ? "No hay turnos para este día o el barbero no está disponible."
+                                            : "Selecciona un día primero para ver las horas."}
+                                    </small>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -225,7 +359,7 @@ export const ApptFormClient = () => {
                     <textarea className="form-control" rows="2" value={data.notes}
                         onChange={e => setData({ ...data, notes: e.target.value })} placeholder="¿Alguna instrucción especial?"></textarea>
                 </div>
-                
+
                 <div className="d-flex justify-content-between">
                     <button type="button" className="btn btn-outline-secondary" onClick={() => navigate(-1)}>
                         Cancelar

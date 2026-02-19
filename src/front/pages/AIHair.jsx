@@ -14,8 +14,8 @@ export const AIHair = () => {
 
         const formData = new FormData();
         formData.append("image", file);
-        formData.append("prompt", prompt); // Ej: "platinum blonde pompadour"
-        formData.append("search_prompt", "hair and beard"); // Esto le dice qué buscar para sustituir
+        formData.append("prompt", prompt);
+        formData.append("search_prompt", "hair and beard");
 
         try {
             const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/edit-hair`, {
@@ -28,7 +28,6 @@ export const AIHair = () => {
 
             if (!resp.ok) throw new Error("Error en la respuesta de la IA");
 
-            // Stability suele devolver la imagen directamente (blob) o una URL de Cloudinary si lo tienes así
             const data = await resp.json();
             setResultImage(data.result);
             setStatus("completed");

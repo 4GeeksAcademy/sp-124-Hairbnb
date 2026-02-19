@@ -1744,15 +1744,13 @@ def edit_hair():
     if not stability_key:
         return jsonify({"msg": "Error: API Key no configurada en el servidor"}), 500
 
-    # 2. Recogemos los datos que vienen del frontend
     if 'image' not in request.files:
         return jsonify({"msg": "No se ha subido ninguna imagen"}), 400
         
     image = request.files['image']
     prompt = request.form.get('prompt')
-    search_prompt = request.form.get('search_prompt', 'hair') # Por defecto busca 'hair'
+    search_prompt = request.form.get('search_prompt', 'hair')
 
-    # 3. Llamada a Stability AI
     try:
         response = requests.post(
             "https://api.stability.ai/v2beta/stable-image/edit/search-and-replace",
@@ -1769,13 +1767,11 @@ def edit_hair():
         )
 
         if response.status_code == 200:
-            # Convertimos la imagen recibida a Base64 para enviarla al Frontend
             image_base64 = base64.b64encode(response.content).decode('utf-8')
             return jsonify({
                 "result": f"data:image/webp;base64,{image_base64}"
             }), 200
         else:
-            # Si Stability da error, lo capturamos
             error_data = response.json()
             return jsonify({"msg": f"Error de IA: {error_data.get('errors')}"}), response.status_code
 

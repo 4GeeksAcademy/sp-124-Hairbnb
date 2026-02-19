@@ -9,7 +9,6 @@ export const BarbershopForm = () => {
   const navigate = useNavigate();
   const [uploading, setUploading] = useState(false);
 
-  // Horario inicial por defecto para evitar errores de undefined
   const defaultHours = {
     Lunes: { m_start: "", m_end: "", a_start: "", a_end: "" },
     Martes: { m_start: "", m_end: "", a_start: "", a_end: "" },
@@ -32,7 +31,6 @@ export const BarbershopForm = () => {
     working_hours: defaultHours
   });
 
-  // CARGAR DATOS AL EDITAR
   useEffect(() => {
     if (store.barbershopInfo) {
       setData({
@@ -44,7 +42,7 @@ export const BarbershopForm = () => {
         barbershop_image: store.barbershopInfo.barbershop_image || "",
         latitude: store.barbershopInfo.latitude || null,
         longitude: store.barbershopInfo.longitude || null,
-        // Si vienen horarios de la DB, los usamos. Si no, usamos los default.
+
         working_hours: store.barbershopInfo.working_hours && Object.keys(store.barbershopInfo.working_hours).length > 0
           ? store.barbershopInfo.working_hours
           : defaultHours
@@ -167,20 +165,17 @@ export const BarbershopForm = () => {
           <div className="col-12">
             <label className="form-label fw-bold">Horarios de Apertura</label>
             <div className="bg-light p-3 rounded border">
-              {/* Usamos un array fijo para asegurar el orden cronológico */}
               {["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map(day => (
                 <div key={day} className="row mb-3 align-items-center border-bottom pb-2">
                   <div className="col-12 col-md-2">
                     <span className="fw-bold">{day}</span>
                   </div>
 
-                  {/* Bloque Mañana */}
                   <div className="col-6 col-md-5 d-flex align-items-center gap-2">
                     <div className="form-check form-switch">
                       <input
                         className="form-check-input"
                         type="checkbox"
-                        // Verificamos si existe la propiedad antes de acceder
                         checked={!!(data.working_hours[day] && data.working_hours[day].m_start)}
                         onChange={(e) => {
                           if (!e.target.checked) {
@@ -204,7 +199,6 @@ export const BarbershopForm = () => {
                       onChange={(e) => handleHourChange(day, "m_end", e.target.value)} />
                   </div>
 
-                  {/* Bloque Tarde */}
                   <div className="col-6 col-md-5 d-flex align-items-center gap-2">
                     <div className="form-check form-switch">
                       <input

@@ -86,11 +86,9 @@ export const ScheduleForm = () => {
         setWeeklySchedule(newState);
     };
 
-    // --- FUNCIÓN PARA OBTENER HORARIO DEL LOCAL ---
     const getShopHours = (dayKey) => {
         const invitation = myBarbershops.find(i => String(i.id) === String(selectedInvitation));
         if (!invitation || !invitation.barbershop?.working_hours) return null;
-        // Buscamos por la etiqueta en español que es como suele estar en working_hours
         return invitation.barbershop.working_hours[dayLabels[dayKey]] || null;
     };
 
@@ -113,7 +111,6 @@ export const ScheduleForm = () => {
 
         const activeDays = Object.keys(weeklySchedule).filter(d => weeklySchedule[d].active);
 
-        // --- VALIDACIÓN DE RANGO CONTRA EL LOCAL ---
         for (let day of activeDays) {
             const myHours = weeklySchedule[day];
             const shop = invitation.barbershop.working_hours?.[dayLabels[day]];
@@ -123,9 +120,8 @@ export const ScheduleForm = () => {
                 return;
             }
 
-            // Función interna para comprobar si un rango está dentro de lo permitido por la barbería
             const isInsideRange = (start, end) => {
-                if (!start || !end) return true; // Si no hay horas, no hay conflicto
+                if (!start || !end) return true;
                 const s = toN(start);
                 const e = toN(end);
 
@@ -135,7 +131,6 @@ export const ScheduleForm = () => {
                 return inMorning || inAfternoon;
             };
 
-            // Validar Turno 1
             if (!isInsideRange(myHours.t1_start, myHours.t1_end)) {
                 dispatch({
                     type: "set-message",
@@ -144,7 +139,6 @@ export const ScheduleForm = () => {
                 return;
             }
 
-            // Validar Turno 2 (si existe)
             if (myHours.t2_start && !isInsideRange(myHours.t2_start, myHours.t2_end)) {
                 dispatch({
                     type: "set-message",
@@ -154,16 +148,13 @@ export const ScheduleForm = () => {
             }
         }
 
-        // --- SI PASA LA VALIDACIÓN, GUARDAMOS ---
         setLoading(true);
         try {
-            // Borramos antiguos
             await fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules/by_invitation/${selectedInvitation}`, {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${store.token}` }
             });
 
-            // Guardamos nuevos
             for (let day of activeDays) {
                 const d = weeklySchedule[day];
                 const sendBody = async (s, e_time) => {
@@ -225,7 +216,6 @@ export const ScheduleForm = () => {
                                                 <input className="form-check-input" type="checkbox" checked={weeklySchedule[day].active} onChange={() => handleCheckDay(day)} />
                                                 <span className="fw-bold">{dayLabels[day]}</span>
                                             </div>
-                                            {/* HORARIO DEL LOCAL AQUÍ */}
                                             {shop ? (
                                                 <div className="text-primary mt-1" style={{ fontSize: '0.75rem' }}>
                                                     <i className="far fa-clock me-1"></i>
