@@ -353,6 +353,7 @@ export const PrivateBarber = () => {
 
                     return confirmedDayApps.map((a) => {
                       const apptTime = a.date.split("T")[1].slice(0, 5);
+                      const endTime = a.end_time ? a.end_time.split("T")[1].slice(0, 5) : "--:--";
 
                       const isCovered = store.schedules?.some((s) => {
                         const padTime = (t) => t && t.length === 4 ? "0" + t : t;
@@ -372,7 +373,7 @@ export const PrivateBarber = () => {
                           <div className="card-body d-flex justify-content-between align-items-center p-3">
                             <div>
                               <div className="d-flex align-items-center gap-2 mb-1">
-                                <span>{apptTime}</span>
+                                <span>{apptTime} - {endTime}</span>
                                 <span>
                                   {a.barbershop_name || "Lugar"}
                                 </span>

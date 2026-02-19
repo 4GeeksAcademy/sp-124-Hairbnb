@@ -12,11 +12,11 @@ export const PrivateClient = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const upcomingAppointments = appointments.filter(appt => 
+    const upcomingAppointments = appointments.filter(appt =>
         ["pending", "confirmed"].includes(appt.status)
     );
-    
-    const historyAppointments = appointments.filter(appt => 
+
+    const historyAppointments = appointments.filter(appt =>
         ["completed", "no_show"].includes(appt.status)
     );
 
@@ -82,7 +82,11 @@ export const PrivateClient = () => {
                                 <div className="col-md-3">
                                     <div className="small text-muted text-uppercase">Fecha y Hora</div>
                                     <div className="fw-bold">{new Date(appt.date).toLocaleDateString()}</div>
-                                    <div className="text-muted small">{appt.time || "10:00"}</div>
+                                    <div className="text-muted small">
+                                        {new Date(appt.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        {" - "}
+                                        {new Date(appt.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </div>
                                 </div>
                                 <div className="col-md-6">
                                     <div className="small text-muted text-uppercase">Establecimiento</div>
@@ -91,15 +95,14 @@ export const PrivateClient = () => {
                                 </div>
                                 <div className="col-md-3 text-md-end mt-3 mt-md-0">
                                     <div className="small text-muted text-uppercase">Estado y Precio</div>
-                                    <span className={`badge rounded-pill ${
-                                        appt.status === 'confirmed' ? 'bg-success' : 
-                                        appt.status === 'pending' ? 'bg-warning text-dark' : 
-                                        appt.status === 'completed' ? 'bg-info' : 'bg-danger'
-                                    }`}>
+                                    <span className={`badge rounded-pill ${appt.status === 'confirmed' ? 'bg-success' :
+                                        appt.status === 'pending' ? 'bg-warning text-dark' :
+                                            appt.status === 'completed' ? 'bg-info' : 'bg-danger'
+                                        }`}>
                                         {appt.status.replace('_', ' ').toUpperCase()}
                                     </span>
                                     <div className="mt-1 fw-bold fs-5">{appt.price} EUR</div>
-                                    
+
                                     {!isHistoryTab && (
                                         <div className="mt-3 d-flex justify-content-md-end gap-2">
                                             <button className="btn btn-sm btn-outline-primary" onClick={() => navigate("/client_appointment_form", { state: { editAppt: appt } })}>

@@ -265,6 +265,7 @@ class BarberBarbershop(db.Model):
             "barber_name": self.barber.name,
             "barbershop_name": self.barbershop.name,
             "barber_image": self.barber.barber_profile_image,
+            "barbershop": self.barbershop.serialize()
             }
     
 
