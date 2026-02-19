@@ -12,36 +12,59 @@ export const Chatbot = () => {
   const [messages, setMessages] = useState([]);
   const scrollRef = useRef(null);
 
-useEffect(() => {
-    if (isOpen) {
-        setMessages([]); 
-        iniciarChat();
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-}, [store.token, store.role]);
+  }, [messages, isTyping]);
 
-const iniciarChat = () => {
+  useEffect(() => {
+    if (isOpen) {
+      iniciarChat();
+    }
+  }, [isOpen, store.token, store.role]);
+
+  const iniciarChat = () => {
     setIsTyping(true);
+    setMessages([]); 
+
     setTimeout(() => {
         let saludo = "";
         let menuDestino = "inicio";
 
+        const rolesEspanol = {
+            admin: "administrador",
+            owner: "dueño de local",
+            barber: "barbero profesional",
+            client: "cliente"
+        };
+
         if (store.token) {
-            const nombre = store.username || "Usuario";
-            saludo = `¡Genial! Ya te he reconocido, ${nombre}. Tienes perfil de ${store.role}. ¿Qué quieres gestionar?`;
+  
+            const nombreLimpio = store.username 
+                ? store.username.split('@')[0] 
+                : "Usuario";
+            
+            const nombreFormateado = nombreLimpio.charAt(0).toUpperCase() + nombreLimpio.slice(1);
+            
+            const rolTraducido = rolesEspanol[store.role] || "Usuario";
+
+            saludo = `¡Hola de nuevo ${nombreFormateado}! ¿Qué quieres gestionar desde tu cuenta de ${rolTraducido}?`;
             
             if (store.role === 'admin') menuDestino = "admin_menu";
             else if (store.role === 'owner') menuDestino = "owner_menu";
             else if (store.role === 'barber') menuDestino = "barber_menu";
             else menuDestino = "cliente_menu";
+
         } else {
-            saludo = "¡Hola! Bienvenido a Hairbnb. No has iniciado sesión en nuestra plataforma";
+            saludo = "¡Hola! Bienvenido a Hairbnb. Parece que no has iniciado sesión en nuestra plataforma.";
             menuDestino = "inicio";
         }
 
         setMessages([{ role: 'assistant', content: saludo }]);
         setCurrentMenu(menuDestino);
         setIsTyping(false);
-    }, 600);
+    }, 800);
 };
 
   const menus = {
@@ -132,25 +155,30 @@ const iniciarChat = () => {
 
   const handleLogout = () => {
     dispatch({ type: "logout" });
-    setMessages(prev => [...prev, { role: 'assistant', content: "Sesión cerrada. ¡Hasta pronto!" }]);
-    setCurrentMenu("inicio");
+    setIsOpen(false);
   };
 
   const handleOptionClick = (opcion) => {
     if (opcion.action) {
       opcion.action();
-      setIsOpen(false);
+     
+      if (opcion.label !== "Cerrar Sesión") setIsOpen(false);
       return;
     }
 
     const isBack = opcion.label.toLowerCase().includes("volver");
-    if (!isBack) setMessages(prev => [...prev, { role: 'user', content: opcion.label }]);
+    if (!isBack) {
+        setMessages(prev => [...prev, { role: 'user', content: opcion.label }]);
+    }
 
     setIsTyping(true);
     setTimeout(() => {
       setIsTyping(false);
       let botResponse = opcion.resp || menus[opcion.next]?.intro;
-      if (botResponse) setMessages(prev => [...prev, { role: 'assistant', content: botResponse }]);
+      
+      if (botResponse) {
+        setMessages(prev => [...prev, { role: 'assistant', content: botResponse }]);
+      }
       setCurrentMenu(opcion.next);
     }, 600);
   };
@@ -162,9 +190,12 @@ const iniciarChat = () => {
       </button>
 
       {isOpen && (
-        <div className="chat-window">
-          <div className="chat-header p-3 d-flex justify-content-between align-items-center">
-            <span>ChatBnb</span>
+        <div className="chat-window shadow-lg border-0">
+          <div className="chat-header p-3 d-flex justify-content-between align-items-center bg-dark text-white">
+            <span className="fw-bold"><i className="fa-solid fa-robot me-2"></i>HairBot</span>
+            <button className="btn btn-sm text-white p-0" onClick={() => setIsOpen(false)}>
+                <i className="fa-solid fa-minus"></i>
+            </button>
           </div>
 
           <div className="chat-body p-3 bg-white" ref={scrollRef} style={{ height: "320px", overflowY: "auto" }}>
@@ -175,7 +206,13 @@ const iniciarChat = () => {
                 </div>
               </div>
             ))}
-            {isTyping && <div className="text-muted small mb-2 text-center">Analizando solicitud...</div>}
+            {isTyping && (
+                <div className="d-flex justify-content-start mb-3">
+                    <div className="bg-light border p-2 rounded-3 text-muted" style={{fontSize: "0.8rem"}}>
+                        <span className="spinner-grow spinner-grow-sm me-1"></span> Escribiendo...
+                    </div>
+                </div>
+            )}
           </div>
 
           <div className="chat-footer p-3 bg-light border-top">
@@ -183,9 +220,9 @@ const iniciarChat = () => {
               {!isTyping && menus[currentMenu]?.options.map((opt, index) => (
                 <button
                   key={index}
-                  className="btn btn-sm btn-outline-dark bg-white shadow-sm"
+                  className="btn btn-sm btn-outline-primary border-2"
                   onClick={() => handleOptionClick(opt)}
-                  style={{ borderRadius: '15px' }}
+                  style={{ borderRadius: '20px', fontSize: '0.75rem', fontWeight: '600' }}
                 >
                   {opt.label}
                 </button>
