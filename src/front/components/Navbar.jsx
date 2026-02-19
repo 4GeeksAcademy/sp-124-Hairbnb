@@ -102,18 +102,20 @@ export const Navbar = () => {
                                     <li>
                                         <Link className="dropdown-item" to={
                                             store.role === "owner" ? "/private/owner" :
-                                                store.role === "barber" ? "/private/barber" : 
-                                                    store.role === "client" ? "/private/client" : 
+                                                store.role === "barber" ? "/private/barber" :
+                                                    store.role === "client" ? "/private/client" :
                                                         "/4dm1n1str4t10n"
                                         }>
                                             Panel principal
                                         </Link>
                                     </li>
-                                    <li>
-                                        <button className="dropdown-item" onClick={handleEditProfile}>
-                                            Editar perfil
-                                        </button>
-                                    </li>
+                                    {store.role !== "admin" && (
+                                        <li>
+                                            <button className="dropdown-item" onClick={handleEditProfile}>
+                                                Editar perfil
+                                            </button>
+                                        </li>
+                                    )}
                                     <li><hr className="dropdown-divider" /></li>
                                     <li>
                                         <button className="dropdown-item text-danger" onClick={handleLogout}>
