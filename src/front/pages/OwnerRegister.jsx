@@ -135,13 +135,13 @@ export const OwnerRegister = () => {
                         <div>
                             <h5 className="mb-3 text-secondary">{isEditing ? "Datos de la cuenta" : "Información de inicio de sesión"}</h5>
 
-                            <label className="form-label">Email Corporativo</label>
+                            <label className="form-label">Email <span className="small text-danger">*</span></label>
                             <input className="form-control mb-3" name="email" value={form.email} type="email" placeholder="nombre@ejemplo.com" onChange={handleChange} required />
 
-                            <label className="form-label">{isEditing ? "Nueva contraseña (opcional)" : "Establece una contraseña"}</label>
+                            <label className="form-label">{isEditing ? "Nueva contraseña (opcional)" : "Establece una contraseña"} <span className="small text-danger">*</span></label>
                             <input className="form-control mb-3" type="password" minLength="8" name="password" placeholder="Mínimo 8 caracteres" onChange={handleChange} required={!isEditing} />
 
-                            <label className="form-label">Confirmar contraseña</label>
+                            <label className="form-label">Confirmar contraseña <span className="small text-danger">*</span></label>
                             <input className="form-control mb-3" type="password" minLength="8" name="confirmPassword" placeholder="Repite la contraseña" onChange={handleChange} required={!isEditing} />
 
                             {!isEditing && (
@@ -169,10 +169,10 @@ export const OwnerRegister = () => {
                                 {uploading && <small className="text-secondary d-block mt-2">Subiendo imagen...</small>}
                             </div>
 
-                            <label className="form-label">Nombre</label>
+                            <label className="form-label">Nombre <span className="small text-danger">*</span></label>
                             <input className="form-control mb-3" name="name" value={form.name} placeholder="Nombre del administrador" onChange={handleChange} required />
 
-                            <label className="form-label">Teléfono de contacto</label>
+                            <label className="form-label">Teléfono de contacto <span className="small text-danger">*</span></label>
                             <div className="border rounded mb-4 bg-white px-2 py-1">
                                 <input
                                     type="text"

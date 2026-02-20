@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-import { useLocation } from "react-router-dom"
+import { useLocation } from "react-router-dom";
+import { io } from "socket.io-client";
 
 export const MessagePage = () => {
     const { store } = useGlobalReducer();
@@ -11,6 +12,7 @@ export const MessagePage = () => {
     const [newMessage, setNewMessage] = useState("");
 
     const scrollRef = useRef(null);
+    const socketRef = useRef(null);
     const isClient = store.role === "client";
 
     const loadConversations = async () => {
@@ -43,19 +45,35 @@ export const MessagePage = () => {
 
     useEffect(() => {
         loadConversations();
-    }, []);
 
-    useEffect(() => {
-        if (location.state?.activeTab === "messages") {
-            setActiveTab("messages");
-        }
-    }, [location.state]);
+        const socketUrl = import.meta.env.VITE_BACKEND_URL.replace("/api", "");
+        socketRef.current = io(socketUrl, {
+            auth: { token: store.token },
+            transports: ["websocket", "polling"]
+        });
+
+        socketRef.current.on("message:new", (msg) => {
+            setSelectedChat((currentSelected) => {
+                if (currentSelected && msg.conversation_id === currentSelected.id) {
+                    setMessages((prev) => {
+                        if (prev.find(m => m.id === msg.id)) return prev;
+                        return [...prev, msg];
+                    });
+                }
+                return currentSelected;
+            });
+
+            loadConversations();
+        });
+
+        return () => {
+            if (socketRef.current) socketRef.current.disconnect();
+        };
+    }, []);
 
     useEffect(() => {
         if (selectedChat) {
             loadMessages(selectedChat.id);
-            const interval = setInterval(() => loadMessages(selectedChat.id), 5000);
-            return () => clearInterval(interval);
         }
     }, [selectedChat]);
 
@@ -84,8 +102,6 @@ export const MessagePage = () => {
 
             if (response.ok) {
                 setNewMessage("");
-                loadMessages(selectedChat.id);
-                loadConversations();
             }
         } catch (error) {
             console.error("Error al enviar mensaje:", error);
@@ -100,10 +116,7 @@ export const MessagePage = () => {
                 </div>
                 <div className="list-group list-group-flush">
                     {conversations.length === 0 ? (
-                        <div className="p-4 text-center text-muted">
-                            
-                            Aún no hay mensajes
-                        </div>
+                        <div className="p-4 text-center text-muted">Aún no hay mensajes</div>
                     ) : (
                         conversations.map(conv => (
                             <button
@@ -140,12 +153,13 @@ export const MessagePage = () => {
                                 <div>
                                     <span className="d-block">Cliente:</span>
                                     <strong>{selectedChat.user_name}</strong>
-                                    <span className="mx-2">|</span>
-                                    <span>{selectedChat.barbershop_name}</span>
+                                    <span className="mx-2 text-muted">|</span>
+                                    <span className="text-muted">{selectedChat.barbershop_name}</span>
                                 </div>
                             )}
                         </div>
-                        <div className="p-3 flex-grow-1" style={{ overflowY: "auto" }}>
+                        
+                        <div className="p-3 flex-grow-1" style={{ overflowY: "auto", backgroundColor: "#f8f9fa" }}>
                             {messages.length === 0 ? (
                                 <div className="h-100 d-flex flex-column align-items-center justify-content-center text-muted">
                                     <p>Aún no hay mensajes en esta conversación.</p>
@@ -157,11 +171,11 @@ export const MessagePage = () => {
                                     return (
                                         <div
                                             key={msg.id}
-                                            className={`p-2 mb-2 border rounded ${isMyMessage ? "ms-auto bg-light border-secondary" : "me-auto bg-white"}`}
+                                            className={`p-2 mb-2 border rounded ${isMyMessage ? "ms-auto bg-primary text-white border-primary" : "me-auto bg-white"}`}
                                             style={{ width: "fit-content", maxWidth: "80%" }}
                                         >
                                             <div>{msg.content}</div>
-                                            <small className="text-muted d-block text-end" style={{ fontSize: "10px" }}>
+                                            <small className={`d-block text-end ${isMyMessage ? "text-white-50" : "text-muted"}`} style={{ fontSize: "10px" }}>
                                                 {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </small>
                                         </div>
@@ -170,6 +184,7 @@ export const MessagePage = () => {
                             )}
                             <div ref={scrollRef} />
                         </div>
+
                         <div className="p-3 border-top mt-auto bg-white">
                             <form className="d-flex gap-2" onSubmit={handleSendMessage}>
                                 <input
@@ -185,7 +200,8 @@ export const MessagePage = () => {
                     </>
                 ) : (
                     <div className="h-100 d-flex align-items-center justify-content-center text-center p-4">
-                        <div>
+                        <div className="text-muted">
+                            <i className="far fa-comments fa-3x mb-3 d-block"></i>
                             {isClient ? "Contacta con una barbería para empezar" : "Selecciona una conversación para responder"}
                         </div>
                     </div>
@@ -193,4 +209,4 @@ export const MessagePage = () => {
             </div>
         </div>
     );
-}
+};

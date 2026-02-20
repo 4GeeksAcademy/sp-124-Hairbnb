@@ -1,13 +1,13 @@
 """
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
-from flask import request, jsonify, Blueprint, send_from_directory
+from flask import request, jsonify, Blueprint, send_from_directory, current_app
 from api.models import db, User
 from api.utils import generate_sitemap
 from flask_cors import CORS
 import os
 from api.utils import generate_sitemap
-from api.models import db, User, Barbershop, Owner, Barber, Schedule, BarberService, Appointment, AdminUser, BarberBarbershop, Conversation, ChatMessage, AIImage
+from api.models import db, User, Barbershop, Owner, Barber, Schedule, BarberService, Appointment, AdminUser, BarberBarbershop, Conversation, ChatMessage
 from datetime import datetime, timedelta, timezone
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
 from flask_cors import CORS
@@ -16,6 +16,8 @@ from google.genai import types
 import requests
 import calendar
 import base64
+import deepl
+
 
 api = Blueprint('api', __name__)
 
@@ -28,14 +30,18 @@ def login_admin():
     email = request.json.get("email")
     password = request.json.get("password")
 
-    user = AdminUser.query.filter_by(email=email, password=password).first()
+    user = AdminUser.query.filter_by(email=email).first()
 
-    if not user:
-        return jsonify({"msg": "Email o contraseña incorrectos"}), 401
-
-    access_token = create_access_token(identity=str(
-        user.id), additional_claims={"role": "admin"})
-    return jsonify({"token": access_token, "user": {"id": user.id, "name": user.name, "role": "admin"}}), 200
+    if user and user.check_password(password):
+        access_token = create_access_token(
+            identity=str(user.id), 
+            additional_claims={"role": "admin"}
+        )
+        return jsonify({
+            "token": access_token, 
+            "user": {"id": user.id, "name": user.name, "role": "admin"}
+        }), 200
+    return jsonify({"msg": "Email o contraseña incorrectos"}), 401
 
 
 @api.route("/login/client", methods=["POST"])
@@ -43,14 +49,18 @@ def login_client():
     email = request.json.get("email")
     password = request.json.get("password")
 
-    user = User.query.filter_by(email=email, password=password).first()
+    client = User.query.filter_by(email=email).first()
 
-    if not user:
-        return jsonify({"msg": "Email o contraseña incorrectos"}), 401
-
-    access_token = create_access_token(identity=str(
-        user.id), additional_claims={"role": "client"})
-    return jsonify({"token": access_token, "user": {"id": user.id, "name": user.name, "role": "client"}}), 200
+    if client and client.check_password(password):
+        access_token = create_access_token(
+            identity=str(client.id), 
+            additional_claims={"role": "client"}
+        )
+        return jsonify({
+            "token": access_token, 
+            "user": {"id": client.id, "name": client.name, "role": "client"}
+        }), 200
+    return jsonify({"msg": "Email o contraseña incorrectos"}), 401
 
 
 @api.route("/login/barber", methods=["POST"])
@@ -58,14 +68,18 @@ def login_barber():
     email = request.json.get("email")
     password = request.json.get("password")
 
-    barber = Barber.query.filter_by(email=email, password=password).first()
+    barber = Barber.query.filter_by(email=email).first()
 
-    if not barber:
-        return jsonify({"msg": "Email o contraseña incorrectos"}), 401
-
-    access_token = create_access_token(identity=str(
-        barber.id), additional_claims={"role": "barber"})
-    return jsonify({"token": access_token, "user": {"id": barber.id, "name": barber.name, "role": "barber"}}), 200
+    if barber and barber.check_password(password):
+        access_token = create_access_token(
+            identity=str(barber.id), 
+            additional_claims={"role": "barber"}
+        )
+        return jsonify({
+            "token": access_token, 
+            "user": {"id": barber.id, "name": barber.name, "role": "barber"}
+        }), 200
+    return jsonify({"msg": "Email o contraseña incorrectos"}), 401
 
 
 @api.route("/login/owner", methods=["POST"])
@@ -73,14 +87,18 @@ def login_owner():
     email = request.json.get("email")
     password = request.json.get("password")
 
-    owner = Owner.query.filter_by(email=email, password=password).first()
+    owner = Owner.query.filter_by(email=email).first()
 
-    if not owner:
-        return jsonify({"msg": "Email o contraseña incorrectos"}), 401
-
-    access_token = create_access_token(identity=str(
-        owner.id), additional_claims={"role": "owner"})
-    return jsonify({"token": access_token, "user": {"id": owner.id, "name": owner.name, "role": "owner"}}), 200
+    if owner and owner.check_password(password):
+        access_token = create_access_token(
+            identity=str(owner.id), 
+            additional_claims={"role": "owner"}
+        )
+        return jsonify({
+            "token": access_token, 
+            "user": {"id": owner.id, "name": owner.name, "role": "owner"}
+        }), 200
+    return jsonify({"msg": "Email o contraseña incorrectos"}), 401
 
 
 # Zonas privadas por rol
@@ -207,8 +225,10 @@ def new_user():
     if not phone:
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar un teléfono"}}), 400
 
-    new_user = User(name=name, last_name=last_name,
-                    password=password, email=email, phone=phone, notes=notes, client_profile_image=client_profile_image)
+    new_user = User(name=name, last_name=last_name, email=email, phone=phone, notes=notes, client_profile_image=client_profile_image)
+    
+    new_user.set_password(password)
+
     db.session.add(new_user)
     db.session.commit()
 
@@ -278,10 +298,12 @@ def edit_user(user_id):
 
     user.name = data.get("name", user.name)
     user.last_name = data.get("last_name", user.last_name)
-    user.password = data.get("password", user.password)
     user.notes = data.get("notes", user.notes)
     user.client_profile_image = data.get(
         "client_profile_image", user.client_profile_image)
+
+    if "password" in data and data["password"]:
+        user.set_password(data["password"])
 
     db.session.commit()
     return jsonify({"message": {"type": "success", "msg": f"Usuario {user.name} actualizado"}}), 200
@@ -543,10 +565,10 @@ def new_owner():
         name=name,
         email=email,
         phone=phone,
-        password=password,
         owner_profile_image=owner_profile_image,
-
     )
+
+    new_owner.set_password(password)
     db.session.add(new_owner)
     db.session.commit()
 
@@ -601,9 +623,11 @@ def edit_owner(owner_id):
         owner.phone = data["phone"]
 
     owner.name = data.get("name", owner.name)
-    owner.password = data.get("password", owner.password)
     owner.owner_profile_image = data.get(
         "owner_profile_image", owner.owner_profile_image)
+
+    if "password" in data and data["password"]:
+        owner.set_password(data["password"])
 
     db.session.commit()
     return jsonify({"message": {"type": "success", "msg": f"Dueño {owner.name} actualizado"}}), 200
@@ -664,8 +688,9 @@ def new_barber():
     if Barber.query.filter_by(email=email).first():
         return jsonify({"message": {"type": "error", "msg": "Email ya registrado"}}), 409
 
-    new_barber = Barber(name=name, email=email, password=password,
-                        phone=phone, barber_profile_image=barber_profile_image)
+    new_barber = Barber(name=name, email=email, phone=phone, barber_profile_image=barber_profile_image)
+    
+    new_barber.set_password(password)
     db.session.add(new_barber)
     db.session.commit()
 
@@ -713,12 +738,14 @@ def edit_barber(barber_id):
         barber.email = data["email"]
 
     barber.name = data.get("name", barber.name)
-    barber.password = data.get("password", barber.password)
     barber.barber_profile_image = data.get(
         "barber_profile_image", barber.barber_profile_image)
 
     barber.barbershop_id = data.get("barbershop_id", barber.barbershop_id)
 
+    if "password" in data and data["password"]:
+        barber.set_password(data["password"])
+        
     db.session.commit()
     return jsonify({"message": {"type": "success", "msg": f"Barbero {barber.name} actualizado"}}), 200
 
@@ -1462,11 +1489,7 @@ def change_appointment_status(appointment_id):
     if not appointment:
         return jsonify({"message": {"type": "error", "msg": "Cita no encontrada"}}), 404
 
-    print(
-        f"DEBUG: Identidad JWT: {current_user_id} (Tipo: {type(current_user_id)})")
-    print(
-        f"DEBUG: Barber ID de la cita: {appointment.barber_id} (Tipo: {type(appointment.barber_id)})")
-    print(f"DEBUG: Rol del usuario: {role}")
+
 
     try:
         user_id_int = int(current_user_id)
@@ -1532,7 +1555,6 @@ def get_availability():
     if not relation:
         return jsonify([]), 200
 
-    print(f"Buscando horario para el día: '{day_name}'")
     new_schedule = Schedule.query.filter_by(
         barber_barbershop_id=relation.id,
         day_of_week=day_name
@@ -1690,6 +1712,14 @@ def send_message():
     db.session.add(new_message)
     db.session.commit()
 
+    serialized = new_message.serialize()
+
+    receiver_id = conv.user_id if role == "owner" else conv.owner_id
+    socketio = current_app.extensions['socketio']
+
+    socketio.emit("message:new", serialized, room=f"user_{receiver_id}")
+    socketio.emit("message:new", serialized, room=f"user_{current_user_id}")
+
     return jsonify(new_message.serialize()), 201
 
 
@@ -1740,6 +1770,7 @@ def delete_conversation(conv_id):
 @api.route('/edit-hair', methods=['POST'])
 def edit_hair():
     stability_key = os.getenv("STABILITY_API_KEY")
+    translator = deepl.Translator(os.environ.get('DEEPL_API_KEY'))
     
     if not stability_key:
         return jsonify({"msg": "Error: API Key no configurada en el servidor"}), 500
@@ -1752,6 +1783,8 @@ def edit_hair():
     search_prompt = request.form.get('search_prompt', 'hair')
 
     try:
+        result = translator.translate_text(prompt, target_lang="EN-US")
+        prompt_en_ingles = result.text
         response = requests.post(
             "https://api.stability.ai/v2beta/stable-image/edit/search-and-replace",
             headers={
@@ -1760,7 +1793,7 @@ def edit_hair():
             },
             files={"image": (image.filename, image.read(), image.content_type)},
             data={
-                "prompt": prompt,
+                "prompt": prompt_en_ingles,
                 "search_prompt": search_prompt,
                 "output_format": "webp"
             },
@@ -1776,7 +1809,6 @@ def edit_hair():
             return jsonify({"msg": f"Error de IA: {error_data.get('errors')}"}), response.status_code
 
     except Exception as e:
-        print(f"Error en el servidor: {str(e)}")
         return jsonify({"msg": "Fallo en la conexión con el servicio de IA"}), 500
 
 

@@ -3,19 +3,25 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_migrate import Migrate
 from api.utils import APIException, generate_sitemap
 from api.models import db
-from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import JWTManager, decode_token
 from datetime import timedelta
+
+from flask_socketio import SocketIO, join_room
+
+from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
+bcrypt = Bcrypt(app)
 
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24)
 jwt = JWTManager(app)
+
+socketio = SocketIO(app, cors_allowed_origins="*", manage_session=False)
 
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
@@ -33,19 +39,31 @@ db.init_app(app)
 setup_admin(app)
 setup_commands(app)
 
+from api.routes import api
 app.register_blueprint(api, url_prefix='/api')
 
+@socketio.on("connect")
+def handle_connect(auth=None):
+    if not auth or 'token' not in auth:
+        return False
+    
+    try:
+        token = auth['token']
+        decoded = decode_token(token)
+        user_id = decoded["sub"]
+        
+        join_room(f"user_{user_id}")
+    except Exception as e:
+        return False
 
 @app.errorhandler(APIException)
 def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code
 
-
 @app.route('/')
 def sitemap():
     return generate_sitemap(app)
 
-
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3001))
-    app.run(host='0.0.0.0', port=PORT, debug=True)
+    socketio.run(app, host='0.0.0.0', port=PORT, debug=True)
