@@ -22,6 +22,10 @@ sqlalchemy = "*"
 python-dotenv = "*"
 google-genai = "*"
 openai = "*"
+deepl = "*"
+flask-socketio = "*"
+bcrypt = "*"
+flask-bcrypt = "*"
 
 [requires]
 python_version = "3.13"

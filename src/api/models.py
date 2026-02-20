@@ -5,16 +5,21 @@ from sqlalchemy import Time
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional
 from datetime import time, datetime, timedelta, timezone
+from flask_bcrypt import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
-
 
 class AdminUser(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(nullable=False)
     email: Mapped[str] = mapped_column(nullable=False, unique=True)
-    password: Mapped[str] = mapped_column(nullable=False)
+    password: Mapped[str] = mapped_column(String(255), nullable=False)
 
+    def set_password(self, password):
+        self.password = generate_password_hash(password).decode('utf-8')
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
+    
     def serialize(self):
         return {
             "id": self.id,
@@ -22,12 +27,11 @@ class AdminUser(db.Model):
             "email": self.email
         }
 
-
 class User(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(nullable=False)
     last_name: Mapped[str] = mapped_column(nullable=False)
-    password: Mapped[str] = mapped_column(nullable=False)
+    password: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(nullable=False, unique=True)
     phone: Mapped[str] = mapped_column(nullable=False, unique=True)
     notes: Mapped[str] = mapped_column(nullable=True)
@@ -35,8 +39,13 @@ class User(db.Model):
 
     appointments: Mapped[List["Appointment"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     conversations: Mapped[List["Conversation"]] = relationship(back_populates="user", cascade="all, delete-orphan")
-    ai_images: Mapped[List["AIImage"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    
+    def set_password(self, password):
+        self.password = generate_password_hash(password).decode('utf-8')
 
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
+    
     def serialize(self):
         return {
             "id": self.id,
@@ -87,13 +96,19 @@ class Owner(db.Model):
     name: Mapped[str] = mapped_column(nullable=False)
     email: Mapped[str] = mapped_column(nullable=False, unique=True)
     phone: Mapped[str] = mapped_column(nullable=False, unique=True)
-    password: Mapped[str] = mapped_column(nullable=False)
+    password: Mapped[str] = mapped_column(String(255), nullable=False)
     owner_profile_image: Mapped[str] = mapped_column(String(255), nullable=True)
 
     barbershops: Mapped[List["Barbershop"]] = relationship(
         back_populates="owner", cascade="all, delete-orphan")
     conversations: Mapped[List["Conversation"]] = relationship(back_populates="owner", cascade="all, delete-orphan")
 
+    def set_password(self, password):
+        self.password = generate_password_hash(password).decode('utf-8')
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
+    
     def serialize(self):
         return {
             "id": self.id,
@@ -110,7 +125,7 @@ class Barber(db.Model):
     name: Mapped[str] = mapped_column(nullable=False)
     email: Mapped[str] = mapped_column(nullable=False, unique=True)
     phone: Mapped[str] = mapped_column(nullable=False, unique=True)
-    password: Mapped[str] = mapped_column(nullable=False)
+    password: Mapped[str] = mapped_column(String(255), nullable=False)
     barbershop_id: Mapped[int] = mapped_column(ForeignKey("barbershop.id"), nullable=True)
     barber_profile_image: Mapped[str] = mapped_column(String(255), nullable=True)
 
@@ -120,6 +135,12 @@ class Barber(db.Model):
     appointments: Mapped[List["Appointment"]] = relationship(back_populates="barber", cascade="all, delete-orphan")
     professional = relationship("BarberBarbershop", back_populates="barber", cascade="all, delete-orphan")
 
+    def set_password(self, password):
+        self.password = generate_password_hash(password).decode('utf-8')
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
+    
     def serialize(self):
         return {
             "id": self.id,
@@ -331,26 +352,3 @@ class ChatMessage(db.Model):
             "is_read": self.is_read
         }
     
-class AIImage(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
-    
-    original_url: Mapped[str] = mapped_column(String(500), nullable=False)
-    result_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    cloudinary_public_id: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
-    
-    lightx_order_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    
-    status: Mapped[str] = mapped_column(String(20), default="pending") # pending, processing, completed, failed
-
-    user: Mapped["User"] = relationship(back_populates="ai_images")
-
-    def serialize(self):
-        return {
-            "id": self.id,
-            "user_id": self.user_id,
-            "original_url": self.original_url,
-            "result_url": self.result_url,
-            "status": self.status,
-            "lightx_order_id": self.lightx_order_id,
-        }

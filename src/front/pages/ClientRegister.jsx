@@ -144,13 +144,13 @@ export const ClientRegister = () => {
                                 {isEditing ? "Datos de la cuenta" : "Información de inicio de sesión"}
                             </h5>
 
-                            <label className="form-label">Email</label>
+                            <label className="form-label">Email <span className="small text-danger">*</span></label>
                             <input className="form-control mb-3" name="email" value={form.email} type="email" placeholder="nombre@ejemplo.com" onChange={handleChange} required />
 
-                            <label className="form-label">{isEditing ? "Nueva contraseña (opcional)" : "Establece una contraseña"}</label>
+                            <label className="form-label">{isEditing ? "Nueva contraseña (opcional)" : "Establece una contraseña"} <span className="small text-danger">*</span></label>
                             <input className="form-control mb-3" type="password" minLength="8" name="password" placeholder="Mínimo 8 caracteres" onChange={handleChange} required={!isEditing} />
 
-                            <label className="form-label">Confirma tu contraseña</label>
+                            <label className="form-label">Confirma tu contraseña <span className="small text-danger">*</span></label>
                             <input className="form-control mb-3" type="password" minLength="8" name="confirmPassword" placeholder="Repite la contraseña" onChange={handleChange} required={!isEditing} />
 
                             {!isEditing && (
@@ -182,7 +182,7 @@ export const ClientRegister = () => {
 
                             <div className="row">
                                 <div className="col-md-6 mb-3">
-                                    <label className="form-label">Nombre</label>
+                                    <label className="form-label">Nombre <span className="small text-danger">*</span></label>
                                     <input className="form-control" name="name" value={form.name} placeholder="Tu nombre" onChange={handleChange} required />
                                 </div>
                                 <div className="col-md-6 mb-3">
@@ -191,7 +191,7 @@ export const ClientRegister = () => {
                                 </div>
                             </div>
 
-                            <label className="form-label">Teléfono móvil</label>
+                            <label className="form-label">Teléfono móvil <span className="small text-danger">*</span></label>
                             <div className="border rounded mb-3 bg-white px-2 py-1">
                                 <input
                                     type="text"
