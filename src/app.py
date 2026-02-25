@@ -60,9 +60,6 @@ def handle_connect(auth=None):
 def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code
 
-@app.route('/')
-def sitemap():
-    return generate_sitemap(app)
 
 static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../dist/')
 
