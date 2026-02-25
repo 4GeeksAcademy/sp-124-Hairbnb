@@ -1,9 +1,19 @@
 import { Link, useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import "../styles/navbar.css";
+import { HashLink } from "react-router-hash-link";
+
 
 export const Navbar = () => {
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
+
+    const getDashboardRoute = () => {
+        if (store.role === "client") return "/private/client";
+        if (store.role === "barber") return "/private/barber";
+        if (store.role === "owner") return "/private/owner";
+        return "/4dm1n1str4t10n";
+    };
 
     const handleEditProfile = () => {
         if (store.role === "barber") navigate("/signup/barber");
@@ -29,97 +39,69 @@ export const Navbar = () => {
     };
 
     return (
-        <nav className="navbar navbar-expand-lg navbar-light bg-light px-3 shadow-sm">
-            <div className="container-fluid">
-                <Link to="/" className="navbar-brand">
-                    <img src="/Logo-HBNB-completo.png" alt="Hairbnb" width="120" />
+        <nav className="navbar navbar-expand-lg navbar-dark hairbnb-navbar sticky-top">
+            <div className="container">
+                <Link to="/" className="navbar-brand d-flex align-items-center">
+                    <img src="/Logo.png" alt="Logo" width="50" className="me-2 logo-gold" />
+                    <span className="hairbnb-brand">HAIRBNB</span>
                 </Link>
 
-                <button
-                    className="navbar-toggler"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#navbarSupportedContent"
-                >
+                <button className="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navHairbnb">
                     <span className="navbar-toggler-icon"></span>
                 </button>
 
-                <div className="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul className="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
+                <div className="collapse navbar-collapse" id="navHairbnb">
+                    <ul className="navbar-nav ms-auto align-items-center">
                         <li className="nav-item">
-                            <Link className="nav-link" to="/">Inicio</Link>
+                            <Link className="nav-link hairbnb-nav-link" to="/">Inicio</Link>
                         </li>
                         <li className="nav-item">
-                            <Link className="nav-link" to="/asociates">Nuestros asociados</Link>
+                            <Link className="nav-link hairbnb-nav-link" to="/asociates">Asociados</Link>
                         </li>
 
-                        {store.token == "client" && (
-                            <li className="nav-item">
-                                <Link
-                                    className="nav-link d-flex align-items-center"
-                                    to="/private/client"
-                                    state={{ activeTab: "messages" }}
-                                >
-
-                                    Mensajes
-                                    {store.hasNewMessages && (
-                                        <span className="badge rounded-pill bg-danger ms-1" style={{ fontSize: "0.5rem" }}>
-                                            ●
-                                        </span>
-                                    )}
-                                </Link>
-                            </li>
-                        )}
                         {!store.token ? (
                             <>
                                 <li className="nav-item dropdown">
-                                    <Link className="nav-link dropdown-toggle" to="#" role="button" data-bs-toggle="dropdown">
-                                        Crear cuenta
+                                    <Link className="nav-link hairbnb-nav-link dropdown-toggle" to="#" role="button" data-bs-toggle="dropdown">
+                                        Iniciar Sesión
                                     </Link>
-                                    <ul className="dropdown-menu dropdown-menu-end shadow">
-                                        <li><Link className="dropdown-item" to="/signup/client">Como cliente</Link></li>
-                                        <li><Link className="dropdown-item" to="/signup/barber">Como profesional</Link></li>
-                                        <li><Link className="dropdown-item" to="/signup/owner">Como dueño</Link></li>
+                                    <ul className="dropdown-menu dropdown-menu-end hairbnb-dropdown shadow">
+                                        <li><Link className="dropdown-item hairbnb-dropdown-item" to="/login/client">Soy cliente</Link></li>
+                                        <li><Link className="dropdown-item hairbnb-dropdown-item" to="/login/barber">Soy profesional</Link></li>
+                                        <li><Link className="dropdown-item hairbnb-dropdown-item" to="/login/owner">Soy dueño</Link></li>
                                     </ul>
                                 </li>
-                                <li className="nav-item dropdown">
-                                    <Link className="nav-link dropdown-toggle" to="#" role="button" data-bs-toggle="dropdown">
-                                        Inicia sesión
-                                    </Link>
-                                    <ul className="dropdown-menu dropdown-menu-end">
-                                        <li><Link className="dropdown-item" to="/login/client">Soy cliente</Link></li>
-                                        <li><Link className="dropdown-item" to="/login/barber">Soy barbero</Link></li>
-                                        <li><Link className="dropdown-item" to="/login/owner">Soy dueño</Link></li>
-                                    </ul>
+                                <li className="nav-item">
+                                    <HashLink
+                                        smooth
+                                        to="/#community"
+                                        className="nav-link hairbnb-btn"
+                                    >
+                                        ÚNETE AHORA
+                                    </HashLink>
                                 </li>
                             </>
                         ) : (
-                            <li className="nav-item dropdown">
-                                <Link className="nav-link dropdown-toggle" to="#" role="button" data-bs-toggle="dropdown">
-                                    Hola, {store.userInfo?.name || "Administrador"}
+                            <li className="nav-item dropdown ms-lg-3">
+                                <Link className="nav-link hairbnb-nav-link dropdown-toggle" to="#" role="button" data-bs-toggle="dropdown">
+                                    HOLA, {store.userInfo?.name?.toUpperCase() || "USER"}
                                 </Link>
-                                <ul className="dropdown-menu dropdown-menu-end shadow">
+                                <ul className="dropdown-menu dropdown-menu-end hairbnb-dropdown shadow">
                                     <li>
-                                        <Link className="dropdown-item" to={
-                                            store.role === "owner" ? "/private/owner" :
-                                                store.role === "barber" ? "/private/barber" :
-                                                    store.role === "client" ? "/private/client" :
-                                                        "/4dm1n1str4t10n"
-                                        }>
+                                        <Link className="dropdown-item hairbnb-dropdown-item" to={getDashboardRoute()}>
                                             Panel principal
                                         </Link>
                                     </li>
-                                    {store.role !== "admin" && (
-                                        <li>
-                                            <button className="dropdown-item" onClick={handleEditProfile}>
-                                                Editar perfil
-                                            </button>
-                                        </li>
-                                    )}
-                                    <li><hr className="dropdown-divider" /></li>
+                                    <li><hr className="dropdown-divider bg-secondary opacity-25" /></li>
                                     <li>
-                                        <button className="dropdown-item text-danger" onClick={handleLogout}>
-                                            Cerrar sesión
+                                        <button className="dropdown-item hairbnb-dropdown-item" onClick={handleEditProfile}>
+                                            <i className="bi bi-person-circle me-2"></i>Ver mi perfil
+                                        </button>
+                                    </li>
+                                    <li><hr className="dropdown-divider bg-secondary opacity-25" /></li>
+                                    <li>
+                                        <button className="dropdown-item hairbnb-dropdown-item text-danger fw-bold" onClick={handleLogout}>
+                                            <i className="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
                                         </button>
                                     </li>
                                 </ul>

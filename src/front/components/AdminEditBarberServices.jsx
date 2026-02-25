@@ -112,49 +112,66 @@ export const AdminEditBarberServices = () => {
     };
 
     return (
-        <div className="container mt-5">
-            <h1 className="display-6 mb-4">{isEditing ? `Admin: editar servicio` : "Admin: nuevo servicio"}</h1>
+        <div className="container py-5" style={{ maxWidth: '750px' }}>
+            <div className="booking-card shadow-lg">
 
-            <form onSubmit={handleSubmit} className="card p-4 shadow-sm border-info">
-                <div className="mb-3">
-                    <label className="fw-bold">Barbero Responsable</label>
-                    <select className="form-select" name="barber_id" value={form.barber_id} onChange={handleChange} required>
-                        <option value="">Selecciona un barbero...</option>
-                        {barbers.map(b => (
-                            <option key={b.id} value={b.id}>{b.name}</option>
-                        ))}
-                    </select>
+                <div className="booking-header">
+                    <h2 className="Oswald mb-0 text-uppercase fw-bold">
+                        {isEditing ? "Editar servicio" : "Nuevo servicio"}
+                    </h2>
+                    <div className="mt-2" style={{ width: '40px', height: '2px', background: '#d19f68', margin: '0 auto' }}></div>
                 </div>
 
-                <div className="mb-3">
-                    <label className="fw-bold">Nombre del Servicio</label>
-                    <input className="form-control" name="name" value={form.name} onChange={handleChange} placeholder="Ej: Corte Degradado + Barba" required />
-                </div>
+                <form onSubmit={handleSubmit} className="p-4 p-md-5">
 
-                <div className="row">
-                    <div className="col-md-6 mb-3">
-                        <label className="fw-bold">Precio (€)</label>
-                        <input type="number" step="0.01" className="form-control" name="price" value={form.price} onChange={handleChange} required />
+                    <div className="form-group-custom mb-4">
+                        <label>Barbero</label>
+                        <select className="select-custom" name="barber_id" value={form.barber_id} onChange={handleChange} required>
+                            <option value="">Selecciona al profesional</option>
+                            {barbers.map(b => (
+                                <option key={b.id} value={b.id}>{b.name}</option>
+                            ))}
+                        </select>
                     </div>
-                    <div className="col-md-6 mb-3">
-                        <label className="fw-bold">Duración (minutos)</label>
-                        <input type="number" className="form-control" name="duration" value={form.duration} onChange={handleChange} placeholder="Ej: 30" required />
-                    </div>
-                </div>
-                <div className="mb-3">
-                    <label className="fw-bold">Descripción</label>
-                    <textarea className="form-control" name="description" value={form.description} onChange={handleChange} placeholder="Describe el servicio..." />
-                </div>
 
-                <div className="d-flex gap-2 mt-3">
-                    <button type="button" className="btn btn-outline-secondary" onClick={() => navigate("/4dm1n1str4t10n")}>
-                        Cancelar
-                    </button>
-                    <button className="btn btn-info text-white">
-                        {isEditing ? "Actualizar Servicio" : "Crear Servicio"}
-                    </button>
-                </div>
-            </form>
+                    <div className="form-group-custom mb-4">
+                        <label>Nombre del servicio</label>
+                        <input className="select-custom" name="name" value={form.name}
+                            onChange={handleChange} placeholder="Ej: Corte Degradado + Ritual de Barba" required />
+                    </div>
+
+                    <div className="row">
+                        <div className="col-md-6 form-group-custom">
+                            <label>Precio (€)</label>
+                            <div className="position-relative">
+                                <input type="number" step="0.01" className="select-custom" name="price"
+                                    value={form.price} onChange={handleChange} placeholder="0.00" required />
+                            </div>
+                        </div>
+                        <div className="col-md-6 form-group-custom">
+                            <label>Duración (minutos)</label>
+                            <input type="number" className="select-custom" name="duration"
+                                value={form.duration} onChange={handleChange} placeholder="30" required />
+                        </div>
+                    </div>
+
+                    <div className="form-group-custom mt-3">
+                        <label>Descripción del servicio (opcional)</label>
+                        <textarea className="select-custom" name="description" rows="3" value={form.description}
+                            onChange={handleChange} placeholder="Explica brevemente en qué consiste el servicio..." />
+                    </div>
+
+                    <div className="d-flex justify-content-between align-items-center mt-5">
+                        <button type="button" className="btn btn-link text-muted text-decoration-none Oswald"
+                            onClick={() => navigate("/4dm1n1str4t10n")}>
+                            CANCELAR
+                        </button>
+                        <button type="submit" className="btn-confirm px-5">
+                            {isEditing ? "ACTUALIZAR" : "CREAR"}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 };

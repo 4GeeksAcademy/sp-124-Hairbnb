@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
-import { MessagePage } from "../components/MessagesPage"
+import { MessagesPage } from "../components/MessagesPage"
 import { Link } from "react-router-dom";
+import userimg from "../../../public/user-icon.png"
+import "../styles/privatezone.css"
 
 
 export const OwnerGestion = () => {
@@ -28,11 +30,11 @@ export const OwnerGestion = () => {
   };
 
   const getDayName = (dateString) => {
-  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const [year, month, day] = dateString.split("-").map(Number);
-  const d = new Date(year, month - 1, day); 
-  return days[d.getDay()];
-};
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const [year, month, day] = dateString.split("-").map(Number);
+    const d = new Date(year, month - 1, day);
+    return days[d.getDay()];
+  };
 
   const loadBarbers = async () => {
     if (!barbershop?.id) return;
@@ -135,200 +137,198 @@ export const OwnerGestion = () => {
     );
   }
 
+
   return (
-    <div className="container mt-5">
-
-      <div className="d-flex justify-content-between align-items-center mb-4">
+    <div className="container-fluid py-5 px-md-5 bg-white min-vh-100">
+      <div className="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
         <div>
-          <h1 className="mb-0">Gestión de: {barbershop?.name}</h1>
-
+          <span className="text-gold fw-bold small text-uppercase Oswald d-block">LOCAL ACTUAL</span>
+          <h1 className="Oswald text-dark fw-bold mb-0 text-uppercase">
+            {barbershop?.name || "SIN BARBERÍA SELECCIONADA"}
+          </h1>
         </div>
-        <Link to="/private/owner" className="btn btn-outline-secondary">
-          <i className="fa-solid fa-arrow-rotate-left me-2"></i>
-          Cambiar de barbería
+        <Link to="/private/owner" className="btn btn-outline-dark Oswald fw-bold text-uppercase px-4">
+          <i className="fa-solid fa-arrow-left me-2"></i>VOLVER
         </Link>
       </div>
-      <ul className="nav nav-tabs my-4">
+
+      <ul className="nav nav-tabs border-0 gap-2 mb-4">
         <li className="nav-item">
-          <button className={`nav-link ${activeTab === "barbers" ? "active" : ""}`} onClick={() => setActiveTab("barbers")}>
-            Barberos
+          <button
+            className={`nav-link Oswald fw-bold ${activeTab === "barbers" ? "bg-dark text-gold active" : "text-secondary border-0"}`}
+            onClick={() => setActiveTab("barbers")}
+          >
+            MI EQUIPO
           </button>
         </li>
         <li className="nav-item">
-          <button className={`nav-link ${activeTab === "appointments" ? "active" : ""}`} onClick={() => setActiveTab("appointments")}>
-            Citas
+          <button
+            className={`nav-link Oswald fw-bold ${activeTab === "appointments" ? "bg-dark text-gold active" : "text-secondary border-0"}`}
+            onClick={() => setActiveTab("appointments")}
+          >
+            AGENDA
           </button>
         </li>
         <li className="nav-item">
-          <button className={`nav-link ${activeTab === "messages" ? "active" : ""}`} onClick={() => setActiveTab("messages")}>
-            Mensajes
+          <button
+            className={`nav-link Oswald fw-bold ${activeTab === "messages" ? "bg-dark text-gold active" : "text-secondary border-0"}`}
+            onClick={() => setActiveTab("messages")}
+          >
+            MENSAJES (GLOBAL)
           </button>
         </li>
       </ul>
 
-      <div className="tab-content">
+      <div className="tab-content animate__animated animate__fadeIn">
+
         {activeTab === "barbers" && (
-          <>
-            <div className="mb-3 d-flex gap-2">
-              <input type="text" placeholder="Email o teléfono del barbero" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} className="form-control" />
-              <button className="btn btn-secondary" onClick={handleInvite}>Invitar</button>
+          <div className="row g-4">
+            <div className="col-lg-4">
+              <div className="p-4 border border-dark bg-white shadow-sm">
+                <h6 className="Oswald fw-bold mb-3 text-dark text-uppercase border-2 border-gold ps-2">
+                  INVITAR PERSONAL
+                </h6>
+                <div className="input-group mb-3">
+                  <input
+                    type="text"
+                    placeholder="EMAIL O TELÉFONO"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    className="form-control border-dark Oswald rounded-0"
+                  />
+                  <button className="btn btn-dark text-gold Oswald fw-bold rounded-0 px-3" onClick={handleInvite}>
+                    INVITAR
+                  </button>
+                </div>
+
+                <h6 className="Oswald fw-bold mt-4 mb-2 small text-muted text-uppercase">INVITACIONES ENVIADAS</h6>
+                <div className="list-group list-group-flush border-top border-dark">
+                  {pending.length === 0 && <p className="text-muted small Oswald py-3">SIN SOLICITUDES</p>}
+                  {pending.map(p => (
+                    <div key={p.id} className="list-group-item px-0 py-2 d-flex justify-content-between align-items-center bg-transparent border-bottom">
+                      <span className="small text-dark Oswald">{p.barber?.email || p.email}</span>
+                      <span className="badge border border-gold text-gold Oswald small" style={{ fontSize: '0.65rem' }}>PENDIENTE</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <h5>Barberos aceptados</h5>
-            <div className="row">
-              {barbers.length === 0 && <div className="col-12"><p className="alert alert-light">No hay barberos aceptados aún.</p></div>}
-              {barbers.map(b => (
-                <div key={b.id} className="col-md-6 col-lg-4 mb-3">
-                  <div className="card h-100">
-                    <div className="card-body">
-                      <div className="d-flex align-items-center mb-3">
-                        <div className="flex-shrink-0">
-                          {b.barber?.barber_profile_image ? (
+
+            <div className="col-lg-8">
+              <div className="row g-3">
+                {barbers.map(b => (
+                  <div key={b.id} className="col-md-6">
+                    <div className="card border-dark rounded-0 shadow-sm bg-white h-100 position-relative">
+                      <div className="position-absolute top-0 end-0 bg-gold" style={{ width: '40px', height: '4px' }}></div>
+
+                      <div className="card-body p-4">
+                        <div className="d-flex align-items-center mb-4">
+                          <div className="position-relative">
                             <img
-                              src={b.barber?.barber_profile_image}
-                              alt={b.barber?.name}
-                              className="rounded-circle object-fit-cover"
-                              style={{ width: "50px", height: "50px" }}
+                              src={b.barber?.barber_profile_image || userimg}
+                              className="border border-dark me-3"
+                              style={{ width: "65px", height: "65px", objectFit: "cover" }}
                             />
-                          ) : (
-                            <div
-                              className="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
-                              style={{ width: "50px", height: "50px" }}
-                            >
-                              <i className="fas fa-user"></i>
-                            </div>
-                          )}
+                            <div className="position-absolute bottom-0 start-0 bg-gold" style={{ width: '15px', height: '15px', border: '2px solid white' }}></div>
+                          </div>
+                          <div>
+                            <h5 className="Oswald fw-bold mb-0 text-dark text-uppercase">{b.barber?.name}</h5>
+                            <small className="text-muted Oswald d-block" style={{ letterSpacing: '1px' }}>{b.barber?.email}</small>
+                          </div>
                         </div>
-                        <div className="ms-3">
-                          <h6 className="mb-0 fw-bold">{b.barber?.name}</h6>
-                          <small className="text-muted">{b.barber?.email}</small>
+
+                        <div className="availability-zone bg-light p-3 border-start border-2 border-gold">
+                          <div className="Oswald fw-bold border-bottom border-dark border-opacity-10 mb-2 pb-1 text-dark text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>
+                            <i className="fa-solid fa-calendar-day text-gold me-2"></i>HORARIO SEMANAL
+                          </div>
+                          {b.schedules?.sort((a, b) => a.id - b.id).map(s => (
+                            <div key={s.id} className="d-flex justify-content-between Oswald py-1 border-bottom border-white small">
+                              <span className="text-muted text-uppercase" style={{ fontSize: '0.65rem' }}>{dayTranslations[s.day_of_week]}</span>
+                              <span className="text-dark fw-bold">
+                                {s.start_time.slice(0, 5)} <span className="text-gold mx-1">-</span> {s.end_time.slice(0, 5)}
+                              </span>
+                            </div>
+                          ))}
                         </div>
                       </div>
 
-                      <div className="mt-3">
-                        <p className="mb-2 text-secondary border-bottom pb-1">
-                          Horarios de trabajo
-                        </p>
-                        <div className="d-flex flex-column gap-1">
-                          {b.schedules && b.schedules.length > 0 ? (
-                            b.schedules
-                              .sort((a, b) => {
-                                const order = { "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5, "Saturday": 6, "Sunday": 7 };
-                                return order[a.day_of_week] - order[b.day_of_week];
-                              })
-                              .map(s => (
-                                <div
-                                  key={s.id}
-                                  className="d-flex justify-content-between py-1 px-2"
-                                >
-                                  <span className="fw-medium">
-                                    {dayTranslations[s.day_of_week] || s.day_of_week}:
-                                  </span>
-                                  <span className="text-muted">
-                                    {s.start_time.slice(0, 5)} - {s.end_time.slice(0, 5)}
-                                  </span>
-                                </div>
-                              ))
-                          ) : (
-                            <span className="text-muted small italic">Sin días asignados</span>
-                          )}
-                        </div>
+                      <div className="card-footer bg-white border-0 px-4 pb-3">
+                        <button className="btn btn-link text-danger text-decoration-none Oswald fw-bold w-100 py-1 small hover-opacity" style={{ fontSize: '0.7rem', letterSpacing: '1px' }}>
+                          <i className="fa-solid fa-user-xmark me-2"></i>DESVINCULAR PERSONAL
+                        </button>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-            <h5>Invitaciones pendientes</h5>
-            <ul className="list-group">
-              {pending.length === 0 && <li className="list-group-item">No hay invitaciones</li>}
-              {pending.map(p => (
-                <li key={p.id} className="list-group-item">{p.barber?.email || p.email} - {p.status}</li>
-              ))}
-            </ul>
-          </>
+          </div>
         )}
 
         {activeTab === "appointments" && (
-          <div className="appointments-wrapper p-3">
-            <div className="d-flex justify-content-between align-items-center mb-4 gap-3">
+          <div className="pb-card animate__animated animate__fadeIn">
+            <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
               <div className="d-flex align-items-center gap-2">
                 <input
                   type="date"
-                  className="form-control w-auto"
+                  className="form-control Oswald border-dark"
                   value={selectedDate}
-                  onChange={(e) => {
-                    setSelectedDate(e.target.value);
-                    setAppointmentView("summary");
-                  }}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  style={{ width: '200px' }}
                 />
-                {appointmentView === "details" && (
-                  <button className="btn btn-outline-secondary" onClick={() => setAppointmentView("summary")}>
-                    <i className="fas fa-arrow-left me-2"></i>Resumen
-                  </button>
-                )}
+                <button
+                  className="btn btn-outline-dark Oswald fw-bold"
+                  onClick={() => setAppointmentView(appointmentView === "summary" ? "details" : "summary")}
+                >
+                  <i className={`fa-solid ${appointmentView === "summary" ? "fa-list-check" : "fa-chart-pie"} me-2`}></i>
+                  {appointmentView === "summary" ? "DETALLES" : "RESUMEN"}
+                </button>
               </div>
-              <button className="btn btn-primary" onClick={() => { dispatch({ type: "set-appointmentInfo", payload: null }); navigate("/owner_appointment_form"); }}>
-                Nueva Cita
+              <button className="hairbnb-btn" onClick={() => navigate("/owner_appointment_form")}>
+                <i className="fa-solid fa-plus me-2"></i>NUEVA CITA
               </button>
             </div>
 
-            <div className="d-flex overflow-auto pb-3 gap-3" style={{ alignItems: "flex-start" }}>
+            <div className="d-flex gap-3 overflow-auto pb-4">
               {barbers.map(b => {
                 const dayApps = store.appointments.filter(a =>
                   String(a.barber_id) === String(b.barber?.id) &&
-                  a.date.split("T")[0] === selectedDate &&
-                  (a.status === "confirmed")
+                  a.date.split("T")[0] === selectedDate && a.status === "confirmed"
                 ).sort((a, b) => a.date.localeCompare(b.date));
 
-                const currentDayName = getDayName(selectedDate);
-const todaySchedule = b.schedules?.find(s => 
-  s.day_of_week.trim() === currentDayName
-);
+                const schedule = b.schedules?.find(s => s.day_of_week.trim() === getDayName(selectedDate));
 
                 return (
-                  <div key={b.id} style={{ minWidth: "300px", maxWidth: "300px" }}>
-                    <div className="card">
-                      <div className="card-headertext-center py-3 text-center">
-                        <h6 className="mb-0 fs-5 text-uppercase">{b.barber?.name}</h6>
-                        {todaySchedule ? `${todaySchedule.start_time} - ${todaySchedule.end_time}` : "No trabaja"}
+                  <div key={b.id} className="flex-shrink-0" style={{ width: "320px" }}>
+                    <div className="card border-dark shadow-sm">
+                      <div className="card-header bg-dark text-gold text-center py-2">
+                        <h6 className="mb-0 Oswald text-uppercase fw-bold">{b.barber?.name}</h6>
+                        <div className="small Oswald text-white">{schedule ? `${schedule.start_time.slice(0, 5)} - ${schedule.end_time.slice(0, 5)}` : "NO TRABAJA HOY"}</div>
                       </div>
-
-                      <div className="card-body p-2 d-flex flex-column justify-content-start" style={{ minHeight: "250px" }}>
-
-                        {appointmentView === "summary" ? (
-                          <div className="text-center my-auto py-4">
-                            <div className="display-4">{dayApps.length}</div>
-                            <p className="mb-3">citas hoy</p>
-                            <button className="btn btn-outline-primary" onClick={() => setAppointmentView("details")}>
-                              Detalles
-                            </button>
+                      <div className="card-body p-2 bg-light" style={{ minHeight: "400px" }}>
+                        {appointmentView === 'summary' ? (
+                          <div className="text-center py-5">
+                            <div className="h1 Oswald fw-bold text-dark">{dayApps.length}</div>
+                            <div className="Oswald text-gold small text-uppercase">CITAS CONFIRMADAS</div>
                           </div>
                         ) : (
-                          <>
-                            {dayApps.length === 0 ? (
-                              <div className="text-center py-5">Sin citas</div>
-                            ) : (
-                              dayApps.map(a => (
-                                <div key={a.id} className="card mb-2">
-                                  <div className="card-body p-2">
-                                    <div className="d-flex justify-content-between mb-1">
-                                      <span>
-                                        {a.date.split("T")[1].slice(0, 5)}
-                                      </span>
-                                      <div className="d-flex gap-2">
-                                        <i className="fas fa-edit" onClick={() => handleEdit(a)}></i>
-                                        <i className="fas fa-trash" onClick={() => handleDelete(a.id)}></i>
-                                      </div>
-                                    </div>
-                                    <div>{a.user_name}</div>
-                                    <div>{a.service_name}</div>
+                          <div className="d-flex flex-column gap-2">
+                            {dayApps.length === 0 && <p className="text-center text-muted Oswald small py-4">SIN CITAS</p>}
+                            {dayApps.map(a => (
+                              <div key={a.id} className="bg-white p-3 border-start border-3 border-gold shadow-sm">
+                                <div className="d-flex justify-content-between align-items-center mb-1">
+                                  <span className="badge bg-dark text-gold Oswald">{a.date.split("T")[1].slice(0, 5)}</span>
+                                  <div className="d-flex gap-2">
+                                    <i className="fa-solid fa-pen text-secondary cursor-pointer" onClick={() => handleEdit(a)}></i>
+                                    <i className="fa-solid fa-trash text-danger cursor-pointer" onClick={() => handleDelete(a.id)}></i>
                                   </div>
                                 </div>
-                              ))
-                            )}
-                          </>
+                                <div className="Oswald fw-bold text-dark text-uppercase small">{a.user_name}</div>
+                                <div className="Oswald text-muted small">{a.service_name}</div>
+                              </div>
+                            ))}
+                          </div>
                         )}
-
                       </div>
                     </div>
                   </div>
@@ -337,12 +337,9 @@ const todaySchedule = b.schedules?.find(s =>
             </div>
           </div>
         )}
-        {activeTab === "messages" && (
-          <div className="messages-wrapper p-3">
-            <MessagePage />
-          </div>
-        )}
+
+        {activeTab === "messages" && <div className="pb-card border border-dark p-4 animate__animated animate__fadeIn"><MessagesPage /></div>}
       </div>
     </div>
   );
-};
+}

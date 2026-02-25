@@ -8,7 +8,6 @@ import { AdminEditAppt } from "../components/AdminEditAppt";
 import { AdminEditAdmin } from "../components/AdminEditAdmin";
 import { AdminEditBarberServices } from "../components/AdminEditBarberServices";
 import { AdminEditSchedule } from "../components/AdminEditSchedule";
-import { AdminEditInvitation } from "../components/AdminEditInvitation";
 
 export const AdminEditForms = () => {
     const { entity, id } = useParams();
@@ -32,14 +31,12 @@ export const AdminEditForms = () => {
                 return <AdminEditBarberServices />;
             case "schedules":
                 return <AdminEditSchedule />;
-            case "invitations":
-                return <AdminEditInvitation />;
 
             default:
                 return (
                     <div className="container mt-5 text-center">
                         <h2 className="text-muted">Formulario no encontrado</h2>
-                        <hr/>
+                        <hr />
                         <p>No existe un editor para la entidad: <strong>{entity}</strong></p>
                         <button className="btn btn-secondary mt-3" onClick={() => navigate(-1)}>Volver</button>
                     </div>

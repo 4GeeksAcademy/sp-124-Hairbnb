@@ -26,53 +26,53 @@ export const Chatbot = () => {
 
   const iniciarChat = () => {
     setIsTyping(true);
-    setMessages([]); 
+    setMessages([]);
 
     setTimeout(() => {
-        let saludo = "";
-        let menuDestino = "inicio";
+      let saludo = "";
+      let menuDestino = "inicio";
 
-        const rolesEspanol = {
-            admin: "administrador",
-            owner: "dueño de local",
-            barber: "barbero profesional",
-            client: "cliente"
-        };
+      const rolesEspanol = {
+        admin: "administrador",
+        owner: "dueño de local",
+        barber: "barbero profesional",
+        client: "cliente"
+      };
 
-        if (store.token) {
-  
-            const nombreLimpio = store.username 
-                ? store.username.split('@')[0] 
-                : "Usuario";
-            
-            const nombreFormateado = nombreLimpio.charAt(0).toUpperCase() + nombreLimpio.slice(1);
-            
-            const rolTraducido = rolesEspanol[store.role] || "Usuario";
+      if (store.token) {
 
-            saludo = `¡Hola de nuevo ${nombreFormateado}! ¿Qué quieres gestionar desde tu cuenta de ${rolTraducido}?`;
-            
-            if (store.role === 'admin') menuDestino = "admin_menu";
-            else if (store.role === 'owner') menuDestino = "owner_menu";
-            else if (store.role === 'barber') menuDestino = "barber_menu";
-            else menuDestino = "cliente_menu";
+        const nombreLimpio = store.username
+          ? store.username.split('@')[0]
+          : "Usuario";
 
-        } else {
-            saludo = "¡Hola! Bienvenido a Hairbnb. Parece que no has iniciado sesión en nuestra plataforma.";
-            menuDestino = "inicio";
-        }
+        const nombreFormateado = nombreLimpio.charAt(0).toUpperCase() + nombreLimpio.slice(1);
 
-        setMessages([{ role: 'assistant', content: saludo }]);
-        setCurrentMenu(menuDestino);
-        setIsTyping(false);
+        const rolTraducido = rolesEspanol[store.role] || "Usuario";
+
+        saludo = `¡Hola de nuevo ${nombreFormateado}! ¿Qué quieres gestionar desde tu cuenta de ${rolTraducido}?`;
+
+        if (store.role === 'admin') menuDestino = "admin_menu";
+        else if (store.role === 'owner') menuDestino = "owner_menu";
+        else if (store.role === 'barber') menuDestino = "barber_menu";
+        else menuDestino = "cliente_menu";
+
+      } else {
+        saludo = "¡Hola! Bienvenido a Hairbnb. Parece que no has iniciado sesión en nuestra plataforma.";
+        menuDestino = "inicio";
+      }
+
+      setMessages([{ role: 'assistant', content: saludo }]);
+      setCurrentMenu(menuDestino);
+      setIsTyping(false);
     }, 800);
-};
+  };
 
   const menus = {
     inicio: {
       options: [
         { label: "Quiero registrarme", next: "registro_opciones" },
         { label: "Ir a iniciar sesión", next: "login_opciones" },
-        { label: "¿Qué me ofrece Hairbnb?", next: "info"}
+        { label: "¿Qué me ofrece Hairbnb?", next: "info" }
       ]
     },
 
@@ -96,13 +96,13 @@ export const Chatbot = () => {
     },
 
     login_opciones: {
-        intro: "Selecciona tu portal de acceso:",
-        options: [
-            { label: "Soy cliente", action: () => navigate("/login/client") },
-            { label: "Soy barbero", action: () => navigate("/login/barber") },
-            { label: "Soy dueño", action: () => navigate("/login/owner") },
-            { label: "Volver", next: "inicio" }
-        ]
+      intro: "Selecciona tu portal de acceso:",
+      options: [
+        { label: "Soy cliente", action: () => navigate("/login/client") },
+        { label: "Soy barbero", action: () => navigate("/login/barber") },
+        { label: "Soy dueño", action: () => navigate("/login/owner") },
+        { label: "Volver", next: "inicio" }
+      ]
     },
 
     registro_opciones: {
@@ -145,11 +145,11 @@ export const Chatbot = () => {
     },
 
     admin_menu: {
-        intro: "Opciones de administrador:",
-        options: [
-            { label: "Ir a la página principal", action: () => navigate("/4dm1n1str4t10n") },
-            { label: "Cerrar Sesión", action: () => handleLogout() }
-        ]
+      intro: "Opciones de administrador:",
+      options: [
+        { label: "Ir a la página principal", action: () => navigate("/4dm1n1str4t10n") },
+        { label: "Cerrar Sesión", action: () => handleLogout() }
+      ]
     }
   };
 
@@ -161,21 +161,21 @@ export const Chatbot = () => {
   const handleOptionClick = (opcion) => {
     if (opcion.action) {
       opcion.action();
-     
+
       if (opcion.label !== "Cerrar Sesión") setIsOpen(false);
       return;
     }
 
     const isBack = opcion.label.toLowerCase().includes("volver");
     if (!isBack) {
-        setMessages(prev => [...prev, { role: 'user', content: opcion.label }]);
+      setMessages(prev => [...prev, { role: 'user', content: opcion.label }]);
     }
 
     setIsTyping(true);
     setTimeout(() => {
       setIsTyping(false);
       let botResponse = opcion.resp || menus[opcion.next]?.intro;
-      
+
       if (botResponse) {
         setMessages(prev => [...prev, { role: 'assistant', content: botResponse }]);
       }
@@ -190,39 +190,41 @@ export const Chatbot = () => {
       </button>
 
       {isOpen && (
-        <div className="chat-window shadow-lg border-0">
-          <div className="chat-header p-3 d-flex justify-content-between align-items-center bg-dark text-white">
-            <span className="fw-bold"><i className="fa-solid fa-robot me-2"></i>HairBot</span>
-            <button className="btn btn-sm text-white p-0" onClick={() => setIsOpen(false)}>
-                <i className="fa-solid fa-minus"></i>
+        <div className="chat-window shadow-lg">
+          <div className="chat-header d-flex justify-content-between align-items-center">
+            <span className="text-gold fw-bold">
+              <i className="fa-solid fa-robot me-2"></i>HairBot
+            </span>
+            <button className="btn btn-sm text-white-50 p-0" onClick={() => setIsOpen(false)}>
+              <i className="fa-solid fa-minus"></i>
             </button>
           </div>
 
-          <div className="chat-body p-3 bg-white" ref={scrollRef} style={{ height: "320px", overflowY: "auto" }}>
+          <div className="chat-body" ref={scrollRef} style={{ height: "350px", overflowY: "auto" }}>
             {messages.map((msg, i) => (
-              <div key={i} className={`d-flex mb-3 ${msg.role === 'user' ? 'justify-content-end' : 'justify-content-start'}`}>
-                <div className={`p-2 px-3 rounded-3 shadow-sm ${msg.role === 'user' ? 'bg-primary text-white' : 'bg-light border text-dark'}`} style={{ maxWidth: "85%", fontSize: "0.85rem" }}>
+              <div key={i} className={`d-flex ${msg.role === 'user' ? 'justify-content-end' : 'justify-content-start'}`}>
+                <div className={`msg-bubble ${msg.role === 'user' ? 'user' : 'assistant shadow-sm'}`}>
                   {msg.content}
                 </div>
               </div>
             ))}
             {isTyping && (
-                <div className="d-flex justify-content-start mb-3">
-                    <div className="bg-light border p-2 rounded-3 text-muted" style={{fontSize: "0.8rem"}}>
-                        <span className="spinner-grow spinner-grow-sm me-1"></span> Escribiendo...
-                    </div>
+              <div className="d-flex justify-content-start">
+                <div className="typing-indicator">
+                  <span className="spinner-grow spinner-grow-sm me-2" style={{ backgroundColor: "#d19f68" }}></span>
+                  Afilando tijeras...
                 </div>
+              </div>
             )}
           </div>
 
-          <div className="chat-footer p-3 bg-light border-top">
-            <div className="d-flex flex-wrap gap-2">
+          <div className="chat-footer">
+            <div className="d-flex flex-wrap gap-2 justify-content-center">
               {!isTyping && menus[currentMenu]?.options.map((opt, index) => (
                 <button
                   key={index}
-                  className="btn btn-sm btn-outline-primary border-2"
+                  className="chat-option-btn"
                   onClick={() => handleOptionClick(opt)}
-                  style={{ borderRadius: '20px', fontSize: '0.75rem', fontWeight: '600' }}
                 >
                   {opt.label}
                 </button>
@@ -233,4 +235,4 @@ export const Chatbot = () => {
       )}
     </div>
   );
-};
+}

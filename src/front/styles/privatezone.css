@@ -1,0 +1,81 @@
+.pb-container {
+    background-color: #ffffff;
+    min-height: 100vh;
+    font-family: 'Poppins', sans-serif;
+    color: #1a1a1d;
+}
+
+.pb-header {
+    background: #1a1a1d;
+    padding: 2.5rem 0;
+    border-bottom: 4px solid #d19f68;
+}
+
+.pb-title-light {
+    font-family: 'Oswald', sans-serif;
+    color: #ffffff;
+    letter-spacing: 2px;
+}
+
+.pb-tabs-nav {
+    display: flex;
+    gap: 1.5rem;
+    border-bottom: 2px solid #f2f2f2;
+    margin: 2rem 0;
+}
+
+.pb-tab-btn {
+    background: none;
+    border: none;
+    padding: 10px 5px;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    color: #888;
+    transition: 0.3s;
+    position: relative;
+}
+
+.pb-tab-btn.active {
+    color: #d19f68;
+}
+
+.pb-tab-btn.active::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #d19f68;
+}
+
+.pb-card {
+    background: #ffffff;
+    border: 1px solid #eaeaea;
+    padding: 2rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+    transition: 0.3s;
+}
+
+.pb-card:hover {
+    border-color: #d19f68;
+}
+
+.pb-appt-item {
+    border-bottom: 1px dashed #e0e0e0;
+    padding: 1.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pb-badge-time {
+    border-left: 3px solid #d19f68;
+    padding-left: 1rem;
+}
+
+.pb-title-dark {
+    font-family: 'Oswald', sans-serif;
+    color: #1a1a1d;
+    text-transform: uppercase;
+}

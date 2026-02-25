@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import "../styles/authforms.css";
 
 export const OwnerLogin = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -62,7 +63,7 @@ export const OwnerLogin = () => {
                     msg: `Hola de nuevo, ${data.user.name}`
                 }
             });
-            
+
             navigate("/private/owner");
 
         } catch (err) {
@@ -74,40 +75,57 @@ export const OwnerLogin = () => {
     };
 
     return (
-        <div className="container mt-5">
-            <h1 className="display-6 mb-4">Inicio de sesión como dueño</h1>
-
-            <form onSubmit={handleLogin}>
-                <div className="mb-3 d-flex m-2 gap-2">
-                    <input
-                        className="form-control"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                    />
-                    <input
-                        className="form-control"
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
+        <div className="auth-page-container">
+            <div className="auth-card" style={{ maxWidth: '450px' }}>
+                <div className="text-center mb-4">
+                    <div className="mb-3 d-inline-block p-3 rounded-circle bg-gold-soft">
+                        <i className="fa-solid fa-shop fa-2x text-gold"></i>
+                    </div>
+                    <h1 className="auth-title">Acceso para propietarios</h1>
+                    <p className="auth-subtitle">Gestiona tus locales y equipos</p>
                 </div>
-                <div className="mx-auto text-center">
-                    <p className="mt-3">
-                        ¿No tienes cuenta?{" "}
+
+                <form onSubmit={handleLogin}>
+                    <div className="mb-3">
+                        <label className="auth-label">Correo electrónico</label>
+                        <input
+                            className="auth-input w-100"
+                            type="email"
+                            placeholder="dueño@tu-negocio.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="auth-label">Contraseña</label>
+                        <input
+                            className="auth-input w-100"
+                            type="password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <button type="submit" className="btn-auth-main w-100 mb-3">
+                        Entrar
+                    </button>
+
+                    <div className="text-center mt-4">
+                        <p className="small text-muted mb-1">¿Quieres registrar tu local?</p>
                         <span
-                            className="text-primary"
+                            className="fw-bold text-decoration-underline cursor-pointer"
+                            style={{ color: '#d19f68', fontSize: '0.9rem' }}
                             onClick={() => navigate("/signup/owner")}
                         >
-                            Crear una cuenta de dueño
+                            Crear cuenta de dueño
                         </span>
-                    </p>
-                    <button type="submit" className="btn btn-outline-primary">
-                        Entrar como dueño
-                    </button>
-                </div>
-            </form>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 };

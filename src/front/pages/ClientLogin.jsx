@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import "../styles/authforms.css"
 
 export const ClientLogin = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -39,7 +40,7 @@ export const ClientLogin = () => {
                 });
                 return;
             }
-            
+
             localStorage.setItem("token", data.token);
             localStorage.setItem("role", data.user.role);
             localStorage.setItem("userInfo", JSON.stringify(data.user))
@@ -73,40 +74,57 @@ export const ClientLogin = () => {
     };
 
     return (
-        <div className="container mt-5">
-            <h1 className="display-6 mb-4">Inicio de sesión como cliente</h1>
-
-            <form onSubmit={handleLogin}>
-                <div className="mb-3 d-flex m-2 gap-2">
-                    <input
-                        className="form-control"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                    />
-                    <input
-                        className="form-control"
-                        type="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
+        <div className="auth-page-container">
+            <div className="auth-card" style={{ maxWidth: '450px' }}>
+                <div className="text-center mb-4">
+                    <div className="mb-3 d-inline-block p-3 rounded-circle bg-gold-soft">
+                        <i className="fa-solid fa-circle-user fa-2x text-gold"></i>
+                    </div>
+                    <h1 className="auth-title">Área de cliente</h1>
+                    <p className="auth-subtitle">Reserva tu cita en los mejores centros</p>
                 </div>
-                <div className="mx-auto text-center">
-                    <p className="mt-3">
-                        ¿No tienes cuenta?{" "}
+
+                <form onSubmit={handleLogin}>
+                    <div className="mb-3">
+                        <label className="auth-label">Correo electrónico</label>
+                        <input
+                            className="auth-input w-100"
+                            type="email"
+                            placeholder="tu@email.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="auth-label">Contraseña</label>
+                        <input
+                            className="auth-input w-100"
+                            type="password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <button type="submit" className="btn-auth-main w-100 mb-3">
+                        Iniciar sesión
+                    </button>
+
+                    <div className="text-center mt-4">
+                        <p className="small text-muted mb-1">¿Aún no disfrutas de nuestros beneficios?</p>
                         <span
-                            className="text-primary"
+                            className="fw-bold text-decoration-underline"
+                            style={{ color: '#d19f68', cursor: 'pointer', fontSize: '0.9rem' }}
                             onClick={() => navigate("/signup/client")}
                         >
-                            Crear una cuenta de cliente
+                            Regístrate como cliente
                         </span>
-                    </p>
-                    <button type="submit" className="btn btn-outline-primary">
-                        Entrar como cliente
-                    </button>
-                </div>
-            </form>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 };

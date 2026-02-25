@@ -6,193 +6,213 @@ export const AdminEditSchedule = () => {
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
     const { id } = useParams();
-    const isEditing = !!id;
 
     const [barbers, setBarbers] = useState([]);
-    const [selectedBarber, setSelectedBarber] = useState("");
-    const [availableShops, setAvailableShops] = useState([]);
+    const [invitations, setInvitations] = useState([]);
+    const [selectedBarberId, setSelectedBarberId] = useState("");
+    const [selectedInvitationId, setSelectedInvitationId] = useState("");
+    const [loading, setLoading] = useState(false);
 
-    const [formData, setFormData] = useState({
-        invitation_id: "",
-        day_of_week: "Monday",
-        start_time: "09:00",
-        end_time: "14:00"
+    const [weeklySchedule, setWeeklySchedule] = useState({
+        Monday: { t1_start: "", t1_end: "", t2_start: "", t2_end: "", active: false },
+        Tuesday: { t1_start: "", t1_end: "", t2_start: "", t2_end: "", active: false },
+        Wednesday: { t1_start: "", t1_end: "", t2_start: "", t2_end: "", active: false },
+        Thursday: { t1_start: "", t1_end: "", t2_start: "", t2_end: "", active: false },
+        Friday: { t1_start: "", t1_end: "", t2_start: "", t2_end: "", active: false },
+        Saturday: { t1_start: "", t1_end: "", t2_start: "", t2_end: "", active: false },
+        Sunday: { t1_start: "", t1_end: "", t2_start: "", t2_end: "", active: false },
     });
 
-    const days = [
-        { val: "Monday", lab: "Lunes" },
-        { val: "Tuesday", lab: "Martes" },
-        { val: "Wednesday", lab: "Miércoles" },
-        { val: "Thursday", lab: "Jueves" },
-        { val: "Friday", lab: "Viernes" },
-        { val: "Saturday", lab: "Sábado" },
-        { val: "Sunday", lab: "Domingo" }
-    ];
+    const dayLabels = {
+        Monday: "Lunes", Tuesday: "Martes", Wednesday: "Miércoles",
+        Thursday: "Jueves", Friday: "Viernes", Saturday: "Sábado", Sunday: "Domingo"
+    };
 
     useEffect(() => {
-        const loadInitialData = async () => {
-            const token = store.token || localStorage.getItem("token");
-            const headers = { "Authorization": `Bearer ${token}` };
-
+        const initLoad = async () => {
+            setLoading(true);
+            const headers = { "Authorization": `Bearer ${store.token}` };
             try {
-                const responseBarbers = await fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/barbers`, { headers });
-                if (responseBarbers.ok) setBarbers(await responseBarbers.json());
-            } catch (error) { console.error("Error barberos:", error); }
+                const [resB, resI] = await Promise.all([
+                    fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/barbers`, { headers }),
+                    fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/invitations`, { headers })
+                ]);
+                const barbersData = resB.ok ? await resB.json() : [];
+                const allInvsData = resI.ok ? await resI.json() : [];
+                const acceptedInvs = allInvsData.filter(i => i.status === "accepted");
+                setBarbers(barbersData);
+                setInvitations(acceptedInvs);
 
-            try {
-                const responseInvitations = await fetch(`${import.meta.env.VITE_BACKEND_URL}/invitations`, { headers });
-                if (responseInvitations.ok) {
-                    const invData = await responseInvitations.json();
-                    const accepted = invData.filter(i => i.status === "accepted");
-                    dispatch({ type: "set-invitations", payload: accepted });
-                }
-            } catch (error) { console.error("Error vinculaciones:", error); }
-
-            if (isEditing) {
-                try {
-                    const responseSchedule = await fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules/${id}`, { headers });
-                    if (responseSchedule.ok) {
-                        const sch = await responseSchedule.json();
-                        setSelectedBarber(sch.barber_id);
-                        setAvailableShops([{
-                            id: sch.barber_barbershop_id,
-                            barbershop: { name: sch.barbershop_name }
-                        }]);
-                        setFormData({
-                            invitation_id: sch.barber_barbershop_id,
-                            day_of_week: sch.day_of_week,
-                            start_time: sch.start_time,
-                            end_time: sch.end_time
-                        });
+                if (id) {
+                    const resS = await fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules/${id}`, { headers });
+                    if (resS.ok) {
+                        const scheduleRow = await resS.json();
+                        const invId = scheduleRow.barber_barbershop_id;
+                        const myInv = acceptedInvs.find(inv => String(inv.id) === String(invId));
+                        if (myInv) {
+                            setSelectedBarberId(String(myInv.barber_id));
+                            setSelectedInvitationId(String(myInv.id));
+                            const resFull = await fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules/by_invitation/${invId}`, { headers });
+                            if (resFull.ok) {
+                                const fullData = await resFull.json();
+                                mapToState(fullData);
+                            }
+                        }
                     }
-                } catch (error) { console.error("Error horario:", error); }
-            }
+                }
+            } catch (error) { console.error(error); } finally { setLoading(false); }
         };
-        loadInitialData();
-    }, [id, isEditing, store.token, dispatch]);
+        if (store.token) initLoad();
+    }, [id, store.token]);
 
-    useEffect(() => {
-        if (!isEditing && selectedBarber && store.invitations?.length > 0) {
-            const filtered = store.invitations.filter(inv =>
-                String(inv.barber_id) === String(selectedBarber)
-            );
-            setAvailableShops(filtered);
-        }
-    }, [selectedBarber, store.invitations, isEditing]);
+    const mapToState = (data) => {
+        const newState = {
+            Monday: { t1_start: "", t1_end: "", t2_start: "", t2_end: "", active: false },
+            Tuesday: { t1_start: "", t1_end: "", t2_start: "", t2_end: "", active: false },
+            Wednesday: { t1_start: "", t1_end: "", t2_start: "", t2_end: "", active: false },
+            Thursday: { t1_start: "", t1_end: "", t2_start: "", t2_end: "", active: false },
+            Friday: { t1_start: "", t1_end: "", t2_start: "", t2_end: "", active: false },
+            Saturday: { t1_start: "", t1_end: "", t2_start: "", t2_end: "", active: false },
+            Sunday: { t1_start: "", t1_end: "", t2_start: "", t2_end: "", active: false },
+        };
+        data.forEach(item => {
+            const day = item.day_of_week;
+            if (newState[day]) {
+                const start = item.start_time.slice(0, 5);
+                const end = item.end_time.slice(0, 5);
+                if (!newState[day].active) {
+                    newState[day].active = true;
+                    newState[day].t1_start = start;
+                    newState[day].t1_end = end;
+                } else {
+                    newState[day].t2_start = start;
+                    newState[day].t2_end = end;
+                }
+            }
+        });
+        setWeeklySchedule(newState);
+    };
+
+    const handleCheckDay = (day) => {
+        setWeeklySchedule(prev => ({
+            ...prev,
+            [day]: { ...prev[day], active: !prev[day].active, t1_start: !prev[day].active ? "09:00" : "", t1_end: !prev[day].active ? "14:00" : "" }
+        }));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const method = isEditing ? "PUT" : "POST";
-        const url = isEditing
-            ? `${import.meta.env.VITE_BACKEND_URL}/schedules/${id}`
-            : `${import.meta.env.VITE_BACKEND_URL}/schedules`;
-
+        setLoading(true);
         try {
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${store.token}`
-                },
-                body: JSON.stringify({
-                    barber_barbershop_id: Number(formData.invitation_id),
-                    day_of_week: formData.day_of_week,
-                    start_time: formData.start_time,
-                    end_time: formData.end_time
-                })
+            await fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules/by_invitation/${selectedInvitationId}`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${store.token}` }
             });
-
-            if (response.ok) {
-                dispatch({ type: "set-message", payload: { type: "success", msg: "Horario guardado en inglés" } });
-                navigate("/4dm1n1str4t10n");
-            } else {
-                const errorData = await response.json();
-                dispatch({ type: "set-message", payload: { type: "error", msg: errorData.msg || "Error al guardar" } });
+            const activeDays = Object.keys(weeklySchedule).filter(d => weeklySchedule[d].active);
+            for (let day of activeDays) {
+                const d = weeklySchedule[day];
+                const saveTurn = async (s, e_t) => {
+                    if (!s || !e_t) return;
+                    await fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${store.token}` },
+                        body: JSON.stringify({ invitation_id: selectedInvitationId, day_of_week: day, start_time: s, end_time: e_t })
+                    });
+                };
+                await saveTurn(d.t1_start, d.t1_end);
+                if (d.t2_start && d.t2_end) await saveTurn(d.t2_start, d.t2_end);
             }
-        } catch (err) {
-            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
-        }
+            dispatch({ type: "set-message", payload: { type: "success", msg: "Horario actualizado" } });
+            navigate("/4dm1n1str4t10n");
+        } catch (error) { console.error(error); } finally { setLoading(false); }
     };
 
     return (
-        <div className="container mt-5 pb-5">
-            <div className="row justify-content-center">
-                <div className="col-md-6">
-                    <h3 className="mb-4 text-center fw-bold">{isEditing ? "Editar turno" : "Nuevo turno"}</h3>
-                    <form onSubmit={handleSubmit} className="card p-4 shadow-sm">
-                        
-                        <div className="mb-3">
-                            <label className="form-label fw-bold">Barbero</label>
-                            <select
-                                className="form-select"
-                                value={selectedBarber}
-                                onChange={(e) => setSelectedBarber(e.target.value)}
-                                disabled={isEditing}
-                                required
-                            >
-                                <option value="">Selecciona barbero...</option>
-                                {barbers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+        <div className="container py-5" style={{ maxWidth: '850px' }}>
+            <div className="booking-card shadow-sm border-0">
+                <div className="booking-header text-center py-4">
+                    <h2 className="Oswald mb-0 text-uppercase fw-bold">
+                        {id ? "Editar horario" : "Nuevo horario"}
+                    </h2>
+                    <div className="mt-2 mx-auto" style={{ width: '40px', height: '2px', background: '#d19f68' }}></div>
+                </div>
+
+                <div className="p-4 p-md-5">
+                    <div className="row g-4 mb-4">
+                        <div className="col-md-6 form-group-custom">
+                            <label className="text-muted Oswald small text-uppercase fw-bold">Profesional</label>
+                            <select className="select-custom" value={selectedBarberId} onChange={(e) => { setSelectedBarberId(e.target.value); setSelectedInvitationId(""); }} required>
+                                <option value="">Selecciona profesional</option>
+                                {barbers.map(b => <option key={b.id} value={String(b.id)}>{b.name}</option>)}
                             </select>
                         </div>
-
-                        <div className="mb-3">
-                            <label className="form-label fw-bold">Barbería / Sede</label>
-                            <select
-                                className="form-select"
-                                value={formData.invitation_id}
-                                onChange={(e) => setFormData({ ...formData, invitation_id: e.target.value })}
-                                disabled={isEditing || availableShops.length === 0}
-                                required
-                            >
-                                <option value="">{availableShops.length > 0 ? "Selecciona la sede..." : "El barbero no tiene sedes aceptadas"}</option>
-                                {availableShops.map(shop => (
-                                    <option key={shop.id} value={shop.id}>
-                                        {shop.barbershop?.name || "Sede cargada"}
-                                    </option>
+                        <div className="col-md-6 form-group-custom">
+                            <label className="text-muted Oswald small text-uppercase fw-bold">Lugar</label>
+                            <select className="select-custom" value={selectedInvitationId} onChange={(e) => setSelectedInvitationId(e.target.value)} disabled={!selectedBarberId} required>
+                                <option value="">Selecciona un local</option>
+                                {invitations.filter(inv => String(inv.barber_id) === String(selectedBarberId)).map(inv => (
+                                    <option key={inv.id} value={String(inv.id)}>{inv.barbershop_name}</option>
                                 ))}
                             </select>
                         </div>
+                    </div>
 
-                        <hr className="my-4" />
+                    {selectedInvitationId && (
+                        <form onSubmit={handleSubmit} className="animate__animated animate__fadeIn">
+                            <div className="mt-5">
+                                <label className="Oswald text-uppercase small fw-bold mb-4 d-block text-gold border-bottom pb-2">Configuración por días</label>
 
-                        <div className="mb-3">
-                            <label className="form-label fw-bold">Día de la semana</label>
-                            <select
-                                className="form-select border-primary"
-                                value={formData.day_of_week}
-                                onChange={(e) => setFormData({ ...formData, day_of_week: e.target.value })}
-                                required
-                            >
-                                {days.map(d => (
-                                    <option key={d.val} value={d.val}>{d.lab}</option>
+                                {Object.keys(weeklySchedule).map((day) => (
+                                    <div key={day} className={`d-flex flex-column flex-md-row align-items-md-center justify-content-between p-3 mb-2 rounded-2 border ${weeklySchedule[day].active ? 'bg-white' : 'bg-light opacity-50'}`}
+                                        style={{ transition: '0.2s', borderColor: weeklySchedule[day].active ? '#d19f68' : '#eee' }}>
+
+                                        <div className="d-flex align-items-center mb-3 mb-md-0" style={{ minWidth: '140px' }}>
+                                            <div className="form-check form-switch me-3">
+                                                <input className="form-check-input custom-switch" type="checkbox" checked={weeklySchedule[day].active} onChange={() => handleCheckDay(day)} />
+                                            </div>
+                                            <span className={`Oswald text-uppercase fw-bold ${weeklySchedule[day].active ? 'text-dark' : 'text-muted'}`}>{dayLabels[day]}</span>
+                                        </div>
+
+                                        <div className="d-flex flex-wrap gap-4 align-items-center">
+                                            <div className="d-flex align-items-center gap-2">
+                                                <span className="small text-muted fw-bold Oswald">T1:</span>
+                                                <input type="time" className="form-control form-control-sm border-0 border-bottom rounded-0 bg-transparent px-1" style={{ width: '80px' }} value={weeklySchedule[day].t1_start} disabled={!weeklySchedule[day].active} onChange={(e) => setWeeklySchedule({ ...weeklySchedule, [day]: { ...weeklySchedule[day], t1_start: e.target.value } })} />
+                                                <span className="text-muted">-</span>
+                                                <input type="time" className="form-control form-control-sm border-0 border-bottom rounded-0 bg-transparent px-1" style={{ width: '80px' }} value={weeklySchedule[day].t1_end} disabled={!weeklySchedule[day].active} onChange={(e) => setWeeklySchedule({ ...weeklySchedule, [day]: { ...weeklySchedule[day], t1_end: e.target.value } })} />
+                                            </div>
+
+                                            <div className="d-flex align-items-center gap-2">
+                                                <div className="form-check">
+                                                    <input type="checkbox" className="form-check-input" disabled={!weeklySchedule[day].active} checked={!!weeklySchedule[day].t2_start}
+                                                        onChange={(e) => setWeeklySchedule({ ...weeklySchedule, [day]: { ...weeklySchedule[day], t2_start: e.target.checked ? "16:00" : "", t2_end: e.target.checked ? "20:00" : "" } })} />
+                                                </div>
+                                                <span className="small text-muted fw-bold Oswald">T2:</span>
+                                                <input type="time" className="form-control form-control-sm border-0 border-bottom rounded-0 bg-transparent px-1" style={{ width: '80px' }} value={weeklySchedule[day].t2_start} disabled={!weeklySchedule[day].active || !weeklySchedule[day].t2_start} onChange={(e) => setWeeklySchedule({ ...weeklySchedule, [day]: { ...weeklySchedule[day], t2_start: e.target.value } })} />
+                                                <span className="text-muted">-</span>
+                                                <input type="time" className="form-control form-control-sm border-0 border-bottom rounded-0 bg-transparent px-1" style={{ width: '80px' }} value={weeklySchedule[day].t2_end} disabled={!weeklySchedule[day].active || !weeklySchedule[day].t2_start} onChange={(e) => setWeeklySchedule({ ...weeklySchedule, [day]: { ...weeklySchedule[day], t2_end: e.target.value } })} />
+                                            </div>
+                                        </div>
+                                    </div>
                                 ))}
-                            </select>
-                        </div>
-
-                        <div className="row">
-                            <div className="col-6 mb-4">
-                                <label className="form-label fw-bold">Hora Entrada</label>
-                                <input type="time" className="form-control" value={formData.start_time}
-                                    onChange={(e) => setFormData({ ...formData, start_time: e.target.value })} required />
                             </div>
-                            <div className="col-6 mb-4">
-                                <label className="form-label fw-bold">Hora Salida</label>
-                                <input type="time" className="form-control" value={formData.end_time}
-                                    onChange={(e) => setFormData({ ...formData, end_time: e.target.value })} required />
-                            </div>
-                        </div>
 
-                        <div className="d-grid gap-2">
-                            <button type="submit" className="btn btn-primary btn-lg">
-                                {isEditing ? "Guardar Cambios" : "Crear Horario"}
-                            </button>
-                            <button type="button" className="btn btn-link text-secondary" onClick={() => navigate("/4dm1n1str4t10n")}>
-                                Cancelar
-                            </button>
-                        </div>
-                    </form>
+                            <div className="d-flex justify-content-between mt-5 pt-4">
+                                <button type="button" className="btn btn-link text-muted text-decoration-none Oswald small" onClick={() => navigate(-1)}>VOLVER</button>
+                                <button type="submit" className="btn-confirm px-5" disabled={loading}>
+                                    {loading ? "GUARDANDO..." : "GUARDAR"}
+                                </button>
+                            </div>
+                        </form>
+                    )}
                 </div>
             </div>
+
+            <style>{`
+                .custom-switch:checked { background-color: #d19f68; border-color: #d19f68; }
+                .text-gold { color: #d19f68; }
+                .form-control:disabled { color: #ccc; border-bottom-color: #eee !important; }
+                .form-control:focus { box-shadow: none; border-bottom-color: #d19f68 !important; }
+            `}</style>
         </div>
     );
 };

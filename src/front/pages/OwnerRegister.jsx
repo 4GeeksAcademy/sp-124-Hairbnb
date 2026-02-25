@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { uploadToCloudinary } from "../utilities/cloudinary";
+import "../styles/authforms.css";
 
 export const OwnerRegister = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -117,83 +118,96 @@ export const OwnerRegister = () => {
     };
 
     return (
-        <div className="container mt-5 d-flex justify-content-center">
-            <div className="card w-75">
-                <h1 className="h3 mb-4 text-center">
-                    {isEditing ? "Mis datos personales" : "Crear cuenta de propietario"}
-                </h1>
+        <div className="auth-page-container">
+            <div className="auth-card">
+                <div className="text-center mb-4">
+                    <img
+                        src="/Logo.png"
+                        alt="Logo Hairbnb"
+                        className="auth-logo"
+                    />
+                </div>
+                <div className="text-center">
+                    <h1 className="auth-title">
+                        {isEditing ? "Edición de propietario" : "Registro de propietarios"}
+                    </h1>
+                    <p className="auth-subtitle">
+                        {isEditing ? "Gestiona tus credenciales de administrador" : "Registra tu cuenta para gestionar tus centros"}
+                    </p>
+                </div>
 
                 {!isEditing && (
-                    <div className="progress mb-4">
-                        <div className="progress-bar bg-secondary" style={{ width: step === 1 ? "50%" : "100%" }}></div>
+                    <div className="auth-progress-container">
+                        <div className="auth-progress-bar" style={{ width: step === 1 ? "50%" : "100%" }}></div>
                     </div>
                 )}
 
                 <form onSubmit={(!isEditing && step === 1) ? nextStep : handleSubmit}>
 
                     {(step === 1 || isEditing) && (
-                        <div>
-                            <h5 className="mb-3 text-secondary">{isEditing ? "Datos de la cuenta" : "Información de inicio de sesión"}</h5>
+                        <div className="animate__animated animate__fadeIn">
+                            <h5 className="auth-label mb-3 text-dark fw-bold">Acceso administrativo</h5>
 
-                            <label className="form-label">Email <span className="small text-danger">*</span></label>
-                            <input className="form-control mb-3" name="email" value={form.email} type="email" placeholder="nombre@ejemplo.com" onChange={handleChange} required />
+                            <label className="auth-label">Correo electrónico</label>
+                            <input className="auth-input w-100 mb-3" name="email" value={form.email} type="email" placeholder="admin@empresa.com" onChange={handleChange} required />
 
-                            <label className="form-label">{isEditing ? "Nueva contraseña (opcional)" : "Establece una contraseña"} <span className="small text-danger">*</span></label>
-                            <input className="form-control mb-3" type="password" minLength="8" name="password" placeholder="Mínimo 8 caracteres" onChange={handleChange} required={!isEditing} />
+                            <label className="auth-label">{isEditing ? "Nueva contraseña (opcional)" : "Contraseña de segurida"}</label>
+                            <input className="auth-input w-100 mb-3" type="password" name="password" minLength="8" placeholder="Mínimo 8 caracteres" onChange={handleChange} required={!isEditing} />
 
-                            <label className="form-label">Confirmar contraseña <span className="small text-danger">*</span></label>
-                            <input className="form-control mb-3" type="password" minLength="8" name="confirmPassword" placeholder="Repite la contraseña" onChange={handleChange} required={!isEditing} />
+                            <label className="auth-label">Confirmar contraseña</label>
+                            <input className="auth-input w-100 mb-4" type="password" name="confirmPassword" minLength="8" placeholder="Repite la contraseña" onChange={handleChange} required={!isEditing} />
 
                             {!isEditing && (
-                                <button type="submit" className="btn btn-dark py-2">
-                                    Siguiente: Datos de perfil
-                                    <i className="fa-solid fa-arrow-right ms-2"></i>
+                                <button type="submit" className="btn-auth-main">
+                                    Siguiente: Datos del propietario <i className="fa-solid fa-chevron-right ms-2"></i>
                                 </button>
                             )}
                         </div>
                     )}
 
                     {(step === 2 || isEditing) && (
-                        <div>
-                            <h5 className="mb-3">{isEditing ? "Información profesional" : "2. Información del propietario"}</h5>
+                        <div className="animate__animated animate__fadeIn">
+                            <h5 className="auth-label mb-3 text-dark fw-bold">Información personal</h5>
 
-                            <div className="mb-4 text-center">
+                            <div className="auth-profile-img-container">
                                 {form.owner_profile_image ? (
-                                    <img src={form.owner_profile_image} className="rounded mb-3" style={{ width: "140px", height: "140px", objectFit: "cover" }} />
+                                    <img src={form.owner_profile_image} className="auth-profile-img" alt="Propietario" />
                                 ) : (
-                                    <div className="rounded mb-3 d-flex align-items-center justify-content-center border border-secondary mx-auto" style={{ width: "140px", height: "140px" }}>
-                                        <i className="fa-solid fa-building-user fa-3x text-secondary"></i>
+                                    <div className="auth-profile-placeholder">
+                                        <i className="fa-solid fa-user-gear fa-2x"></i>
                                     </div>
                                 )}
-                                <input type="file" className="form-control form-control-sm" onChange={handleFileChange} accept="image/*" disabled={uploading} />
-                                {uploading && <small className="text-secondary d-block mt-2">Subiendo imagen...</small>}
                             </div>
 
-                            <label className="form-label">Nombre <span className="small text-danger">*</span></label>
-                            <input className="form-control mb-3" name="name" value={form.name} placeholder="Nombre del administrador" onChange={handleChange} required />
-
-                            <label className="form-label">Teléfono de contacto <span className="small text-danger">*</span></label>
-                            <div className="border rounded mb-4 bg-white px-2 py-1">
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Ej: 600123456"
-                                    maxLength="9"
-                                    value={form.phone}
-                                    onChange={(e) => {
-                                        const val = e.target.value.replace(/\D/g, "");
-                                        setForm({ ...form, phone: val });
-                                    }}
-                                    style={{ width: "100%" }}
-                                />
+                            <div className="mb-4 text-center">
+                                <input type="file" className="form-control form-control-sm mx-auto" style={{ maxWidth: '250px' }} onChange={handleFileChange} accept="image/*" disabled={uploading} />
+                                {uploading && <small className="text-gold d-block mt-2">Actualizando imagen...</small>}
                             </div>
+
+                            <label className="auth-label">Nombre completo</label>
+                            <input className="auth-input w-100 mb-3" name="name" value={form.name} placeholder="Nombre completo" onChange={handleChange} required />
+
+                            <label className="auth-label">Teléfono</label>
+                            <input
+                                className="auth-input w-100 mb-4"
+                                type="text"
+                                name="phone"
+                                value={form.phone}
+                                placeholder="600 000 000"
+                                maxLength="9"
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, "");
+                                    setForm({ ...form, phone: val });
+                                }}
+                                required
+                            />
 
                             <div className="d-flex gap-2">
                                 {!isEditing && (
-                                    <button type="button" className="btn btn-outline-secondary" onClick={() => setStep(1)}>Atrás</button>
+                                    <button type="button" className="btn-auth-secondary" onClick={() => setStep(1)}>VOLVER</button>
                                 )}
-                                <button type="submit" className="btn btn-secondary">
-                                    {isEditing ? "Actualizar Datos" : "Crear Cuenta de Dueño"}
+                                <button type="submit" className="btn-auth-main">
+                                    {isEditing ? "ACTUALIZAR" : "CREAR"}
                                 </button>
                             </div>
                         </div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import "../styles/authforms.css"
 
 export const BarberLogin = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -39,9 +40,10 @@ export const BarberLogin = () => {
                 });
                 return;
             }
+
             localStorage.setItem("token", data.token);
             localStorage.setItem("role", data.user.role);
-            localStorage.setItem("userInfo", JSON.stringify(data.user))
+            localStorage.setItem("userInfo", JSON.stringify(data.user));
 
             dispatch({
                 type: "login",
@@ -55,10 +57,7 @@ export const BarberLogin = () => {
 
             dispatch({
                 type: "set-message",
-                payload: {
-                    type: "success",
-                    msg: `Hola de nuevo, ${data.user.name}`
-                }
+                payload: { type: "success", msg: `¡Hola de nuevo, ${data.user.name}!` }
             });
 
             navigate("/private/barber");
@@ -66,45 +65,65 @@ export const BarberLogin = () => {
         } catch (err) {
             dispatch({
                 type: "set-message",
-                payload: { type: "error", msg: `Error: ${err.message}` }
+                payload: { type: "error", msg: `Error de conexión: ${err.message}` }
             });
         }
     };
 
     return (
-        <div className="container">
-                <h1 className="display-6 mb-4">Inicio de sesión como barbero</h1>
+        <div className="auth-page-container">
+            <div className="auth-card" style={{ maxWidth: '450px' }}>
+                <div className="text-center mb-4">
+                    <div className="mb-3 d-inline-block p-3 rounded-circle bg-gold-soft">
+                        <i className="fa-solid fa-scissors fa-2x text-gold"></i>
+                    </div>
+                    <h1 className="auth-title">Acceso para profesionales</h1>
+                    <p className="auth-subtitle">Gestiona tu agenda y tus servicios</p>
+                </div>
+
                 <form onSubmit={handleLogin}>
-                    <div className="mb-3 d-flex m-2 gap-2">
+                    <div className="mb-3">
+                        <label className="auth-label">Correo electrónico</label>
                         <input
-                            className="form-control"
-                            placeholder="Email"
+                            className="auth-input w-100"
+                            type="email"
+                            placeholder="nombre@tu-barberia.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                        />
-                        <input
-                            className="form-control"
-                            type="password"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            required
                         />
                     </div>
-                    <div className="mx-auto text-center">
-                        <p className="mt-3">
-                            ¿No tienes cuenta?{" "}
+
+                    <div className="mb-4">
+                        <label className="auth-label">Contraseña</label>
+                        <input
+                            className="auth-input w-100"
+                            type="password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <button type="submit" className="btn-auth-main w-100 mb-3">
+                        Entrar
+                    </button>
+
+                    <div className="text-center mt-3">
+                        <p className="small text-muted">
+                            ¿Aún no eres parte de nuestra familia?{" "}
                             <span
-                                className="text-primary"
+                                className="fw-bold text-decoration-underline cursor-pointer"
+                                style={{ color: '#d19f68', cursor: 'pointer' }}
                                 onClick={() => navigate("/signup/barber")}
                             >
-                                Crear una cuenta de barbero
+                                Regístrate aquí
                             </span>
                         </p>
-                        <button type="submit" className="btn btn-primary">
-                            Entrar como barbero
-                        </button>
                     </div>
                 </form>
             </div>
+        </div>
     );
 };
