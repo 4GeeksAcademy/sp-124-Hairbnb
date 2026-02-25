@@ -77,6 +77,11 @@ class Barbershop(db.Model):
     local = relationship("BarberBarbershop", back_populates="barbershop", cascade="all, delete-orphan")
     conversations: Mapped[List["Conversation"]] = relationship(back_populates="barbershop", cascade="all, delete-orphan")
     
+    def active_subscription(self):
+        if self.owner and self.owner.active_subscription:
+            return True
+        return False
+    
     def serialize(self):
         return {
             "id": self.id,
@@ -87,7 +92,8 @@ class Barbershop(db.Model):
             "barbershop_description": self.barbershop_description,
             "latitude": self.latitude,
             "longitude": self.longitude,
-            "working_hours": self.working_hours
+            "working_hours": self.working_hours,
+            "active_subscription": self.active_subscription()
         }
     
     
@@ -98,6 +104,10 @@ class Owner(db.Model):
     phone: Mapped[str] = mapped_column(nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     owner_profile_image: Mapped[str] = mapped_column(String(255), nullable=True)
+    active_subscription: Mapped[bool] = mapped_column(nullable=True, default=False)
+    stripe_owner_id: Mapped[str] = mapped_column(String(255), nullable=True)
+    subscription_id: Mapped[str] = mapped_column(String(255), nullable=True)
+
 
     barbershops: Mapped[List["Barbershop"]] = relationship(
         back_populates="owner", cascade="all, delete-orphan")
@@ -117,6 +127,7 @@ class Owner(db.Model):
             "phone": self.phone,
             "barbershops": [barbershop.id for barbershop in self.barbershops],
             "owner_profile_image": self.owner_profile_image,
+            "active_subscription": self.active_subscription
         }
 
 
@@ -283,6 +294,7 @@ class BarberBarbershop(db.Model):
             "id": self.id,
             "status": self.status,
             "barbershop_id": self.barbershop_id,
+            "barber_id": self.barber_id,
             "barber_name": self.barber.name,
             "barbershop_name": self.barbershop.name,
             "barber_image": self.barber.barber_profile_image,

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-import { MessagePage } from "../components/MessagesPage.jsx";
-import { useLocation } from "react-router-dom";
+import { MessagesPage } from "../components/MessagesPage.jsx";
 import { AIHair } from "./AIHair.jsx";
+import "../styles/privatezone.css";
 
 export const PrivateClient = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -12,13 +12,17 @@ export const PrivateClient = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const upcomingAppointments = appointments.filter(appt =>
-        ["pending", "confirmed"].includes(appt.status)
-    );
+    const now = new Date();
 
-    const historyAppointments = appointments.filter(appt =>
-        ["completed", "no_show"].includes(appt.status)
-    );
+    const upcomingAppointments = appointments.filter(appt => {
+    const apptDate = new Date(appt.date);
+    return ["pending", "confirmed"].includes(appt.status) && apptDate >= now;
+});
+
+    const historyAppointments = appointments.filter(appt => {
+    const apptDate = new Date(appt.date);
+    return ["completed", "no_show", "cancelled"].includes(appt.status) || apptDate < now;
+});
 
     useEffect(() => {
         if (location.state?.activeChatId || location.state?.activeTab === "messages") {
@@ -62,114 +66,124 @@ export const PrivateClient = () => {
 
     if (store.role !== "client") {
         return (
-            <div className="container mt-4 text-center">
-                <h2 className="text-danger">Acceso denegado</h2>
-                <button className="btn btn-outline-primary" onClick={() => navigate("/login")}>Ir al Login</button>
+            <div className="container py-5 text-center">
+                <h2 className="Oswald fw-bold text-danger">ACCESO DENEGADO</h2>
+                <button className="btn btn-dark Oswald mt-3" onClick={() => navigate("/login")}>IR AL LOGIN</button>
             </div>
         );
     }
 
     const renderAppointmentList = (list, isHistoryTab) => (
-        <div className="bg-white shadow-sm border rounded p-4">
-            <h5 className="mb-4 border-bottom pb-2">
-                {isHistoryTab ? "HISTORIAL DE CITAS" : "PRÓXIMAS CITAS"}
-            </h5>
-            <div className="list-group list-group-flush">
-                {list.length > 0 ? (
-                    list.map((appt) => (
-                        <div key={appt.id} className="list-group-item py-4 px-0 border-bottom">
-                            <div className="row align-items-center">
-                                <div className="col-md-3">
-                                    <div className="small text-muted text-uppercase">Fecha y Hora</div>
-                                    <div className="fw-bold">{new Date(appt.date).toLocaleDateString()}</div>
-                                    <div className="text-muted small">
-                                        {new Date(appt.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        {" - "}
-                                        {new Date(appt.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </div>
-                                </div>
-                                <div className="col-md-6">
-                                    <div className="small text-muted text-uppercase">Establecimiento</div>
-                                    <div className="fw-bold text-primary">{appt.barbershop_name}</div>
-                                    <div className="text-dark">{appt.service_name} con <span className="text-muted">{appt.barber_name}</span></div>
-                                </div>
-                                <div className="col-md-3 text-md-end mt-3 mt-md-0">
-                                    <div className="small text-muted text-uppercase">Estado y Precio</div>
-                                    <span className={`badge rounded-pill ${appt.status === 'confirmed' ? 'bg-success' :
-                                        appt.status === 'pending' ? 'bg-warning text-dark' :
-                                            appt.status === 'completed' ? 'bg-info' : 'bg-danger'
-                                        }`}>
-                                        {appt.status.replace('_', ' ').toUpperCase()}
-                                    </span>
-                                    <div className="mt-1 fw-bold fs-5">{appt.price} EUR</div>
+        <div className="animate__animated animate__fadeIn mt-4">
+            {list.length > 0 ? (
+                <div className="row g-3">
+                    {list.map((appt) => (
+                        <div key={appt.id} className="col-12">
+                            <div className="card border-dark rounded-0 shadow-sm bg-white position-relative overflow-hidden">
+                                <div className={`position-absolute top-0 start-0 h-100 ${appt.status === 'confirmed' ? 'bg-success' :
+                                        appt.status === 'pending' ? 'bg-gold' : 'bg-secondary'
+                                    }`} style={{ width: '4px' }}></div>
 
-                                    {!isHistoryTab && (
-                                        <div className="mt-3 d-flex justify-content-md-end gap-2">
-                                            <button className="btn btn-sm btn-outline-primary" onClick={() => navigate("/client_appointment_form", { state: { editAppt: appt } })}>
-                                                <i className="fa-solid fa-pen-to-square"></i>
-                                            </button>
-                                            <button className="btn btn-sm btn-outline-danger" onClick={() => handleCancelAppointment(appt.id)}>
-                                                <i className="fa-solid fa-trash-can"></i>
-                                            </button>
+                                <div className="card-body p-3 ps-4">
+                                    <div className="row align-items-center">
+                                        <div className="col-md-2 text-center border-end border-light">
+                                            <div className="Oswald fw-bold text-dark h4 mb-0">{new Date(appt.date).getDate()}</div>
+                                            <div className="Oswald text-gold small fw-bold text-uppercase">
+                                                {new Date(appt.date).toLocaleString('es', { month: 'short' })}
+                                            </div>
+                                            <div className="small text-muted Oswald">
+                                                {new Date(appt.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </div>
                                         </div>
-                                    )}
+
+                                        <div className="col-md-5 mt-3 mt-md-0">
+                                            <h6 className="Oswald fw-bold mb-1 text-uppercase text-dark">{appt.service_name}</h6>
+                                            <div className="d-flex flex-wrap gap-3">
+                                                <span className="small Oswald text-muted">
+                                                    <i className="fa-solid fa-shop text-gold me-2"></i>{appt.barbershop_name}
+                                                </span>
+                                                <span className="small Oswald text-muted">
+                                                    <i className="fa-solid fa-user-check text-gold me-2"></i>{appt.barber_name}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="col-md-5 text-md-end mt-3 mt-md-0">
+                                            <div className="d-flex flex-md-row justify-content-md-end align-items-center gap-3">
+                                                <div className="me-md-3">
+                                                    <div className="Oswald fw-bold text-dark">{appt.price} €</div>
+                                                    <span className="badge border border-dark text-dark Oswald px-2 text-uppercase small" style={{ fontSize: '0.6rem' }}>
+                                                        {appt.status.replace('_', ' ')}
+                                                    </span>
+                                                </div>
+
+                                                {!isHistoryTab && (
+                                                    <div className="d-flex gap-2">
+                                                        <button
+                                                            className="btn btn-dark text-gold btn-sm Oswald fw-bold px-3"
+                                                            style={{ fontSize: '0.7rem' }}
+                                                            onClick={() => navigate("/client_appointment_form", { state: { editAppt: appt } })}
+                                                        >
+                                                            REPROGRAMAR
+                                                        </button>
+                                                        <button
+                                                            className="btn btn-outline-danger btn-sm Oswald fw-bold px-3"
+                                                            style={{ fontSize: '0.7rem' }}
+                                                            onClick={() => handleCancelAppointment(appt.id)}
+                                                        >
+                                                            CANCELAR
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    ))
-                ) : (
-                    <div className="py-5 text-center text-muted">
-                        <i className="fa-regular fa-calendar-xmark d-block mb-3 fs-1"></i>
-                        <p>{isHistoryTab ? "No hay registros en tu historial." : "No tienes citas programadas actualmente."}</p>
-                    </div>
-                )}
-            </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center py-5 border border-dark border-opacity-10 bg-light">
+                    <p className="Oswald text-muted mb-0">NO HAY CITAS DISPONIBLES</p>
+                </div>
+            )}
         </div>
     );
 
     return (
-        <div className="container mt-5" style={{ minHeight: "80vh" }}>
-            <div className="d-flex justify-content-between align-items-center mb-4">
+        <div className="container-fluid py-5 px-md-5 bg-white min-vh-100">
+            <div className="d-flex justify-content-between align-items-end mb-5 border-bottom pb-3">
                 <div>
-                    <h2 className="mb-0">HOLA, {store.userInfo?.name.toUpperCase()}</h2>
-                    <p className="text-muted">Gestiona tus citas y mensajes desde aquí</p>
+                    <span className="text-gold fw-bold small text-uppercase Oswald d-block">CLIENTE</span>
+                    <h1 className="Oswald text-dark fw-bold mb-0 text-uppercase">
+                        HOLA, {store.userInfo?.name || "USUARIO"}
+                    </h1>
                 </div>
-                <button className="btn btn-outline-secondary px-4" onClick={() => navigate("/client_appointment_form")}>
-                    Nueva cita
+                <button className="btn btn-dark text-gold Oswald fw-bold px-4 py-2 rounded-0 shadow-sm" onClick={() => navigate("/client_appointment_form")}>
+                    <i className="fa-solid fa-plus me-2"></i>NUEVA CITA
                 </button>
             </div>
 
-            <ul className="nav nav-tabs mb-4">
-                <li className="nav-item">
-                    <button className={`nav-link ${activeTab === "appointments" ? "active fw-bold" : "text-muted"}`} onClick={() => setActiveTab("appointments")}>
-                        Mis Citas
-                    </button>
-                </li>
-                <li className="nav-item">
-                    <button className={`nav-link ${activeTab === "history" ? "active fw-bold" : "text-muted"}`} onClick={() => setActiveTab("history")}>
-                        Citas anteriores
-                    </button>
-                </li>
-                <li className="nav-item">
-                    <button className={`nav-link ${activeTab === "messages" ? "active fw-bold" : "text-muted"}`} onClick={() => setActiveTab("messages")}>
-                        Mensajes
-                    </button>
-                </li>
-                <li className="nav-item">
-                    <button className={`nav-link ${activeTab === "ai_testing" ? "active fw-bold text-primary" : "text-muted"}`} onClick={() => setActiveTab("ai_testing")}>
-                        Probador de peinados
-                    </button>
-                </li>
+            <ul className="nav nav-tabs border-0 gap-2 mb-4">
+                {["appointments", "history", "messages", "ai_testing"].map((tab) => (
+                    <li className="nav-item" key={tab}>
+                        <button
+                            className={`nav-link Oswald fw-bold border-0 ${activeTab === tab ? "bg-dark text-gold" : "text-muted"}`}
+                            onClick={() => setActiveTab(tab)}
+                        >
+                            {tab === "appointments" ? "MIS CITAS" : tab === "history" ? "HISTORIAL" : tab === "messages" ? "MENSAJES" : "AI TESTING"}
+                        </button>
+                    </li>
+                ))}
             </ul>
 
-            {activeTab === "appointments" && renderAppointmentList(upcomingAppointments, false)}
-            {activeTab === "history" && renderAppointmentList(historyAppointments, true)}
-            {activeTab === "messages" && <MessagePage />}
-            {activeTab === "ai_testing" && (
-                <div className="animate__animated animate__fadeIn">
-                    <AIHair />
-                </div>
-            )}
+            <div className="tab-content">
+                {activeTab === "appointments" && renderAppointmentList(upcomingAppointments, false)}
+                {activeTab === "history" && renderAppointmentList(historyAppointments, true)}
+                {activeTab === "messages" && <div className="p-3 border border-dark bg-white"><MessagesPage /></div>}
+                {activeTab === "ai_testing" && <div className="p-4 border border-dark bg-white"><AIHair /></div>}
+            </div>
         </div>
     );
 };

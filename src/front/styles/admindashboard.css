@@ -1,0 +1,118 @@
+.admin-container {
+    padding-bottom: 3rem;
+}
+
+.admin-header h2 {
+    letter-spacing: 1px;
+    color: #1a1a1d;
+}
+
+.admin-nav-console {
+    background-color: #1a1a1d;
+    padding: 1.2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.nav-item-btn {
+    border: 1px solid rgba(255,255,255,0.1);
+    background: transparent;
+    color: rgba(255,255,255,0.6);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.nav-item-btn:hover {
+    color: #fff;
+    border-color: #d19f68;
+}
+
+.nav-item-btn.active {
+    background-color: #d19f68;
+    color: #1a1a1d;
+    border-color: #d19f68;
+    font-weight: bold;
+}
+
+.admin-table-card {
+    background: #fff;
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+.custom-admin-table {
+    margin-bottom: 0;
+}
+
+.custom-admin-table thead th {
+    background-color: #1a1a1d;
+    color: #d19f68;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    padding: 15px;
+    border: none;
+    position: sticky;
+    top: 0;
+}
+
+.custom-admin-table tbody td {
+    padding: 12px 15px;
+    font-size: 0.85rem;
+    color: #444;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+}
+
+.custom-admin-table tbody tr:hover {
+    background-color: rgba(209, 159, 104, 0.03);
+}
+
+.admin-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.admin-badge-true {
+    background-color: #e6f4ea;
+    color: #1e7e34;
+}
+
+.admin-badge-false {
+    background-color: #fdecea;
+    color: #d93025;
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    background: #fff;
+    color: #555;
+    transition: all 0.2s;
+}
+
+.action-btn-edit:hover {
+    border-color: #d19f68;
+    color: #d19f68;
+}
+
+.action-btn-delete:hover {
+    border-color: #dc3545;
+    color: #dc3545;
+    background-color: #fff5f5;
+}

@@ -11,8 +11,10 @@ export const ApptFormOwner = () => {
 
     const [phoneSearch, setPhoneSearch] = useState("");
     const [foundUser, setFoundUser] = useState(null);
+
     const [availableSlots, setAvailableSlots] = useState([]);
     const [daysAvailability, setDaysAvailability] = useState({});
+    const [isChecking, setIsChecking] = useState(false);
     const [startDate, setStartDate] = useState(new Date());
 
     const [data, setData] = useState({
@@ -24,6 +26,8 @@ export const ApptFormOwner = () => {
         time: preData.date ? preData.date.split("T")[1].slice(0, 5) : "",
         notes: preData.notes || ""
     });
+
+    const isCalendarDisabled = !data.barbershop_id || !data.barber_id || !data.barber_service_id;
 
     const getDaysArray = (start) => {
         return Array.from({ length: 7 }, (_, i) => {
@@ -53,6 +57,7 @@ export const ApptFormOwner = () => {
         d.setHours(0, 0, 0, 0);
         return d < today;
     };
+
 
     useEffect(() => {
         const loadBarbersByShop = async () => {
@@ -88,6 +93,34 @@ export const ApptFormOwner = () => {
     }, [store.token]);
 
     useEffect(() => {
+        const checkMultipleDays = async () => {
+            if (isCalendarDisabled) return;
+
+            setIsChecking(true);
+            const availabilityMap = {};
+
+            const promises = days.map(async (day) => {
+                const dateStr = day.toISOString().split('T')[0];
+                if (isPast(day)) return;
+
+                try {
+                    const url = `${import.meta.env.VITE_BACKEND_URL}/barber_availability?barber_id=${data.barber_id}&barbershop_id=${data.barbershop_id}&date=${dateStr}&service_id=${data.barber_service_id}`;
+                    const resp = await fetch(url, { headers: { "Authorization": `Bearer ${store.token}` } });
+                    if (resp.ok) {
+                        const slots = await resp.json();
+                        availabilityMap[dateStr] = slots.length > 0;
+                    }
+                } catch (e) { console.error(e); }
+            });
+
+            await Promise.all(promises);
+            setDaysAvailability(availabilityMap);
+            setIsChecking(false);
+        };
+        checkMultipleDays();
+    }, [startDate, data.barber_id, data.barber_service_id, data.barbershop_id]);
+
+    useEffect(() => {
         const fetchSlots = async () => {
             if (data.barber_id && data.barbershop_id && data.date && data.barber_service_id) {
                 const url = `${import.meta.env.VITE_BACKEND_URL}/barber_availability?barber_id=${data.barber_id}&barbershop_id=${data.barbershop_id}&date=${data.date}&service_id=${data.barber_service_id}`;
@@ -99,28 +132,6 @@ export const ApptFormOwner = () => {
         };
         fetchSlots();
     }, [data.date, data.barber_id, data.barber_service_id]);
-
-    useEffect(() => {
-        const checkWeek = async () => {
-            if (!data.barber_id || !data.barber_service_id || !data.barbershop_id) return;
-            const map = {};
-            const promises = days.map(async (day) => {
-                const dateStr = day.toISOString().split('T')[0];
-                if (isPast(day)) return;
-                try {
-                    const url = `${import.meta.env.VITE_BACKEND_URL}/barber_availability?barber_id=${data.barber_id}&barbershop_id=${data.barbershop_id}&date=${dateStr}&service_id=${data.barber_service_id}`;
-                    const resp = await fetch(url, { headers: { "Authorization": `Bearer ${store.token}` } });
-                    if (resp.ok) {
-                        const slots = await resp.json();
-                        map[dateStr] = slots.length > 0;
-                    }
-                } catch (e) { }
-            });
-            await Promise.all(promises);
-            setDaysAvailability(map);
-        };
-        checkWeek();
-    }, [startDate, data.barber_id, data.barber_service_id]);
 
     const currentBarbers = store.barbers?.filter(inv => inv.status === "accepted" && Number(inv.barbershop_id) === Number(data.barbershop_id)) || [];
     const currentServices = store.barber_services?.filter(s => Number(s.barber_id) === Number(data.barber_id)) || [];
@@ -169,7 +180,7 @@ export const ApptFormOwner = () => {
         <div className="container mt-4">
             <h2 className="text-center mb-4">{isEditing ? "Modificar Cita" : "Nueva Reserva (Gestión)"}</h2>
             <form onSubmit={handleSubmit} className="card p-4 shadow-sm border-0">
-                
+
                 <div className={`mb-3 ${isEditing ? 'd-none' : ''}`}>
                     <label className="form-label">Cliente</label>
                     {foundUser ? (
@@ -185,10 +196,10 @@ export const ApptFormOwner = () => {
                     )}
                 </div>
 
-                <label className="form-label">Sede</label>
+                <label className="form-label">Lugar</label>
                 <select className="form-select mb-3" required value={data.barbershop_id}
                     onChange={e => setData({ ...data, barbershop_id: e.target.value, barber_id: "", barber_service_id: "", time: "", date: "" })}>
-                    <option value="">Selecciona sede...</option>
+                    <option value="">Selecciona un local</option>
                     {store.barbershops?.map(shop => (
                         <option key={shop.id} value={shop.id}>{shop.name}</option>
                     ))}
@@ -197,7 +208,7 @@ export const ApptFormOwner = () => {
                 <label className="form-label">Barbero</label>
                 <select className="form-select mb-3" disabled={!data.barbershop_id} required value={data.barber_id}
                     onChange={e => setData({ ...data, barber_id: e.target.value, barber_service_id: "", time: "", date: "" })}>
-                    <option value="">Selecciona barbero...</option>
+                    <option value="">Selecciona un profesional</option>
                     {currentBarbers?.map(inv => (
                         <option key={inv.id} value={inv.barber?.id || inv.id}>{inv.barber?.name || inv.name}</option>
                     ))}
@@ -206,37 +217,46 @@ export const ApptFormOwner = () => {
                 <label className="form-label">Servicio</label>
                 <select className="form-select mb-3" disabled={!data.barber_id} required value={data.barber_service_id}
                     onChange={e => setData({ ...data, barber_service_id: e.target.value, time: "", date: "" })}>
-                    <option value="">Elegir servicio...</option>
+                    <option value="">Elege servicio</option>
                     {currentServices?.map(s => (
                         <option key={s.id} value={s.id}>{s.name} - {s.price}€</option>
                     ))}
                 </select>
 
-                <div className="mb-4">
+                <div className={`mb-4 ${isCalendarDisabled ? "opacity-50" : ""}`} style={{ pointerEvents: isCalendarDisabled ? 'none' : 'auto' }}>
                     <label className="form-label fw-bold">Fecha de la cita</label>
                     <div className="d-flex align-items-center justify-content-between mb-3 bg-light p-2 rounded border">
                         <button type="button" className="btn btn-sm btn-outline-primary" onClick={handlePrevWeek}><i className="fas fa-chevron-left"></i></button>
-                        <div className="d-flex overflow-hidden gap-2 text-center">
-                            {days.map((day, index) => {
-                                const dateStr = day.toISOString().split('T')[0];
-                                const isActive = data.date === dateStr;
-                                const isPastDay = isPast(day);
-                                const hasSlots = daysAvailability[dateStr];
-                                const isFull = !isPastDay && daysAvailability.hasOwnProperty(dateStr) && !hasSlots;
-                                const isDisabled = isPastDay || isFull;
 
-                                return (
-                                    <div key={index}
-                                        onClick={() => { if (!isDisabled) setData({ ...data, date: dateStr, time: "" }); }}
-                                        style={{ cursor: isDisabled ? 'not-allowed' : 'pointer', minWidth: '85px' }}
-                                        className={`p-2 rounded transition-all border ${isActive ? 'bg-primary text-white border-primary shadow' : isFull ? 'bg-secondary-subtle text-secondary opacity-75' : isPastDay ? 'bg-light text-muted border-light' : 'bg-white border-secondary-subtle'}`}
-                                    >
-                                        <small className="d-block text-uppercase" style={{ fontSize: '0.65rem', fontWeight: 'bold' }}>{day.toLocaleDateString('es-ES', { weekday: 'short' })}</small>
-                                        <strong className="d-block fs-5">{day.getDate()}</strong>
-                                    </div>
-                                );
-                            })}
+                        <div className={`d-flex overflow-hidden gap-2 text-center transition-all ${isChecking ? "opacity-25" : "opacity-100"}`} style={{ minHeight: '80px' }}>
+                            {isChecking ? (
+                                <div className="w-100 d-flex align-items-center justify-content-center">
+                                    <div className="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                    <span className="ms-2 small text-muted">Consultando agenda...</span>
+                                </div>
+                            ) : (
+                                days.map((day, index) => {
+                                    const dateStr = day.toISOString().split('T')[0];
+                                    const isActive = data.date === dateStr;
+                                    const isPastDay = isPast(day);
+                                    const hasSlots = daysAvailability[dateStr];
+                                    const isFull = !isPastDay && daysAvailability.hasOwnProperty(dateStr) && !hasSlots;
+                                    const isDisabled = isPastDay || isFull;
+
+                                    return (
+                                        <div key={index}
+                                            onClick={() => { if (!isDisabled) setData({ ...data, date: dateStr, time: "" }); }}
+                                            style={{ cursor: isDisabled ? 'not-allowed' : 'pointer', minWidth: '85px' }}
+                                            className={`p-2 rounded transition-all border ${isActive ? 'bg-primary text-white border-primary shadow' : isFull ? 'bg-secondary-subtle text-secondary opacity-75' : isPastDay ? 'bg-light text-muted border-light' : 'bg-white border-secondary-subtle'}`}
+                                        >
+                                            <small className="d-block text-uppercase" style={{ fontSize: '0.65rem', fontWeight: 'bold' }}>{day.toLocaleDateString('es-ES', { weekday: 'short' })}</small>
+                                            <strong className="d-block fs-5">{day.getDate()}</strong>
+                                        </div>
+                                    );
+                                })
+                            )}
                         </div>
+
                         <button type="button" className="btn btn-sm btn-outline-primary" onClick={handleNextWeek}><i className="fas fa-chevron-right"></i></button>
                     </div>
 
@@ -250,7 +270,9 @@ export const ApptFormOwner = () => {
                                     </button>
                                 ))
                             ) : (
-                                <div className="w-100 text-center py-2 bg-light rounded"><small className="text-muted">Sin turnos disponibles</small></div>
+                                <div className="w-100 text-center py-2 bg-light rounded">
+                                    <small className="text-muted">{data.date ? "No hay turnos disponibles" : "Selecciona un día para ver disponibilidad."}</small>
+                                </div>
                             )}
                         </div>
                     </div>

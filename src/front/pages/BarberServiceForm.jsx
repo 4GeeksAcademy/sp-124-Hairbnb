@@ -16,16 +16,16 @@ export const BarberServiceForm = () => {
     });
 
     const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+        const file = e.target.files[0];
+        if (!file) return;
 
-    setUploading(true);
-    const imageUrl = await uploadToCloudinary(file);
-    if (imageUrl) {
-      setFormData(prev => ({ ...prev, service_demo_image: imageUrl }));
-    }
-    setUploading(false);
-  };
+        setUploading(true);
+        const imageUrl = await uploadToCloudinary(file);
+        if (imageUrl) {
+            setFormData(prev => ({ ...prev, service_demo_image: imageUrl }));
+        }
+        setUploading(false);
+    };
 
     useEffect(() => {
         if (store.barber_serviceInfo) {
@@ -68,7 +68,7 @@ export const BarberServiceForm = () => {
                 dispatch({ type: "set-barber_serviceInfo", payload: null });
                 dispatch({ type: "set-message", payload: { type: "success", msg: `Servicio ${isEditing ? "actualizado" : "creado"} correctamente` } });
                 navigate(-1);
-            } 
+            }
         } catch (error) {
             console.error("Error en la petición:", error);
         }
@@ -84,75 +84,112 @@ export const BarberServiceForm = () => {
     }
 
     return (
-        <div className="container mt-5">
-            <div className="card mx-auto" style={{ maxWidth: "500px" }}>
-                <div className="card-header">
-                    <h4 className="mb-0">{store.barber_serviceInfo ? "Editar Servicio" : "Nuevo Servicio"}</h4>
+        <div className="container py-5" style={{ maxWidth: "600px" }}>
+            <div className="booking-card shadow-sm animate__animated animate__fadeIn">
+
+                <div className="booking-header">
+                    <h2 className="Oswald mb-0 text-uppercase fw-bold">
+                        {store.barber_serviceInfo ? "Editar servicio" : "Nuevo servicio"}
+                    </h2>
                 </div>
-                <div className="card-body">
+
+                <div className="p-4 p-md-5">
                     <form onSubmit={handleSubmit}>
-                        <div className="mb-3">
-                            <div className="col-12 text-center mb-3">
-                                {formData.service_demo_image && (
-                                    <img src={formData.service_demo_image} alt="Preview" className="img-thumbnail mb-2" style={{ maxHeight: "200px" }} />
+
+                        <div className="form-group-custom mb-4 text-center">
+                            <label>Foto del Servicio</label>
+                            <div className="calendar-container p-3 mb-3">
+                                {formData.service_demo_image ? (
+                                    <img
+                                        src={formData.service_demo_image}
+                                        alt="Preview"
+                                        className="img-fluid mb-3"
+                                        style={{ maxHeight: "200px", borderRadius: "15px" }}
+                                    />
+                                ) : (
+                                    <div className="text-muted Oswald small py-4">
+                                        <i className="fa-solid fa-camera fa-2x d-block mb-2"></i>
+                                        SIN IMAGEN SELECCIONADA
+                                    </div>
                                 )}
-                                <input type="file" className="form-control" onChange={handleFileChange} accept="image/*" disabled={uploading} />
-                                {uploading && <small className="text-primary fw-bold">Subiendo imagen a Cloudinary...</small>}
+
+                                <input
+                                    type="file"
+                                    className="select-custom"
+                                    onChange={handleFileChange}
+                                    accept="image/*"
+                                    disabled={uploading}
+                                />
+
+                                {uploading && (
+                                    <div className="mt-2 d-flex align-items-center justify-content-center">
+                                        <div className="spinner-gold me-2" style={{ width: '20px', height: '20px' }}></div>
+                                        <small className="Oswald text-gold fw-bold">SUBIENDO...</small>
+                                    </div>
+                                )}
                             </div>
                         </div>
-                        <label className="form-label">Nombre del Servicio</label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            placeholder="Ej: Corte Degradado"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            required
-                        />
 
-                <div className="row">
-                    <div className="col-md-6 mb-3">
-                        <label className="form-label">Precio (€)</label>
-                        <input
-                            type="number"
-                            className="form-control"
-                            placeholder="0"
-                            value={formData.price}
-                            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                            required
-                        />
-                    </div>
-                    <div className="col-md-6 mb-3">
-                        <label className="form-label">Duración (min)</label>
-                        <input
-                            type="number"
-                            className="form-control"
-                            placeholder="30"
-                            value={formData.duration}
-                            onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                            required
-                        />
-                    </div>
-                </div>
+                        <div className="form-group-custom">
+                            <label>Nombre del servicio</label>
+                            <input
+                                type="text"
+                                className="select-custom"
+                                placeholder="Ej: Corte degradado"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                required
+                            />
+                        </div>
 
-                <div className="d-flex justify-content-between mt-4">
-                    <button
-                        type="button"
-                        className="btn btn-outline-secondary"
-                        onClick={() => {
-                            dispatch({ type: "set-barber_serviceInfo", payload: null });
-                            navigate(-1);
-                        }}
-                    >
-                        Cancelar
-                    </button>
-                    <button type="submit" className="btn btn-primary">
-                        {store.barber_serviceInfo ? "Guardar Cambios" : "Añadir a mi lista"}
-                    </button>
+                        <div className="row">
+                            <div className="col-md-6">
+                                <div className="form-group-custom">
+                                    <label>Precio (€)</label>
+                                    <input
+                                        type="number"
+                                        className="select-custom"
+                                        placeholder="0"
+                                        value={formData.price}
+                                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div className="col-md-6">
+                                <div className="form-group-custom">
+                                    <label>Duración (min)</label>
+                                    <input
+                                        type="number"
+                                        className="select-custom"
+                                        placeholder="30"
+                                        value={formData.duration}
+                                        onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="d-flex justify-content-between align-items-center mt-4">
+                            <button
+                                type="button"
+                                className="btn btn-link text-muted text-decoration-none Oswald small fw-bold"
+                                onClick={() => {
+                                    dispatch({ type: "set-barber_serviceInfo", payload: null });
+                                    navigate(-1);
+                                }}
+                            >
+                                VOLVER
+                            </button>
+
+                            <button type="submit" className="btn-confirm" disabled={uploading}>
+                                {store.barber_serviceInfo ? "ACTUALIZAR" : "CREAR"}
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
         </div>
-      </div >
-    </div >
-  );
-};
+    );
+}

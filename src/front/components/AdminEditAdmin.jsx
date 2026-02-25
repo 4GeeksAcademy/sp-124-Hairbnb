@@ -47,7 +47,7 @@ export const AdminEditAdmin = () => {
     const handleSubmit = async e => {
         e.preventDefault();
 
-        
+
         if (form.password !== form.confirmPassword) {
             dispatch({ type: "set-message", payload: { type: "error", msg: "Las contraseñas no coinciden" } });
             return;
@@ -90,36 +90,62 @@ export const AdminEditAdmin = () => {
     }
 
     return (
-        <div className="container mt-5">
-            <h1 className="display-6 mb-4">{isEditing ? `Admin: editar admin` : "Admin: nuevo admin"}</h1>
+        <div className="container py-5" style={{ maxWidth: '650px' }}>
+            <div className="booking-card shadow-lg">
 
-            <form onSubmit={handleSubmit} className="card p-4 shadow-sm border-danger">
-                <div className="alert alert-warning">
-                    <strong>Atención:</strong> Estás gestionando una cuenta con acceso total al sistema.
+                <div className="booking-header">
+                    <h2 className="Oswald mb-0 text-uppercase fw-bold">
+                        {isEditing ? "Editar administrador" : "Nuevo administrador"}
+                    </h2>
+                    <div className="mt-2" style={{ width: '40px', height: '2px', background: '#d19f68', margin: '0 auto' }}></div>
                 </div>
 
-                <label className="fw-bold">Nombre</label>
-                <input className="form-control mb-2" name="name" value={form.name} onChange={handleChange} required />
+                <form onSubmit={handleSubmit} className="p-4 p-md-5">
 
-                <label className="fw-bold">Email</label>
-                <input className="form-control mb-2" name="email" value={form.email} onChange={handleChange} required />
+                    <div className="mb-4 p-3 rounded-3 bg-light border-start border-4 border-warning">
+                        <small className="text-warning d-block Oswald text-uppercase fw-bold" style={{ fontSize: '0.7rem' }}>
+                            <i className="fas fa-exclamation-triangle me-2"></i>Área restringida
+                        </small>
+                        <span className="small">Estás gestionando una cuenta con acceso total al sistema.</span>
+                    </div>
 
-                <hr />
-                <label className="fw-bold">{isEditing ? "Nueva contraseña (opcional)" : "Contraseña"}</label>
-                <input className="form-control mb-2" type="password" name="password" placeholder="********" onChange={handleChange} required={!isEditing} />
+                    <div className="form-group-custom">
+                        <label>Nombre completo</label>
+                        <input className="select-custom" name="name" value={form.name} onChange={handleChange} required />
+                    </div>
 
-                <label className="fw-bold">Confirmar contraseña</label>
-                <input className="form-control mb-2" type="password" name="confirmPassword" placeholder="********" onChange={handleChange} required={!isEditing} />
+                    <div className="form-group-custom">
+                        <label>Correo electrónico</label>
+                        <input className="select-custom" name="email" value={form.email} onChange={handleChange} required />
+                    </div>
 
-                <div className="d-flex gap-2 mt-3">
-                    <button type="button" className="btn btn-outline-secondary" onClick={() => navigate("/4dm1n1str4t10n")}>
-                        Cancelar
-                    </button>
-                    <button className="btn btn-danger">
-                        {isEditing ? "Guardar cambios" : "Crear Administrador"}
-                    </button>
-                </div>
-            </form>
+                    <hr className="my-4" style={{ opacity: '0.1' }} />
+
+                    <div className="row">
+                        <div className="col-md-6 form-group-custom">
+                            <label>{isEditing ? "Nueva contraseña" : "Contraseña"}</label>
+                            <input className="select-custom" type="password" name="password"
+                                placeholder="********" onChange={handleChange} required={!isEditing} />
+                        </div>
+
+                        <div className="col-md-6 form-group-custom">
+                            <label>Confirmar contraseña</label>
+                            <input className="select-custom" type="password" name="confirmPassword"
+                                placeholder="********" onChange={handleChange} required={!isEditing} />
+                        </div>
+                    </div>
+
+                    <div className="d-flex justify-content-between align-items-center mt-5">
+                        <button type="button" className="btn btn-link text-muted text-decoration-none Oswald"
+                            onClick={() => navigate("/4dm1n1str4t10n")}>
+                            CANCELAR
+                        </button>
+                        <button type="submit" className="btn-confirm px-5">
+                            {isEditing ? "ACTUALIZAR" : "CREAR"}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
-};
+}

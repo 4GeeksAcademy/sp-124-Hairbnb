@@ -1,0 +1,142 @@
+.auth-page-container {
+  min-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.auth-card {
+  background: #ffffff;
+  border-radius: 15px;
+  border: none;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 600px;
+}
+
+.auth-title {
+  font-family: "Oswald", sans-serif;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #1a1a1d;
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+}
+
+.auth-subtitle {
+  color: #d19f68;
+  font-size: 0.9rem;
+  margin-bottom: 2rem;
+  font-weight: 500;
+}
+
+.auth-progress-container {
+  height: 6px;
+  background-color: #f0f0f0;
+  border-radius: 10px;
+  margin-bottom: 2.5rem;
+  overflow: hidden;
+}
+
+.auth-progress-bar {
+  background-color: #d19f68;
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.auth-label {
+  font-family: "Oswald", sans-serif;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #666;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.auth-input {
+  border: 1px solid #e0e0e0;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  background-color: #fcfcfc;
+}
+
+.auth-input:focus {
+  border-color: #d19f68;
+  background-color: #fff;
+  box-shadow: 0 0 0 4px rgba(209, 159, 104, 0.1);
+  outline: none;
+}
+
+.btn-auth-main {
+  background-color: #1a1a1d;
+  color: #d19f68;
+  font-family: "Oswald", sans-serif;
+  text-transform: uppercase;
+  padding: 0.8rem 2rem;
+  border: none;
+  border-radius: 8px;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.btn-auth-main:hover {
+  background-color: #d19f68;
+  color: #1a1a1d;
+  transform: translateY(-2px);
+}
+
+.btn-auth-secondary {
+  background-color: transparent;
+  color: #666;
+  border: 1px solid #ddd;
+  font-family: "Oswald", sans-serif;
+  text-transform: uppercase;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.btn-auth-secondary:hover {
+  background-color: #f5f5f5;
+  color: #1a1a1d;
+}
+
+.auth-profile-img-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 1.5rem;
+}
+
+.auth-profile-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 4px solid #f8f9fa;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.auth-profile-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d19f68;
+  border: 2px dashed #ddd;
+}
+
+.auth-logo {
+    width: 120px;
+    height: auto;
+    object-fit: contain;
+}

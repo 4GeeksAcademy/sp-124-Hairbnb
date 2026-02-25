@@ -25,7 +25,6 @@ export const ScheduleForm = () => {
     };
 
     const myBarbershops = store.invitations?.filter(inv => inv.status === "accepted") || [];
-
     const toN = (t) => t ? parseInt(t.replace(":", ""), 10) : 0;
 
     useEffect(() => {
@@ -33,7 +32,6 @@ export const ScheduleForm = () => {
             resetForm();
             return;
         }
-
         const loadExistingSchedules = async () => {
             setLoading(true);
             try {
@@ -41,7 +39,6 @@ export const ScheduleForm = () => {
                 const resp = await fetch(url, {
                     headers: { "Authorization": `Bearer ${store.token}` }
                 });
-
                 if (resp.ok) {
                     const data = await resp.json();
                     if (data && data.length > 0) mapToState(data);
@@ -69,7 +66,6 @@ export const ScheduleForm = () => {
         Object.keys(weeklySchedule).forEach(day => {
             newState[day] = { t1_start: "", t1_end: "", t2_start: "", t2_end: "", active: false };
         });
-
         data.forEach(item => {
             const dayKey = item.day_of_week;
             if (newState[dayKey]) {
@@ -103,7 +99,6 @@ export const ScheduleForm = () => {
         setWeeklySchedule(prev => ({ ...prev, [day]: { ...prev[day], [field]: value } }));
     };
 
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         const invitation = myBarbershops.find(i => String(i.id) === String(selectedInvitation));
@@ -124,26 +119,18 @@ export const ScheduleForm = () => {
                 if (!start || !end) return true;
                 const s = toN(start);
                 const e = toN(end);
-
                 const inMorning = shop.m_start && (s >= toN(shop.m_start) && e <= toN(shop.m_end));
                 const inAfternoon = shop.a_start && (s >= toN(shop.a_start) && e <= toN(shop.a_end));
-
                 return inMorning || inAfternoon;
             };
 
             if (!isInsideRange(myHours.t1_start, myHours.t1_end)) {
-                dispatch({
-                    type: "set-message",
-                    payload: { type: "error", msg: `Tu Turno 1 del ${dayLabels[day]} está fuera del horario del local.` }
-                });
+                dispatch({ type: "set-message", payload: { type: "error", msg: `Tu Turno 1 del ${dayLabels[day]} está fuera del horario del local.` } });
                 return;
             }
 
             if (myHours.t2_start && !isInsideRange(myHours.t2_start, myHours.t2_end)) {
-                dispatch({
-                    type: "set-message",
-                    payload: { type: "error", msg: `Tu Turno 2 del ${dayLabels[day]} está fuera del horario del local.` }
-                });
+                dispatch({ type: "set-message", payload: { type: "error", msg: `Tu Turno 2 del ${dayLabels[day]} está fuera del horario del local.` } });
                 return;
             }
         }
@@ -169,7 +156,6 @@ export const ScheduleForm = () => {
                         })
                     });
                 };
-
                 if (d.t1_start && d.t1_end) await sendBody(d.t1_start, d.t1_end);
                 if (d.t2_start && d.t2_end) await sendBody(d.t2_start, d.t2_end);
             }
@@ -185,75 +171,143 @@ export const ScheduleForm = () => {
     };
 
     return (
-        <div className="container py-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <h1 className="display-6 m-0">Mi Horario Personal</h1>
-                <button className="btn btn-outline-secondary" onClick={() => navigate(-1)}>
-                    <i className="fas fa-arrow-left me-2"></i>Volver
-                </button>
-            </div>
+        <div className="container py-5" style={{ maxWidth: '850px' }}>
+            <div className="booking-card shadow-sm animate__animated animate__fadeIn">
 
-            <div className="card shadow-sm p-4">
-                <label className="form-label fw-bold">Selecciona la Barbería:</label>
-                <select className="form-select mb-4" value={selectedInvitation} onChange={(e) => setSelectedInvitation(e.target.value)}>
-                    <option value="">-- Selecciona --</option>
-                    {myBarbershops.map(inv => (
-                        <option key={inv.id} value={inv.id}>{inv.barbershop?.name}</option>
-                    ))}
-                </select>
+                <div className="booking-header">
+                    <h2 className="Oswald mb-0 text-uppercase fw-bold">Mi horario profesional</h2>
+                </div>
 
-                {loading ? (
-                    <div className="text-center p-5"><div className="spinner-border text-primary"></div></div>
-                ) : selectedInvitation && (
-                    <form onSubmit={handleSubmit}>
-                        <div className="bg-light p-3 rounded border">
+                <div className="p-4 p-md-5">
+                    <div className="form-group-custom mb-5">
+                        <label>Selecciona el local</label>
+                        <select
+                            className="select-custom"
+                            value={selectedInvitation}
+                            onChange={(e) => setSelectedInvitation(e.target.value)}
+                        >
+                            <option value="">Selecciona donde trabajas</option>
+                            {myBarbershops.map(inv => (
+                                <option key={inv.id} value={inv.id}>{inv.barbershop?.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {loading ? (
+                        <div className="text-center p-5">
+                            <div className="spinner-gold mx-auto"></div>
+                            <p className="Oswald text-gold mt-3 small">CARGANDO HORARIOS...</p>
+                        </div>
+                    ) : selectedInvitation && (
+                        <form onSubmit={handleSubmit} className="animate__animated animate__fadeIn">
+                            <label className="Oswald text-uppercase small fw-bold mb-4 d-block text-gold border-bottom pb-2">
+                                Configuración de la jornada
+                            </label>
+
                             {Object.keys(weeklySchedule).map((day) => {
                                 const shop = getShopHours(day);
+                                const isActive = weeklySchedule[day].active;
+
                                 return (
-                                    <div key={day} className="row mb-3 align-items-center border-bottom pb-3">
-                                        <div className="col-md-3">
-                                            <div className="form-check form-switch">
-                                                <input className="form-check-input" type="checkbox" checked={weeklySchedule[day].active} onChange={() => handleCheckDay(day)} />
-                                                <span className="fw-bold">{dayLabels[day]}</span>
+                                    <div key={day} className={`day-row-premium d-flex flex-column flex-md-row align-items-md-center justify-content-between p-3 mb-2 rounded-2 border ${isActive ? 'bg-white' : 'bg-light opacity-50'}`}
+                                        style={{ borderColor: isActive ? '#d19f68' : '#eee' }}>
+
+                                        <div className="d-flex flex-column mb-3 mb-md-0" style={{ minWidth: '160px' }}>
+                                            <div className="d-flex align-items-center">
+                                                <div className="form-check form-switch me-3">
+                                                    <input
+                                                        className="form-check-input custom-switch"
+                                                        type="checkbox"
+                                                        checked={isActive}
+                                                        onChange={() => handleCheckDay(day)}
+                                                    />
+                                                </div>
+                                                <span className={`Oswald text-uppercase fw-bold ${isActive ? 'text-dark' : 'text-muted'}`}>
+                                                    {dayLabels[day]}
+                                                </span>
                                             </div>
                                             {shop ? (
-                                                <div className="text-primary mt-1" style={{ fontSize: '0.75rem' }}>
+                                                <div className="text-gold mt-1 Oswald" style={{ fontSize: '0.7rem' }}>
                                                     <i className="far fa-clock me-1"></i>
-                                                    {shop.m_start?.slice(0, 5)}-{shop.m_end?.slice(0, 5)}
+                                                    LOCAL: {shop.m_start?.slice(0, 5)}-{shop.m_end?.slice(0, 5)}
                                                     {shop.a_start && ` / ${shop.a_start.slice(0, 5)}-${shop.a_end.slice(0, 5)}`}
                                                 </div>
                                             ) : (
-                                                <div className="text-muted mt-1" style={{ fontSize: '0.7rem' }}>Cerrado o sin horario</div>
+                                                <div className="text-muted mt-1 Oswald" style={{ fontSize: '0.7rem' }}>CERRADO</div>
                                             )}
                                         </div>
-                                        <div className="col-md-4 d-flex align-items-center gap-1">
-                                            <span className="badge bg-secondary">T1</span>
-                                            <input type="time" className="form-control" value={weeklySchedule[day].t1_start} disabled={!weeklySchedule[day].active} onChange={(e) => handleTimeChange(day, "t1_start", e.target.value)} />
-                                            <input type="time" className="form-control" value={weeklySchedule[day].t1_end} disabled={!weeklySchedule[day].active} onChange={(e) => handleTimeChange(day, "t1_end", e.target.value)} />
-                                        </div>
-                                        <div className="col-md-5 d-flex align-items-center gap-1">
-                                            <div className="form-check form-switch">
-                                                <input className="form-check-input" type="checkbox" disabled={!weeklySchedule[day].active} checked={!!weeklySchedule[day].t2_start}
-                                                    onChange={(e) => {
-                                                        handleTimeChange(day, "t2_start", e.target.checked ? "16:00" : "");
-                                                        handleTimeChange(day, "t2_end", e.target.checked ? "20:00" : "");
-                                                    }}
+
+                                        <div className="d-flex flex-wrap gap-4 align-items-center">
+                                            <div className="d-flex align-items-center gap-2">
+                                                <span className="badge bg-dark text-gold Oswald" style={{ fontSize: '0.6rem' }}>T1</span>
+                                                <input
+                                                    type="time"
+                                                    className="time-input-minimal"
+                                                    style={{ width: '75px' }}
+                                                    value={weeklySchedule[day].t1_start}
+                                                    disabled={!isActive}
+                                                    onChange={(e) => handleTimeChange(day, "t1_start", e.target.value)}
+                                                />
+                                                <span className="text-muted small">-</span>
+                                                <input
+                                                    type="time"
+                                                    className="time-input-minimal"
+                                                    style={{ width: '75px' }}
+                                                    value={weeklySchedule[day].t1_end}
+                                                    disabled={!isActive}
+                                                    onChange={(e) => handleTimeChange(day, "t1_end", e.target.value)}
                                                 />
                                             </div>
-                                            <span className="badge bg-secondary">T2</span>
-                                            <input type="time" className="form-control" value={weeklySchedule[day].t2_start} disabled={!weeklySchedule[day].active || !weeklySchedule[day].t2_start} onChange={(e) => handleTimeChange(day, "t2_start", e.target.value)} />
-                                            <input type="time" className="form-control" value={weeklySchedule[day].t2_end} disabled={!weeklySchedule[day].active || !weeklySchedule[day].t2_start} onChange={(e) => handleTimeChange(day, "t2_end", e.target.value)} />
+
+                                            <div className="d-flex align-items-center gap-2">
+                                                <div className="form-check">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="form-check-input custom-switch"
+                                                        disabled={!isActive}
+                                                        checked={!!weeklySchedule[day].t2_start}
+                                                        onChange={(e) => {
+                                                            handleTimeChange(day, "t2_start", e.target.checked ? "16:00" : "");
+                                                            handleTimeChange(day, "t2_end", e.target.checked ? "20:00" : "");
+                                                        }}
+                                                    />
+                                                </div>
+                                                <span className="badge bg-secondary text-white Oswald" style={{ fontSize: '0.6rem' }}>T2</span>
+                                                <input
+                                                    type="time"
+                                                    className="time-input-minimal"
+                                                    style={{ width: '75px' }}
+                                                    value={weeklySchedule[day].t2_start}
+                                                    disabled={!isActive || !weeklySchedule[day].t2_start}
+                                                    onChange={(e) => handleTimeChange(day, "t2_start", e.target.value)}
+                                                />
+                                                <span className="text-muted small">-</span>
+                                                <input
+                                                    type="time"
+                                                    className="time-input-minimal"
+                                                    style={{ width: '75px' }}
+                                                    value={weeklySchedule[day].t2_end}
+                                                    disabled={!isActive || !weeklySchedule[day].t2_start}
+                                                    onChange={(e) => handleTimeChange(day, "t2_end", e.target.value)}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 );
                             })}
-                        </div>
-                        <button type="submit" className="btn btn-primary btn-lg w-100 mt-4">
-                            <i className="fas fa-save me-2"></i>Guardar Horario
-                        </button>
-                    </form>
-                )}
+
+                            <div className="d-flex justify-content-between mt-5 pt-4">
+                                <button type="button" className="btn btn-link text-muted text-decoration-none Oswald small fw-bold" onClick={() => navigate(-1)}>
+                                    CANCELAR
+                                </button>
+                                <button type="submit" className="btn-confirm px-5" disabled={loading}>
+                                    {loading ? "GUARDANDO..." : "GUARDAR"}
+                                </button>
+                            </div>
+                        </form>
+                    )}
+                </div>
             </div>
         </div>
     );
-};
+}

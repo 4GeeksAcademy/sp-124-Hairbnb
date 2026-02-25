@@ -1,0 +1,81 @@
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Oswald:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap");
+
+.logo-white {
+  filter: brightness(0) invert(1);
+}
+
+.logo-gold {
+  filter: invert(74%) sepia(19%) saturate(836%) hue-rotate(346deg)
+    brightness(89%) contrast(87%);
+}
+
+.hairbnb-navbar {
+  background: #1a1a1d !important;
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.hairbnb-brand {
+  font-family: "Oswald", sans-serif;
+  color: #fff !important;
+  font-size: 28px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.hairbnb-nav-link {
+  font-family: "Poppins", sans-serif;
+  color: #fff !important;
+  font-size: 15px;
+  font-weight: 500;
+  text-transform: capitalize;
+  padding: 10px 20px !important;
+  transition: 0.3s;
+}
+
+.hairbnb-nav-link:hover {
+  color: #d19f68 !important;
+}
+
+.hairbnb-btn {
+  background: #d19f68;
+  color: #fff !important;
+  display: inline-block;
+  padding: 12px 30px;
+  font-family: "Oswald", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 0;
+  transition: 0.3s;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.hairbnb-btn:hover {
+  background: #fff;
+  color: #d19f68 !important;
+}
+
+.hairbnb-dropdown {
+  background-color: #1a1a1d !important;
+  border: 1px solid #d19f68;
+  border-radius: 0;
+  margin-top: 15px;
+}
+
+.hairbnb-dropdown-item {
+  color: #fff !important;
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  padding: 10px 20px;
+  transition: 0.2s;
+}
+
+.hairbnb-dropdown-item:hover {
+  background-color: #d19f68 !important;
+  color: #fff !important;
+}

@@ -1,0 +1,164 @@
+.messages-main-container {
+  height: 75vh;
+  min-height: 600px;
+  background-color: #ffffff;
+  border: 1px solid #eee;
+}
+
+.conversations-sidebar {
+  background-color: #fff;
+  border-right: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  padding: 1.5rem;
+  background-color: #1a1a1d;
+  color: #ffffff;
+}
+
+.conversations-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  background-color: #fcfcfc;
+}
+
+.conversation-item {
+  background: transparent;
+  border: none;
+  border-left: 4px solid transparent;
+  padding: 1.2rem;
+  width: 100%;
+  text-align: left;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.conversation-item:hover {
+  background-color: #f8f9fa;
+}
+
+.conversation-item.active {
+  background-color: #ffffff;
+  border-left-color: #d19f68;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.chat-window-container {
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+}
+
+.chat-header-top {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #eee;
+  background-color: #ffffff;
+}
+
+.chat-messages-body {
+  flex-grow: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)), 
+                    url('https://www.transparenttextures.com/patterns/carbon-fibre.png'); 
+  background-repeat: repeat;
+}
+
+.msg-wrapper {
+  display: flex;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.msg-wrapper.my-msg {
+  justify-content: flex-end;
+}
+
+.msg-wrapper.their-msg {
+  justify-content: flex-start;
+}
+
+.bubble {
+  padding: 0.8rem 1.2rem;
+  max-width: 75%;
+  position: relative;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  font-size: 0.95rem;
+}
+
+.bubble.me {
+  background-color: #2a2a2e;
+  color: #ffffff;
+  border-radius: 15px 15px 0 15px;
+}
+
+.bubble.them {
+  background-color: #fdf9f5;
+  color: #333;
+  border: 1px solid rgba(209, 159, 104, 0.3);
+  border-radius: 15px 15px 15px 0;
+}
+
+.msg-time {
+  font-size: 0.65rem;
+  margin-top: 0.4rem;
+  display: block;
+  opacity: 0.6;
+}
+
+.chat-input-area {
+  padding: 1.5rem;
+  border-top: 1px solid #eee;
+  background-color: #fff;
+}
+
+.custom-input-group {
+  display: flex;
+  background-color: #f5f5f5;
+  border-radius: 12px;
+  padding: 0.3rem;
+  transition: border 0.3s ease;
+}
+
+.custom-input-group:focus-within {
+  border: 1px solid #d19f68;
+  background-color: #fff;
+}
+
+.chat-input-field {
+  border: none;
+  background: transparent;
+  padding: 0.8rem 1rem;
+  flex-grow: 1;
+  outline: none;
+  font-size: 0.9rem;
+}
+
+.chat-send-btn {
+  background-color: #1a1a1d;
+  color: #d19f68;
+  border: none;
+  width: 45px;
+  height: 45px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.3s;
+}
+
+.chat-send-btn:hover {
+  background-color: #d19f68;
+  color: #2b2b30;
+}
+
+.text-gold {
+  color: #d19f68 !important;
+}
+.bg-gold-soft {
+  background-color: rgba(209, 159, 104, 0.1);
+}

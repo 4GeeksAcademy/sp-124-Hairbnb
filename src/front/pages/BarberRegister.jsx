@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { uploadToCloudinary } from "../utilities/cloudinary";
+import "../styles/authforms.css"
 
 export const BarberRegister = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -119,85 +120,96 @@ export const BarberRegister = () => {
     };
 
     return (
-        <div className="container mt-5 d-flex justify-content-center">
-            <div className="card w-75">
-                <h1 className="h3 mb-4 text-center">
-                    {isEditing ? "Mis datos personales" : "Crear cuenta de barbero"}
-                </h1>
+        <div className="auth-page-container">
+            <div className="auth-card">
+                <div className="text-center mb-4">
+                    <img
+                        src="/Logo.png"
+                        alt="Logo Hairbnb"
+                        className="auth-logo"
+                    />
+                </div>
+                <div className="text-center">
+                    <h1 className="auth-title">
+                        {isEditing ? "Editar profesional" : "Nuevo profesional"}
+                    </h1>
+                    <p className="auth-subtitle">
+                        {isEditing ? "Mantén tus datos actualizados" : "Únete y gestiona tu agenda"}
+                    </p>
+                </div>
 
                 {!isEditing && (
-                    <div className="progress mb-4">
-                        <div className="progress-bar bg-danger" style={{ width: step === 1 ? "50%" : "100%" }}></div>
+                    <div className="auth-progress-container">
+                        <div className="auth-progress-bar" style={{ width: step === 1 ? "50%" : "100%" }}></div>
                     </div>
                 )}
 
                 <form onSubmit={(!isEditing && step === 1) ? nextStep : handleSubmit}>
 
                     {(step === 1 || isEditing) && (
-                        <div>
-                            <h5 className="mb-3">{isEditing ? "Datos de la cuenta" : "Información de inicio de sesión"}</h5>
-                            <label className="form-label">Email <span className="small text-danger">*</span></label>
-                            <input className="form-control mb-3" name="email" value={form.email} type="email" placeholder="nombre@ejemplo.com" onChange={handleChange} required />
+                        <div className="animate__animated animate__fadeIn">
+                            <h5 className="auth-label mb-3 text-dark fw-bold">Credenciales de acceso</h5>
 
-                            <label className="form-label">{isEditing ? "Nueva contraseña (opcional)" : "Establece una contraseña"} <span className="small text-danger">*</span></label>
-                            <input className="form-control mb-3" type="password" name="password" minLength="8" placeholder="Mínimo 8 caracteres" onChange={handleChange} required={!isEditing} />
+                            <label className="auth-label">Correo electrónico</label>
+                            <input className="auth-input w-100 mb-3" name="email" value={form.email} type="email" placeholder="barber@ejemplo.com" onChange={handleChange} required />
 
-                            <label className="form-label">Confirmar contraseña <span className="small text-danger">*</span></label>
-                            <input className="form-control mb-3" type="password" name="confirmPassword" minLength="8" placeholder="Repite la contraseña" onChange={handleChange} required={!isEditing} />
+                            <label className="auth-label">{isEditing ? "Nueva contraseña (opcional)" : "Contraseña"}</label>
+                            <input className="auth-input w-100 mb-3" type="password" name="password" minLength="8" placeholder="Mínimo 8 caracteres" onChange={handleChange} required={!isEditing} />
+
+                            <label className="auth-label">Confirmar contraseña</label>
+                            <input className="auth-input w-100 mb-4" type="password" name="confirmPassword" minLength="8" placeholder="Repite la contraseña" onChange={handleChange} required={!isEditing} />
 
                             {!isEditing && (
-                                <button type="submit" className="btn btn-danger py-2">
-                                    Siguiente: Datos de perfil
-                                    <i className="fa-solid fa-arrow-right ms-2"></i>
+                                <button type="submit" className="btn-auth-main">
+                                    Siguiente: Perfil <i className="fa-solid fa-chevron-right ms-2"></i>
                                 </button>
                             )}
                         </div>
                     )}
 
                     {(step === 2 || isEditing) && (
-                        <div>
-                            <h5 className="mb-3">
-                                {isEditing ? "Información profesional" : "Paso 2: Tu perfil"}
-                            </h5>
+                        <div className="animate__animated animate__fadeIn">
+                            <h5 className="auth-label mb-3 text-dark fw-bold">Información del barbero</h5>
 
-                            <div className="text-center mb-4">
-                                <label className="form-label d-block text-start">Foto de Perfil</label>
+                            <div className="auth-profile-img-container">
                                 {form.barber_profile_image ? (
-                                    <img src={form.barber_profile_image} className="rounded-circle mb-3 border border-3 border-danger" style={{ width: "120px", height: "120px", objectFit: "cover" }} />
+                                    <img src={form.barber_profile_image} className="auth-profile-img" alt="Perfil" />
                                 ) : (
-                                    <div className="rounded-circle mb-3 bg-light d-flex align-items-center justify-content-center border mx-auto" style={{ width: "120px", height: "120px" }}>
-                                        <i className="fa-solid fa-user-tie fa-3x text-danger"></i>
+                                    <div className="auth-profile-placeholder">
+                                        <i className="fa-solid fa-user-tie fa-2x"></i>
                                     </div>
                                 )}
-                                <input type="file" className="form-control form-control-sm" onChange={handleFileChange} accept="image/*" disabled={uploading} />
-                                {uploading && <small className="text-danger d-block mt-2">Subiendo imagen...</small>}
                             </div>
 
-                            <label className="form-label">Nombre <span className="small text-danger">*</span></label>
-                            <input className="form-control mb-3" name="name" value={form.name} placeholder="Tu nombre" onChange={handleChange} required />
-
-                            <label className="form-label">Teléfono <span className="small text-danger">*</span></label>
-                            <div className="border rounded mb-4 bg-white px-2 py-1">
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Ej: 600123456"
-                                    maxLength="9"
-                                    value={form.phone}
-                                    onChange={(e) => {
-                                        const val = e.target.value.replace(/\D/g, "");
-                                        setForm({ ...form, phone: val });
-                                    }}
-                                
-                                />
+                            <div className="mb-4 text-center">
+                                <input type="file" className="form-control form-control-sm mx-auto" style={{ maxWidth: '250px' }} onChange={handleFileChange} accept="image/*" disabled={uploading} />
+                                {uploading && <small className="text-gold d-block mt-2">Subiendo imagen...</small>}
                             </div>
+
+                            <label className="auth-label">Nombre completo</label>
+                            <input className="auth-input w-100 mb-3" name="name" value={form.name} placeholder="Tu nombre artístico o real" onChange={handleChange} required />
+
+                            <label className="auth-label">Teléfono</label>
+                            <input
+                                className="auth-input w-100 mb-4"
+                                type="text"
+                                name="phone"
+                                value={form.phone}
+                                placeholder="600 000 000"
+                                maxLength="9"
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, "");
+                                    setForm({ ...form, phone: val });
+                                }}
+                                required
+                            />
 
                             <div className="d-flex gap-2">
                                 {!isEditing && (
-                                    <button type="button" className="btn btn-outline-danger" onClick={() => setStep(1)}>Atrás</button>
+                                    <button type="button" className="btn-auth-secondary" onClick={() => setStep(1)}>Atrás</button>
                                 )}
-                                <button type="submit" className="btn btn-danger">
-                                    {isEditing ? "Guardar cambios" : "Finalizar Registro"}
+                                <button type="submit" className="btn-auth-main">
+                                    {isEditing ? "ACTUALIZAR" : "REGISTRARME"}
                                 </button>
                             </div>
                         </div>

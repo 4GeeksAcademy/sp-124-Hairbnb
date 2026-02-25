@@ -1,0 +1,64 @@
+.hairbnb-footer {
+  background-color: #16161a;
+  border-top: 1px solid rgba(209, 159, 104, 0.1);
+  color: #ffffff;
+}
+
+.text-gold {
+  color: #d19f68;
+}
+
+.ls-1 {
+  letter-spacing: 1px;
+}
+
+.btn-link-gold {
+  background: none;
+  border: none;
+  color: #d19f68;
+  text-decoration: none;
+  padding: 0;
+  transition: 0.3s;
+  font-family: "Poppins", sans-serif;
+}
+
+.btn-link-gold:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.btn-admin-link {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #888;
+  font-size: 11px;
+  padding: 4px 12px;
+  text-transform: uppercase;
+  transition: 0.3s;
+  border-radius: 2px;
+}
+
+.btn-admin-link:hover {
+  background: rgba(209, 159, 104, 0.1);
+  color: #d19f68;
+  border-color: #d19f68;
+}
+
+.hairbnb-brand {
+  font-family: "Oswald", sans-serif;
+  letter-spacing: 2px;
+}
+
+.footer-link-gold {
+  color: #d19f68;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid transparent;
+}
+
+.footer-link-gold:hover {
+  color: #fff;
+  border-bottom: 1px solid #d19f68;
+  text-decoration: none;
+}

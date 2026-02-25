@@ -1,0 +1,65 @@
+:root {
+  --gold: #d4af37;
+  --gold-soft: rgba(212, 175, 55, 0.15);
+}
+
+.Oswald {
+  font-family: "Oswald", sans-serif;
+}
+
+.blur-sm {
+  filter: blur(4px);
+}
+
+.bg-gold-soft {
+  background-color: var(--gold-soft);
+}
+
+.text-gold {
+  color: var(--gold);
+}
+
+.border-gold {
+  border-color: var(--gold) !important;
+}
+
+.animate__animated {
+  animation-duration: 0.8s;
+  animation-fill-mode: both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate__fadeIn {
+  animation-name: fadeIn;
+}
+
+.btn-gold {
+  background-color: var(--gold);
+  color: white;
+  border: none;
+}
+
+.btn-gold:hover {
+  background-color: #b8962e;
+  color: white;
+}
+
+.preview-wrapper img {
+  object-fit: cover;
+  border: 2px solid #eee;
+}
+
+textarea.form-control:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.25);
+}

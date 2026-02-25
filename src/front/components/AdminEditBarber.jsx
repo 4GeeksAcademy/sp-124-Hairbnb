@@ -121,48 +121,82 @@ export const AdminEditBarber = () => {
         }
     };
     return (
-        <div className="container mt-5">
-            <h1 className="display-6 mb-4">
-                {isEditing ? `Admin: editar barbero` : "Admin: crear barbero"}
-            </h1>
+        <div className="container py-5" style={{ maxWidth: '700px' }}>
+            <div className="booking-card shadow-lg">
 
-            <form onSubmit={handleSubmit}>
-                <label>Nombre</label>
-                <input className="form-control mb-2" name="name" value={form.name} placeholder="Nombre" onChange={handleChange} />
-
-                <label>Email</label>
-                <input className="form-control mb-2" name="email" value={form.email} placeholder="Email" onChange={handleChange} />
-
-                <label>Teléfono</label>
-                <input
-                    type="text"
-                    className="form-control mb-2"
-                    name="phone"
-                    value={form.phone}
-                    placeholder="Ej: 612345678"
-                    maxLength="9"
-                    onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, "");
-                        setForm({ ...form, phone: val });
-                    }}
-                />
-
-                <hr />
-                <label>{isEditing ? "Nueva contraseña (dejar vacío para no cambiar)" : "Contraseña"}</label>
-                <input className="form-control mb-2" type="password" name="password" placeholder="********" onChange={handleChange} />
-
-                <label>Confirmar contraseña</label>
-                <input className="form-control mb-2" type="password" name="confirmPassword" placeholder="********" onChange={handleChange} />
-
-                <div className="d-flex gap-2 mt-3">
-                    <button type="button" className="btn btn-outline-secondary" onClick={() => navigate(-1)}>
-                        Cancelar
-                    </button>
-                    <button type="submit" className="btn btn-outline-primary">
-                        {isEditing ? "Actualizar barbero" : "Crear cuenta"}
-                    </button>
+                <div className="booking-header">
+                    <h2 className="Oswald mb-0 text-uppercase fw-bold">
+                        {isEditing ? "Editar profesional" : "Nuevo profesional"}
+                    </h2>
+                    <div className="mt-2" style={{ width: '40px', height: '2px', background: '#d19f68', margin: '0 auto' }}></div>
                 </div>
-            </form>
+
+                <form onSubmit={handleSubmit} className="p-4 p-md-5">
+
+                    <div className="row">
+                        <div className="col-md-12 form-group-custom">
+                            <label>Nombre completo</label>
+                            <input className="select-custom" name="name" value={form.name}
+                                placeholder="Ej. Ricardo Arjona" onChange={handleChange} required />
+                        </div>
+
+                        <div className="col-md-6 form-group-custom">
+                            <label>Correo electrónico</label>
+                            <input className="select-custom" name="email" value={form.email}
+                                placeholder="barbero@tuweb.com" onChange={handleChange} required />
+                        </div>
+
+                        <div className="col-md-6 form-group-custom">
+                            <label>Teléfono</label>
+                            <input
+                                type="text"
+                                className="select-custom"
+                                name="phone"
+                                value={form.phone}
+                                placeholder="600111222"
+                                maxLength="9"
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, "");
+                                    setForm({ ...form, phone: val });
+                                }}
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <hr className="my-4" style={{ opacity: '0.1' }} />
+
+                    <div className="row">
+                        <div className="col-md-12 mb-3">
+                            <small className="Oswald text-muted text-uppercase" style={{ letterSpacing: '1px', fontSize: '0.7rem' }}>
+                                {isEditing ? "Contraseña (Solo si deseas cambiarla)" : "Configurar acceso"}
+                            </small>
+                        </div>
+
+                        <div className="col-md-6 form-group-custom">
+                            <label>Contraseña</label>
+                            <input className="select-custom" type="password" name="password"
+                                placeholder="********" onChange={handleChange} required={!isEditing} />
+                        </div>
+
+                        <div className="col-md-6 form-group-custom">
+                            <label>Confirmar contraseña</label>
+                            <input className="select-custom" type="password" name="confirmPassword"
+                                placeholder="********" onChange={handleChange} required={!isEditing} />
+                        </div>
+                    </div>
+
+                    <div className="d-flex justify-content-between align-items-center mt-5">
+                        <button type="button" className="btn btn-link text-muted text-decoration-none Oswald"
+                            onClick={() => navigate(-1)}>
+                            CANCELAR
+                        </button>
+                        <button type="submit" className="btn-confirm px-5">
+                            {isEditing ? "ACTUALIZAR" : "CREAR"}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 };

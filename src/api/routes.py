@@ -17,12 +17,16 @@ import requests
 import calendar
 import base64
 import deepl
-
+import stripe
+from dotenv import load_dotenv
 
 api = Blueprint('api', __name__)
 
 # Allow CORS requests to this API
 CORS(api)
+
+load_dotenv()
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 
 @api.route("/login/admin", methods=["POST"])
@@ -34,11 +38,11 @@ def login_admin():
 
     if user and user.check_password(password):
         access_token = create_access_token(
-            identity=str(user.id), 
+            identity=str(user.id),
             additional_claims={"role": "admin"}
         )
         return jsonify({
-            "token": access_token, 
+            "token": access_token,
             "user": {"id": user.id, "name": user.name, "role": "admin"}
         }), 200
     return jsonify({"msg": "Email o contraseña incorrectos"}), 401
@@ -53,11 +57,11 @@ def login_client():
 
     if client and client.check_password(password):
         access_token = create_access_token(
-            identity=str(client.id), 
+            identity=str(client.id),
             additional_claims={"role": "client"}
         )
         return jsonify({
-            "token": access_token, 
+            "token": access_token,
             "user": {"id": client.id, "name": client.name, "role": "client"}
         }), 200
     return jsonify({"msg": "Email o contraseña incorrectos"}), 401
@@ -72,11 +76,11 @@ def login_barber():
 
     if barber and barber.check_password(password):
         access_token = create_access_token(
-            identity=str(barber.id), 
+            identity=str(barber.id),
             additional_claims={"role": "barber"}
         )
         return jsonify({
-            "token": access_token, 
+            "token": access_token,
             "user": {"id": barber.id, "name": barber.name, "role": "barber"}
         }), 200
     return jsonify({"msg": "Email o contraseña incorrectos"}), 401
@@ -91,11 +95,11 @@ def login_owner():
 
     if owner and owner.check_password(password):
         access_token = create_access_token(
-            identity=str(owner.id), 
+            identity=str(owner.id),
             additional_claims={"role": "owner"}
         )
         return jsonify({
-            "token": access_token, 
+            "token": access_token,
             "user": {"id": owner.id, "name": owner.name, "role": "owner"}
         }), 200
     return jsonify({"msg": "Email o contraseña incorrectos"}), 401
@@ -220,13 +224,16 @@ def new_user():
         return jsonify({"message": {"type": "error", "msg": "Necesitas una contraseña"}}), 400
     if len(password) < 8:
         return jsonify({"message": {"type": "error", "msg": "La contraseña debe tener al menos 8 caracteres"}}), 400
+    if len(phone) < 8:
+        return jsonify({"message": {"type": "error", "msg": "Introduce un número de teléfono correcto"}}), 400
     if not email:
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar un email"}}), 400
     if not phone:
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar un teléfono"}}), 400
 
-    new_user = User(name=name, last_name=last_name, email=email, phone=phone, notes=notes, client_profile_image=client_profile_image)
-    
+    new_user = User(name=name, last_name=last_name, email=email, phone=phone,
+                    notes=notes, client_profile_image=client_profile_image)
+
     new_user.set_password(password)
 
     db.session.add(new_user)
@@ -295,6 +302,8 @@ def edit_user(user_id):
         if existing_phone:
             return jsonify({"message": {"type": "error", "msg": "Teléfono ya registrado"}}), 409
         user.phone = data["phone"]
+        if len(user.phone) < 8:
+            return jsonify({"message": {"type": "error", "msg": "Introduce un número de teléfono correcto"}}), 400
 
     user.name = data.get("name", user.name)
     user.last_name = data.get("last_name", user.last_name)
@@ -349,7 +358,8 @@ def get_my_barbershops():
 @api.route("/barbershops", methods=["GET"])
 def get_barbershops():
     barbershops = Barbershop.query.order_by(Barbershop.id).all()
-    data = [barbershop.serialize() for barbershop in barbershops]
+    data = [barbershop.serialize()
+            for barbershop in barbershops if barbershop.active_subscription()]
     return jsonify(data), 200
 
 
@@ -370,6 +380,10 @@ def new_barbershop():
 
     owner_id = data.get(
         "owner_id", current_user_id) if role == "admin" else current_user_id
+
+    if len(data.get("phone")) < 8:
+        return jsonify({"message": {"type": "error", "msg": "Introduce un número de teléfono correcto"}}), 400
+
     new_barbsh = Barbershop(
         name=data.get("name"),
         address=data.get("address"),
@@ -555,7 +569,8 @@ def new_owner():
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar una contraseña"}}), 400
     if len(password) < 8:
         return jsonify({"message": {"type": "error", "msg": "La contraseña debe tener al menos 8 caracteres"}}), 400
-
+    if len(phone) < 8:
+        return jsonify({"message": {"type": "error", "msg": "Introduce un número de teléfono correcto"}}), 400
     if Owner.query.filter_by(email=email).first():
         return jsonify({"message": {"type": "error", "msg": "Email ya registrado"}}), 409
     if Owner.query.filter_by(phone=phone).first():
@@ -684,12 +699,14 @@ def new_barber():
         return jsonify({"message": {"type": "error", "msg": "Necesitas indicar una contraseña"}}), 400
     if len(password) < 8:
         return jsonify({"message": {"type": "error", "msg": "La contraseña debe tener al menos 8 caracteres"}}), 400
-
+    if len(phone) < 8:
+        return jsonify({"message": {"type": "error", "msg": "Introduce un número de teléfono correcto"}}), 400
     if Barber.query.filter_by(email=email).first():
         return jsonify({"message": {"type": "error", "msg": "Email ya registrado"}}), 409
 
-    new_barber = Barber(name=name, email=email, phone=phone, barber_profile_image=barber_profile_image)
-    
+    new_barber = Barber(name=name, email=email, phone=phone,
+                        barber_profile_image=barber_profile_image)
+
     new_barber.set_password(password)
     db.session.add(new_barber)
     db.session.commit()
@@ -745,7 +762,7 @@ def edit_barber(barber_id):
 
     if "password" in data and data["password"]:
         barber.set_password(data["password"])
-        
+
     db.session.commit()
     return jsonify({"message": {"type": "success", "msg": f"Barbero {barber.name} actualizado"}}), 200
 
@@ -792,6 +809,7 @@ def get_barber_invitations():
         ).all()
 
     return jsonify([invite.serialize() for invite in invitations]), 200
+
 
 @api.route("/invitations", methods=["POST"])
 @jwt_required()
@@ -1071,8 +1089,9 @@ def delete_schedule(schedule_id):
 @jwt_required()
 def get_schedules_by_invitation(invitation_id):
     try:
-        schedules = Schedule.query.filter_by(barber_barbershop_id=invitation_id).all()
-        
+        schedules = Schedule.query.filter_by(
+            barber_barbershop_id=invitation_id).all()
+
         return jsonify([s.serialize() for s in schedules]), 200
     except Exception as e:
         return jsonify({"msg": str(e)}), 500
@@ -1082,7 +1101,8 @@ def get_schedules_by_invitation(invitation_id):
 @jwt_required()
 def delete_schedules_by_invitation(invitation_id):
     try:
-        schedules = Schedule.query.filter_by(barber_barbershop_id=invitation_id).all()
+        schedules = Schedule.query.filter_by(
+            barber_barbershop_id=invitation_id).all()
         for s in schedules:
             db.session.delete(s)
         db.session.commit()
@@ -1489,8 +1509,6 @@ def change_appointment_status(appointment_id):
     if not appointment:
         return jsonify({"message": {"type": "error", "msg": "Cita no encontrada"}}), 404
 
-
-
     try:
         user_id_int = int(current_user_id)
         is_barber = (role == "barber" and int(
@@ -1771,13 +1789,13 @@ def delete_conversation(conv_id):
 def edit_hair():
     stability_key = os.getenv("STABILITY_API_KEY")
     translator = deepl.Translator(os.environ.get('DEEPL_API_KEY'))
-    
+
     if not stability_key:
         return jsonify({"msg": "Error: API Key no configurada en el servidor"}), 500
 
     if 'image' not in request.files:
         return jsonify({"msg": "No se ha subido ninguna imagen"}), 400
-        
+
     image = request.files['image']
     prompt = request.form.get('prompt')
     search_prompt = request.form.get('search_prompt', 'hair')
@@ -1791,7 +1809,8 @@ def edit_hair():
                 "authorization": f"Bearer {stability_key}",
                 "accept": "image/*"
             },
-            files={"image": (image.filename, image.read(), image.content_type)},
+            files={"image": (image.filename, image.read(),
+                             image.content_type)},
             data={
                 "prompt": prompt_en_ingles,
                 "search_prompt": search_prompt,
@@ -1810,6 +1829,124 @@ def edit_hair():
 
     except Exception as e:
         return jsonify({"msg": "Fallo en la conexión con el servicio de IA"}), 500
+
+
+# ENPOINTS DE STRIPE
+
+@api.route('/verify-subscription', methods=['GET'])
+@jwt_required()
+def check_subscription_status():
+    current_user_id = get_jwt_identity()
+    owner = Owner.query.get(current_user_id)
+
+    if not owner or not owner.subscription_id:
+        return jsonify({"active_subscription": False, "next_payment": None}), 200
+
+    try:
+        subscription = stripe.Subscription.retrieve(owner.subscription_id)
+        is_active = (subscription.status in ['active', 'trialing'])
+
+        # 1. VARIABLE DE ORO: Si Stripe nos da el final, lo usamos y punto.
+        ts_end = subscription.get('current_period_end')
+
+        if ts_end:
+            # Esto nos da la fecha exacta que tiene Stripe en sus servidores
+            end_date = datetime.fromtimestamp(ts_end)
+            print(f"DEBUG: Usando fecha oficial de Stripe: {end_date}")
+        else:
+            # 2. PLAN B: Si Stripe no la manda, calculamos manualmente
+            start_ts = subscription.get('current_period_start')
+            start_date = datetime.fromtimestamp(
+                start_ts) if start_ts else datetime.now()
+            price_id = subscription['items']['data'][0]['price']['id']
+
+            # Cargamos IDs limpios
+            MONTHLY = (os.getenv("PRICE_ONE_MONTH") or "").strip()
+            QUARTERLY = (os.getenv("PRICE_THREE_MONTHS") or "").strip()
+            YEARLY = (os.getenv("PRICE_TWELVE_MONTHS") or "").strip()
+
+            # PRIORIDAD: Comprobamos el anual PRIMERO
+            if price_id == YEARLY:
+                end_date = start_date + timedelta(days=365)
+                print("DEBUG: Detectado Plan ANUAL (Manual)")
+            elif price_id == QUARTERLY:
+                end_date = start_date + timedelta(days=90)
+                print("DEBUG: Detectado Plan TRIMESTRAL (Manual)")
+            elif price_id == MONTHLY:
+                end_date = start_date + timedelta(days=30)
+                print("DEBUG: Detectado Plan MENSUAL (Manual)")
+            else:
+                end_date = start_date + timedelta(days=30)
+                print("DEBUG: ID no reconocido, asignando 30 días")
+
+        return jsonify({
+            "active_subscription": is_active,
+            "next_payment": end_date.strftime('%d/%m/%Y')
+        }), 200
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"active_subscription": False, "error": str(e)}), 500
+
+
+@api.route('/activate-subscription', methods=['POST'])
+@jwt_required()
+def activate_subscription():
+    current_user_id = get_jwt_identity()
+    owner = Owner.query.get(current_user_id)
+    data = request.json
+    session_id = data.get('session_id')
+
+    if not owner or not session_id:
+        return jsonify({"msg": "Datos incompletos"}), 400
+
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+        if session.payment_status == 'paid':
+            owner.active_subscription = True
+            owner.stripe_owner_id = session.customer
+            owner.subscription_id = session.subscription
+            db.session.commit()
+            return jsonify({"active_subscription": True}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify({"active_subscription": False}), 400
+
+
+@api.route('/create-checkout-session', methods=['POST'])
+@jwt_required()
+def create_checkout_session():
+    current_user_id = get_jwt_identity()
+    claims = get_jwt()
+    if claims.get("role") != "owner":
+        return jsonify({"msg": "No tienes permisos"}), 403
+
+    data = request.json
+
+    plan_type = data.get('plan')
+
+    if plan_type == 'mensual':
+        price_id = os.getenv("PRICE_ONE_MONTH")
+    elif plan_type == 'trimestral':
+        price_id = os.getenv("PRICE_THREE_MONTHS")
+    elif plan_type == 'anual':
+        price_id = os.getenv("PRICE_TWELVE_MONTHS")
+
+    try:
+        session = stripe.checkout.Session.create(
+            client_reference_id=current_user_id,
+            payment_method_types=['card'],
+            line_items=[{'price': price_id, 'quantity': 1}],
+            mode='subscription',
+            success_url=f"{os.getenv('VITE_FRONTEND_URL')}/subscription?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{os.getenv('VITE_FRONTEND_URL')}/pricing",
+        )
+
+        return jsonify({'url': session.url})
+    except Exception as e:
+        return jsonify(error=str(e)), 500
 
 
 # NO TOCAR
