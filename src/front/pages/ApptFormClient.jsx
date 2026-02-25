@@ -158,6 +158,8 @@ export const ApptFormClient = () => {
         Number(s.barber_id) === Number(data.barber_id)
     );
 
+    const selectedServiceInfo = store.barber_services?.find(s => s.id == data.barber_service_id);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -310,6 +312,14 @@ export const ApptFormClient = () => {
                                     <option key={s.id} value={s.id}>{s.name} ({s.price}€)</option>
                                 ))}
                             </select>
+                            {selectedServiceInfo?.service_description && (
+                                <div className="mt-2 animate__animated animate__fadeIn">
+                                    <p className="text-muted small Oswald mb-0" style={{ borderLeft: '2px solid #d19f68', paddingLeft: '10px', fontStyle: 'italic' }}>
+
+                                        {selectedServiceInfo.service_description}
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
 

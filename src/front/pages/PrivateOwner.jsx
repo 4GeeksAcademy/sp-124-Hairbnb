@@ -21,7 +21,6 @@ export const PrivateOwner = () => {
         });
 
         const data = await response.json();
-        console.log("Datos de suscripción recibidos:", data);
 
         setSubscription({
           active: data.active_subscription,
