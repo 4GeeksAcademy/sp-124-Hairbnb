@@ -8,7 +8,7 @@ from flask_admin.contrib.sqla import ModelView
 
 def setup_admin(app):
     app.secret_key = os.environ.get('FLASK_APP_KEY', 'sample key')
-    admin = Admin(app, name='HairBnB', template_mode='bootstrap4')
+    admin = Admin(app, name='HairBnB')
 
     # Dynamically add all models to the admin interface
     for name, obj in inspect.getmembers(models):
