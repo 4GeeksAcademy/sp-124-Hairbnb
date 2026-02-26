@@ -13,11 +13,116 @@ export const ClientRegister = () => {
     const [step, setStep] = useState(1);
 
     const [form, setForm] = useState({
-        name: "", last_name: "", email: "", phone: "",
-        password: "", confirmPassword: "", notes: "", client_profile_image: ""
+        name: "", 
+        last_name: "", 
+        email: "", 
+        phone: "",
+        password: "", 
+        confirmPassword: "", 
+        notes: "", 
+        client_profile_image: ""
     });
 
+    useEffect(() => {
+        const loadClientData = async () => {
+            if (isEditing && store.userInfo?.id) {
+                try {
+                    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/${store.userInfo.id}`, {
+                        method: "GET",
+                        headers: { "Authorization": `Bearer ${store.token}` }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        setForm({
+                            name: data.name || "",
+                            last_name: data.last_name || "",
+                            email: data.email || "",
+                            phone: data.phone || "",
+                            notes: data.notes || "",
+                            client_profile_image: data.client_profile_image || "",
+                            password: "",
+                            confirmPassword: ""
+                        });
+                    }
+                } catch (error) {
+                    console.error("Error cargando datos del cliente:", error);
+                }
+            }
+        };
+        loadClientData();
+    }, [isEditing, store.token, store.userInfo?.id]);
+
     const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+
+    const nextStep = (e) => {
+        e.preventDefault();
+        if (!form.email || !form.password) {
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Email y contraseña son obligatorios" } });
+            return;
+        }
+        if (form.password !== form.confirmPassword) {
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Las contraseñas no coinciden" } });
+            return;
+        }
+        setStep(2);
+    };
+
+    const handleSubmit = async e => {
+        e.preventDefault();
+
+        const method = isEditing ? "PUT" : "POST";
+        const url = isEditing
+            ? `${import.meta.env.VITE_BACKEND_URL}/users/${store.userInfo.id}`
+            : `${import.meta.env.VITE_BACKEND_URL}/users`;
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(isEditing && { "Authorization": `Bearer ${store.token}` })
+                },
+                body: JSON.stringify({
+                    name: form.name,
+                    last_name: form.last_name,
+                    email: form.email,
+                    phone: form.phone,
+                    notes: form.notes,
+                    client_profile_image: form.client_profile_image,
+                    ...(form.password && { password: form.password })
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                dispatch({ type: "set-message", payload: { type: "error", msg: data.msg || "Algo ha fallado" } });
+                return;
+            }
+
+            if (isEditing) {
+                dispatch({ type: "set-userInfo", payload: data.user || { ...store.userInfo, ...form } });
+                dispatch({ type: "set-message", payload: { type: "success", msg: "Perfil actualizado correctamente" } });
+                navigate("/private/client");
+            } else {
+                dispatch({ type: "set-message", payload: { type: "success", msg: "¡Cuenta creada! Ya puedes iniciar sesión" } });
+                navigate("/login/client");
+            }
+        } catch (err) {
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
+        }
+    };
+
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setUploading(true);
+        const imageUrl = await uploadToCloudinary(file);
+        if (imageUrl) {
+            setForm(prev => ({ ...prev, client_profile_image: imageUrl }));
+        }
+        setUploading(false);
+    };
 
     return (
         <div className="auth-page-container">
@@ -76,7 +181,8 @@ export const ClientRegister = () => {
                                     </div>
                                 )}
                             </div>
-                            <input type="file" className="form-control form-control-sm mb-4" onChange={() => { }} accept="image/*" />
+                            <input type="file" className="form-control form-control-sm mx-auto" style={{ maxWidth: "250px" }} onChange={handleFileChange} accept="image/*" disabled={uploading} />
+                                {uploading && <small className="text-danger d-block mt-2">Subiendo imagen...</small>}
 
                             <div className="row">
                                 <div className="col-md-6 mb-3">
@@ -99,7 +205,7 @@ export const ClientRegister = () => {
                                 {!isEditing && (
                                     <button type="button" className="btn-auth-secondary" onClick={() => setStep(1)}>Atrás</button>
                                 )}
-                                <button type="submit" className="btn-auth-main">
+                                <button onClick={handleSubmit} className="btn-auth-main">
                                     {isEditing ? "ACTUALIZAR" : "CREAR"}
                                 </button>
                             </div>
