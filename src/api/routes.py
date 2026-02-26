@@ -1346,7 +1346,7 @@ def new_appointment():
         Appointment.barber_id == barber_service.barber_id,
         Appointment.date < new_end_time,
         Appointment.end_time > start_date,
-        Appointment.status.in_(['pending', 'confirmed', 'completed'])
+        Appointment.status.in_(['pending', 'confirmed'])
     ).first()
 
     if collision:

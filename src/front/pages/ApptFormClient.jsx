@@ -29,10 +29,15 @@ export const ApptFormClient = () => {
     const [startDate, setStartDate] = useState(new Date());
 
     const getDaysArray = (start) => {
+        const d = new Date(start);
+        const dayName = d.getDay();
+        const diff = d.getDate() - dayName + (dayName === 0 ? -6 : 1);
+        const monday = new Date(d.setDate(diff));
+
         return Array.from({ length: 7 }, (_, i) => {
-            const d = new Date(start);
-            d.setDate(d.getDate() + i);
-            return d;
+            const date = new Date(monday);
+            date.setDate(monday.getDate() + i);
+            return date;
         });
     };
 
@@ -97,6 +102,7 @@ export const ApptFormClient = () => {
     useEffect(() => {
         const fetchSlots = async () => {
             if (data.barber_id && data.barbershop_id && data.date && data.barber_service_id) {
+                // Asegúrate de enviar service_id para que el back calcule la duración
                 const url = `${import.meta.env.VITE_BACKEND_URL}/barber_availability?barber_id=${data.barber_id}&barbershop_id=${data.barbershop_id}&date=${data.date}&service_id=${data.barber_service_id}`;
 
                 try {
@@ -105,6 +111,8 @@ export const ApptFormClient = () => {
                     });
                     if (responseSlots.ok) {
                         let slots = await responseSlots.json();
+
+                        // Lógica para edición
                         if (isEditing && data.date === editData.date.split("T")[0] && !slots.includes(data.time)) {
                             slots.push(data.time);
                             slots.sort();
@@ -127,7 +135,8 @@ export const ApptFormClient = () => {
             const availabilityMap = {};
 
             const promises = days.map(async (day) => {
-                const dateStr = day.toISOString().split('T')[0];
+                const dateStr = getLocalDateString(day);
+
                 if (isPast(day)) return;
 
                 try {
@@ -148,7 +157,7 @@ export const ApptFormClient = () => {
         };
 
         checkMultipleDays();
-    }, [startDate, data.barber_id, data.barber_service_id]);
+    }, [startDate, data.barber_id, data.barber_service_id, data.barbershop_id]);
 
     const currentBarbers = store.barbers?.filter(inv =>
         inv.status === "accepted" && Number(inv.barbershop_id) === Number(data.barbershop_id)
@@ -211,6 +220,13 @@ export const ApptFormClient = () => {
     };
 
     const [daysAvailability, setDaysAvailability] = useState({});
+
+    const getLocalDateString = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
 
     useEffect(() => {
         const checkMultipleDays = async () => {
@@ -352,7 +368,7 @@ export const ApptFormClient = () => {
 
                                 <div className="d-flex gap-2 overflow-auto pb-2">
                                     {days.map((day, index) => {
-                                        const dateString = day.toISOString().split('T')[0];
+                                        const dateString = getLocalDateString(day);
                                         const isActive = data.date === dateString;
                                         const isPastDay = isPast(day);
                                         const hasSlots = daysAvailability[dateString];
