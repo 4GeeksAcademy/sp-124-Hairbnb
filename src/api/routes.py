@@ -25,16 +25,10 @@ api = Blueprint('api', __name__)
 # Allow CORS requests to this API
 CORS(api)
 
-# load_dotenv()
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-stripe.default_http_client = stripe.RequestsClient()
 
-sk = os.getenv("STRIPE_SECRET_KEY")
-if sk:
-    print(f"CONFIRMACIÓN: La clave de Stripe empieza por: {sk[:7]}")
-    stripe.api_key = sk
-else:
-    print("ERROR: Render no está detectando la variable STRIPE_SECRET_KEY")
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+
+
 
 @api.route("/login/admin", methods=["POST"])
 def login_admin():
