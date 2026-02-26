@@ -1,7 +1,7 @@
 -i https://pypi.org/simple
 alembic==1.13.1
 Bcrypt==4.1.2
-certifi==2020.12.5
+certifi>=2024.2.2
 click==8.1.7
 cloudinary==1.24.0
 deepl==1.17.0
@@ -27,9 +27,10 @@ python-dateutil==2.8.1
 python-dotenv==0.15.0
 python-editor==1.0.4
 PyYAML==6.0.1
+requests>=2.31.0
 six==1.15.0
 stripe==11.5.0
 SQLAlchemy==2.0.25
-urllib3==1.26.3
+urllib3>=2.0.0
 Werkzeug==3.0.1
 wtforms==2.3.3

@@ -27,7 +27,7 @@ CORS(api)
 
 load_dotenv()
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-
+stripe.default_http_client = stripe.RequestsClient()
 
 @api.route("/login/admin", methods=["POST"])
 def login_admin():
@@ -1846,26 +1846,21 @@ def check_subscription_status():
         subscription = stripe.Subscription.retrieve(owner.subscription_id)
         is_active = (subscription.status in ['active', 'trialing'])
 
-        # 1. VARIABLE DE ORO: Si Stripe nos da el final, lo usamos y punto.
         ts_end = subscription.get('current_period_end')
 
         if ts_end:
-            # Esto nos da la fecha exacta que tiene Stripe en sus servidores
             end_date = datetime.fromtimestamp(ts_end)
             print(f"DEBUG: Usando fecha oficial de Stripe: {end_date}")
         else:
-            # 2. PLAN B: Si Stripe no la manda, calculamos manualmente
             start_ts = subscription.get('current_period_start')
             start_date = datetime.fromtimestamp(
                 start_ts) if start_ts else datetime.now()
             price_id = subscription['items']['data'][0]['price']['id']
 
-            # Cargamos IDs limpios
             MONTHLY = (os.getenv("PRICE_ONE_MONTH") or "").strip()
             QUARTERLY = (os.getenv("PRICE_THREE_MONTHS") or "").strip()
             YEARLY = (os.getenv("PRICE_TWELVE_MONTHS") or "").strip()
 
-            # PRIORIDAD: Comprobamos el anual PRIMERO
             if price_id == YEARLY:
                 end_date = start_date + timedelta(days=365)
                 print("DEBUG: Detectado Plan ANUAL (Manual)")
