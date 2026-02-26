@@ -29,6 +29,21 @@ load_dotenv()
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 
+@api.route("/setup-admin-secret", methods=["GET"])
+def setup_admin():
+    exists = AdminUser.query.filter_by(email="admin@hairbnb.com").first()
+    if not exists:
+        new_admin = AdminUser(
+            name="Super admin",
+            email="admin@hairbnb.com"
+        )
+        new_admin.set_password("admin123")
+        db.session.add(new_admin)
+        db.session.commit()
+        return "Admin creado con éxito", 201
+    return "El admin ya existe", 200
+
+
 @api.route("/login/admin", methods=["POST"])
 def login_admin():
     email = request.json.get("email")
