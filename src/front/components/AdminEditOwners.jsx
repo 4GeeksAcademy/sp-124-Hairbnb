@@ -24,7 +24,7 @@ export const AdminEditOwner = () => {
         const loadOwnerData = async () => {
             if (!isEditing) return;
             try {
-                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/${id}`, {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/owners/${id}`, {
                     headers: { "Authorization": `Bearer ${store.token}` }
                 });
 
@@ -45,7 +45,7 @@ export const AdminEditOwner = () => {
             }
         };
         loadOwnerData();
-    }, [id, isEditing, store.token]);
+    }, [id, isEditing, store.token, dispatch]);
 
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
@@ -75,8 +75,8 @@ export const AdminEditOwner = () => {
 
         const method = isEditing ? "PUT" : "POST";
         const url = isEditing
-            ? `${import.meta.env.VITE_BACKEND_URL}/users/${id}`
-            : `${import.meta.env.VITE_BACKEND_URL}/users`;
+            ? `${import.meta.env.VITE_BACKEND_URL}/owners/${id}`
+            : `${import.meta.env.VITE_BACKEND_URL}/owners`;
 
         try {
             const response = await fetch(url, {

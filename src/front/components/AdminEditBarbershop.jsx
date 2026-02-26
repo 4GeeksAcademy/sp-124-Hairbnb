@@ -108,6 +108,15 @@ export const AdminEditBarbershop = () => {
 
     const handleSubmit = async e => {
         e.preventDefault();
+
+        if (!form.latitude || !form.longitude) {
+            dispatch({
+                type: "set-message",
+                payload: { type: "error", msg: "Debes seleccionar una dirección de la lista de Google para obtener coordenadas." }
+            });
+            return;
+        }
+        
         const method = isEditing ? "PUT" : "POST";
         const url = isEditing ? `${import.meta.env.VITE_BACKEND_URL}/barbershops/${id}` : `${import.meta.env.VITE_BACKEND_URL}/barbershops`;
 

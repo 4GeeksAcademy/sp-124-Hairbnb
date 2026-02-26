@@ -18,7 +18,7 @@ export const AdminEditClient = () => {
         password: "",
         confirmPassword: "",
         notes: "",
-        profile_image: ""
+        client_profile_image: ""
     });
 
     useEffect(() => {
@@ -37,17 +37,22 @@ export const AdminEditClient = () => {
                         email: data.email || "",
                         phone: data.phone || "",
                         notes: data.notes || "",
-                        profile_image: data.profile_image || "",
+                        client_profile_image: data.client_profile_image || "",
                         password: "",
                         confirmPassword: ""
                     });
-                }
-            } catch (error) {
+                } else {
+                    dispatch({
+                        type: "set-message",
+                        payload: { type: "error", msg: "No se pudo cargar la información del cliente" }
+                    });
+                }}
+            catch (error) {
                 console.error("Error:", error);
             }
         };
         loadClientData();
-    }, [id, isEditing, store.token]);
+    }, [id, isEditing, store.token, dispatch]);
 
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
