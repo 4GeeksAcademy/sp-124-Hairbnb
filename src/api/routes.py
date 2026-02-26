@@ -1920,6 +1920,7 @@ def activate_subscription():
 @api.route('/create-checkout-session', methods=['POST'])
 @jwt_required()
 def create_checkout_session():
+    
     current_user_id = get_jwt_identity()
     
     frontend_url = os.getenv('VITE_FRONTEND_URL')
@@ -1936,6 +1937,9 @@ def create_checkout_session():
     }
     
     price_id = prices.get(plan_type)
+    
+    print("PLAN TYPE:", plan_type)
+    print("PRICE ID:", price_id)
 
     try:
         session = stripe.checkout.Session.create(
