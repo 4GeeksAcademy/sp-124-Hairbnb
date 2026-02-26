@@ -1940,18 +1940,17 @@ def create_checkout_session():
     stripe.log = 'debug'
     try:
         session = stripe.checkout.Session.create(
-        client_reference_id=str(current_user_id),
-        payment_method_types=['card'],
-        line_items=[{'price': price_id, 'quantity': 1}],
-        mode='subscription',
-        success_url=f"{frontend_url.rstrip('/')}/subscription?session_id={{CHECKOUT_SESSION_ID}}",
-        cancel_url=f"{frontend_url.rstrip('/')}/pricing",
-        request_options={'timeout': 10}
-        )
-        return jsonify({'url': session.url})
-    except Exception as e:
-        print(f">>> ERROR STRIPE: {str(e)}")
-        return jsonify(error=str(e)), 500
+            client_reference_id=str(current_user_id),
+            payment_method_types=['card'],
+            line_items=[{'price': price_id, 'quantity': 1}],
+            mode='subscription',
+            success_url=f"{frontend_url.rstrip('/')}/subscription?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{frontend_url.rstrip('/')}/pricing",
+            request_options={'timeout': 10}  # <--- timeout seguro
+    )
+    except stripe.error.APIConnectionError as e:
+        print(f"ERROR DE CONEXIÓN CON STRIPE: {e}")
+        return jsonify({"error": "No se pudo conectar con Stripe. Intenta más tarde."}), 500
     
 
 
