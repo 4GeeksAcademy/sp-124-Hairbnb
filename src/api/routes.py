@@ -1919,37 +1919,42 @@ def activate_subscription():
 @api.route('/create-checkout-session', methods=['POST'])
 @jwt_required()
 def create_checkout_session():
-    print("¡PETICIÓN RECIBIDA!", flush=True)
-    print("Probando respuesta sin Stripe...", flush=True)
-    current_user_id = get_jwt_identity()
-    claims = get_jwt()
-    if claims.get("role") != "owner":
-        return jsonify({"msg": "No tienes permisos"}), 403
-
-    data = request.json
-
-    plan_type = data.get('plan')
-
-    if plan_type == 'mensual':
-        price_id = os.getenv("PRICE_ONE_MONTH")
-    elif plan_type == 'trimestral':
-        price_id = os.getenv("PRICE_THREE_MONTHS")
-    elif plan_type == 'anual':
-        price_id = os.getenv("PRICE_TWELVE_MONTHS")
-
+    print(">>> [DEBUG] Entrando en create_checkout_session", flush=True)
+    
+    sk = os.getenv("STRIPE_SECRET_KEY")
+    print(f">>> [DEBUG] ¿Key configurada?: {'SÍ' if sk else 'NO'}", flush=True)
+    
     try:
+        data = request.json
+        plan_type = data.get('plan')
+        print(f">>> [DEBUG] Plan recibido: {plan_type}", flush=True)
+
+        price_id = os.getenv(f"PRICE_{plan_type.upper()}") # O como los tengas nombrados
+        if not price_id:
+             if plan_type == 'mensual': price_id = os.getenv("PRICE_ONE_MONTH")
+             elif plan_type == 'trimestral': price_id = os.getenv("PRICE_THREE_MONTHS")
+             elif plan_type == 'anual': price_id = os.getenv("PRICE_TWELVE_MONTHS")
+
+        print(f">>> [DEBUG] Price ID encontrado: {price_id}", flush=True)
+
         session = stripe.checkout.Session.create(
-            client_reference_id=current_user_id,
+            client_reference_id=str(get_jwt_identity()),
             payment_method_types=['card'],
             line_items=[{'price': price_id, 'quantity': 1}],
             mode='subscription',
-            success_url=f"{os.getenv('VITE_FRONTEND_URL')}/subscription?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{os.getenv('VITE_FRONTEND_URL')}/pricing",
+            success_url=f"{os.getenv('VITE_FRONTEND_URL').rstrip('/')}/subscription?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{os.getenv('VITE_FRONTEND_URL').rstrip('/')}/pricing",
         )
-
+        
+        print(f">>> [DEBUG] Sesión creada: {session.id}", flush=True)
         return jsonify({'url': session.url})
+
     except Exception as e:
-        return jsonify(error=str(e)), 500
+        import traceback
+        print(">>> [ERROR] Falló la creación de sesión:", flush=True)
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    
 
 
 # NO TOCAR
