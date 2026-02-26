@@ -1940,6 +1940,8 @@ def create_checkout_session():
     
     print("PLAN TYPE:", plan_type)
     print("PRICE ID:", price_id)
+    print("STRIPE VERSION:", stripe.__version__)
+    print("STRIPE API KEY SET:", bool(os.getenv("STRIPE_SECRET_KEY")))
 
     try:
         session = stripe.checkout.Session.create(
