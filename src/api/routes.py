@@ -1914,37 +1914,35 @@ def activate_subscription():
 @api.route('/create-checkout-session', methods=['POST'])
 @jwt_required()
 def create_checkout_session():
-    
     current_user_id = get_jwt_identity()
-    
-    frontend_url = os.getenv('VITE_FRONTEND_URL')
-    if not frontend_url:
-        frontend_url = "https://hairbnb-bw01.onrender.com"
+    claims = get_jwt()
+    if claims.get("role") != "owner":
+        return jsonify({"msg": "No tienes permisos"}), 403
 
     data = request.json
+
     plan_type = data.get('plan')
 
-    prices = {
-        'mensual': os.getenv("PRICE_ONE_MONTH"),
-        'trimestral': os.getenv("PRICE_THREE_MONTHS"),
-        'anual': os.getenv("PRICE_TWELVE_MONTHS")
-    }
-    
-    price_id = prices.get(plan_type)
-    stripe.log = 'debug'
+    if plan_type == 'mensual':
+        price_id = os.getenv("PRICE_ONE_MONTH")
+    elif plan_type == 'trimestral':
+        price_id = os.getenv("PRICE_THREE_MONTHS")
+    elif plan_type == 'anual':
+        price_id = os.getenv("PRICE_TWELVE_MONTHS")
+
     try:
         session = stripe.checkout.Session.create(
-            client_reference_id=str(current_user_id),
+            client_reference_id=current_user_id,
             payment_method_types=['card'],
             line_items=[{'price': price_id, 'quantity': 1}],
             mode='subscription',
-            success_url=f"{frontend_url.rstrip('/')}/subscription?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{frontend_url.rstrip('/')}/pricing",
-            request_options={'timeout': 10}  # <--- timeout seguro
-    )
-    except stripe.error.APIConnectionError as e:
-        print(f"ERROR DE CONEXIÓN CON STRIPE: {e}")
-        return jsonify({"error": "No se pudo conectar con Stripe. Intenta más tarde."}), 500
+            success_url=f"{os.getenv('VITE_FRONTEND_URL')}/subscription?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{os.getenv('VITE_FRONTEND_URL')}/pricing",
+        )
+
+        return jsonify({'url': session.url})
+    except Exception as e:
+        return jsonify(error=str(e)), 500
     
 
 
