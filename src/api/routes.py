@@ -1940,12 +1940,13 @@ def create_checkout_session():
 
     try:
         session = stripe.checkout.Session.create(
-            client_reference_id=str(current_user_id),
-            payment_method_types=['card'],
-            line_items=[{'price': price_id, 'quantity': 1}],
-            mode='subscription',
-            success_url=f"{frontend_url.rstrip('/')}/subscription?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{frontend_url.rstrip('/')}/pricing",
+        client_reference_id=str(current_user_id),
+        payment_method_types=['card'],
+        line_items=[{'price': price_id, 'quantity': 1}],
+        mode='subscription',
+        success_url=f"{frontend_url.rstrip('/')}/subscription?session_id={{CHECKOUT_SESSION_ID}}",
+        cancel_url=f"{frontend_url.rstrip('/')}/pricing",
+        request_options={'timeout': 10}
         )
         return jsonify({'url': session.url})
     except Exception as e:
