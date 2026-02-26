@@ -40,7 +40,6 @@ export const AdminLogin = () => {
                 return;
             }
 
-            // Guardamos la sesión
             localStorage.setItem("token", data.token);
             localStorage.setItem("role", data.user.role);
             localStorage.setItem("userInfo", JSON.stringify(data.user));
@@ -55,8 +54,7 @@ export const AdminLogin = () => {
                 }
             });
 
-            // Redirigir al panel de admin después del login
-            navigate("/admin/dashboard"); 
+            navigate("/4dm1n1str4t10n"); 
 
         } catch (err) {
             dispatch({
