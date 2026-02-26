@@ -1937,7 +1937,7 @@ def create_checkout_session():
     }
     
     price_id = prices.get(plan_type)
-
+    stripe.log = 'debug'
     try:
         session = stripe.checkout.Session.create(
         client_reference_id=str(current_user_id),
