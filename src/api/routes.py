@@ -1919,6 +1919,8 @@ def activate_subscription():
 @api.route('/create-checkout-session', methods=['POST'])
 @jwt_required()
 def create_checkout_session():
+    print("¡PETICIÓN RECIBIDA!", flush=True)
+    print("Probando respuesta sin Stripe...", flush=True)
     current_user_id = get_jwt_identity()
     claims = get_jwt()
     if claims.get("role") != "owner":
