@@ -17,6 +17,13 @@ app = Flask(__name__)
 app.url_map.strict_slashes = False
 bcrypt = Bcrypt(app)
 
+socketio = SocketIO(app, 
+    cors_allowed_origins="*", 
+    async_mode='threading',   
+    logger=True, 
+    engineio_logger=True
+)
+
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24)
 jwt = JWTManager(app)

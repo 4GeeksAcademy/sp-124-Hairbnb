@@ -15,6 +15,11 @@ export const MessagesPage = () => {
     const socketRef = useRef(null);
     const isClient = store.role === "client";
 
+    const socket = io(process.env.VITE_BACKEND_URL, {
+    transports: ['polling', 'websocket'],
+    withCredentials: true
+    });
+
     const loadConversations = async () => {
         try {
             const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/conversations`, {
