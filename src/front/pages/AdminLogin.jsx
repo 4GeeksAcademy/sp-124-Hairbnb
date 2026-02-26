@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-import "../styles/authforms.css"
+import "../styles/authforms.css";
 
 export const AdminLogin = () => {
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
-
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
@@ -41,19 +40,13 @@ export const AdminLogin = () => {
                 return;
             }
 
+            // Guardamos la sesión
             localStorage.setItem("token", data.token);
             localStorage.setItem("role", data.user.role);
             localStorage.setItem("userInfo", JSON.stringify(data.user));
 
-            dispatch({
-                type: "login",
-                payload: {
-                    token: data.token,
-                    username: data.user.name,
-                    role: "admin"
-                }
-            });
-
+            dispatch({ type: "login", payload: data.user });
+            
             dispatch({
                 type: "set-message",
                 payload: {
@@ -62,7 +55,8 @@ export const AdminLogin = () => {
                 }
             });
 
-            navigate("/4dm1n1str4t10n");
+            // Redirigir al panel de admin después del login
+            navigate("/admin/dashboard"); 
 
         } catch (err) {
             dispatch({
@@ -79,7 +73,7 @@ export const AdminLogin = () => {
                     <div className="mb-3 d-inline-block p-3 rounded-circle bg-gold-soft">
                         <i className="fa-solid fa-user-shield fa-2x text-gold"></i>
                     </div>
-                    <h1 className="auth-title">Acceso a dministración</h1>
+                    <h1 className="auth-title">Acceso a Administración</h1>
                     <p className="auth-subtitle">Panel de gestión interna Hairbnb</p>
                 </div>
 
