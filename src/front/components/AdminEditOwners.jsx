@@ -12,7 +12,6 @@ export const AdminEditOwner = () => {
 
     const [form, setForm] = useState({
         name: "",
-        last_name: "",
         email: "",
         phone: "",
         profile_image: "",
@@ -32,7 +31,6 @@ export const AdminEditOwner = () => {
                     const data = await response.json();
                     setForm({
                         name: data.name || "",
-                        last_name: data.last_name || "",
                         email: data.email || "",
                         phone: data.phone || "",
                         profile_image: data.profile_image || "",
@@ -143,10 +141,7 @@ export const AdminEditOwner = () => {
                                     <label>Nombre</label>
                                     <input className="select-custom" name="name" value={form.name} onChange={handleChange} required />
                                 </div>
-                                <div className="col-md-6 form-group-custom">
-                                    <label>Apellidos</label>
-                                    <input className="select-custom" name="last_name" value={form.last_name} onChange={handleChange} required />
-                                </div>
+                                
                                 <div className="col-12 form-group-custom">
                                     <label>Correo electrónico</label>
                                     <input className="select-custom" type="email" name="email" value={form.email} onChange={handleChange} required />

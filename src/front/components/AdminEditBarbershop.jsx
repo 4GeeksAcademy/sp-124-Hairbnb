@@ -116,7 +116,7 @@ export const AdminEditBarbershop = () => {
             });
             return;
         }
-        
+
         const method = isEditing ? "PUT" : "POST";
         const url = isEditing ? `${import.meta.env.VITE_BACKEND_URL}/barbershops/${id}` : `${import.meta.env.VITE_BACKEND_URL}/barbershops`;
 
@@ -149,9 +149,19 @@ export const AdminEditBarbershop = () => {
                         </div>
                         <div className="col-md-5 form-group-custom">
                             <label>Dueño</label>
-                            <select className="select-custom border-gold" name="owner_id" value={form.owner_id} onChange={(e) => setForm({ ...form, owner_id: e.target.value })} required>
+                            <select
+                                className="select-custom border-gold"
+                                name="owner_id"
+                                value={String(form.owner_id)}
+                                onChange={(e) => setForm({ ...form, owner_id: e.target.value })}
+                                required
+                            >
                                 <option value="">Seleccionar dueño</option>
-                                {owners.map(o => <option key={o.id} value={o.id}>{o.name} {o.last_name}</option>)}
+                                {owners.map(o => (
+                                    <option key={o.id} value={String(o.id)}>
+                                        {o.name} {o.last_name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 

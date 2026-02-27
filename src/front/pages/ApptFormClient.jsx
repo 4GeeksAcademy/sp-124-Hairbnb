@@ -30,7 +30,7 @@ export const ApptFormClient = () => {
 
     const getDaysArray = (start) => {
         const d = new Date(start);
-        const dayName = d.getDay(); // 0=Dom, 1=Lun...
+        const dayName = d.getDay();
         const diff = d.getDate() - dayName + (dayName === 0 ? -6 : 1);
         const monday = new Date(d.setDate(diff));
 
@@ -102,7 +102,6 @@ export const ApptFormClient = () => {
     useEffect(() => {
         const fetchSlots = async () => {
             if (data.barber_id && data.barbershop_id && data.date && data.barber_service_id) {
-                // Asegúrate de enviar service_id para que el back calcule la duración
                 const url = `${import.meta.env.VITE_BACKEND_URL}/barber_availability?barber_id=${data.barber_id}&barbershop_id=${data.barbershop_id}&date=${data.date}&service_id=${data.barber_service_id}`;
 
                 try {
@@ -112,7 +111,6 @@ export const ApptFormClient = () => {
                     if (responseSlots.ok) {
                         let slots = await responseSlots.json();
 
-                        // Lógica para edición
                         if (isEditing && data.date === editData.date.split("T")[0] && !slots.includes(data.time)) {
                             slots.push(data.time);
                             slots.sort();
@@ -268,12 +266,14 @@ export const ApptFormClient = () => {
 
     if (store.role !== "client") {
         return (
-            <div className="container mt-4">
-                <h2 className="text-danger">Acceso denegado</h2>
-                <p>Inicia sesión como cliente para gestionar la cita.</p>
+            <div className="container py-5 text-center">
+                <h2 className="Oswald fw-bold text-danger">ACCESO DENEGADO</h2>
+                <p>Inicia sesión como cliente para acceder.</p>
+                <button className="btn btn-dark Oswald mt-3" onClick={() => navigate("/login/client")}>INICIAR SESIÓN</button>
             </div>
         );
     }
+
 
     return (
         <div className="container py-5" style={{ maxWidth: '750px' }}>

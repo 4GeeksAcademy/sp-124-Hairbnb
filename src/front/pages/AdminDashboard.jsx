@@ -15,7 +15,6 @@ export const AdminDashboard = () => {
         { route: "barbershops", label: "BARBERÍA", icon: "fa-shop" },
         { route: "owners", label: "DUEÑO", icon: "fa-user-tie" },
         { route: "appointments", label: "CITA", icon: "fa-calendar-check" },
-        { route: "adminusers", label: "ADMIN", icon: "fa-user-shield" },
         { route: "barbers", label: "BARBERO", icon: "fa-scissors" },
         { route: "barber_services", label: "SERVICIO", icon: "fa-hand-sparkles" },
         { route: "schedules", label: "HORARIO", icon: "fa-clock" },

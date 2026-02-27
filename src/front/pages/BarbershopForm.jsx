@@ -120,8 +120,15 @@ export const BarbershopForm = () => {
   };
 
   if (store.role !== "owner") {
-    return <div className="container mt-4"><h2 className="text-danger">Acceso denegado</h2></div>;
-  }
+        return (
+            <div className="container py-5 text-center">
+                <h2 className="Oswald fw-bold text-danger">ACCESO DENEGADO</h2>
+                <p>Inicia sesión como dueño para acceder.</p>
+                <button className="btn btn-dark Oswald mt-3" onClick={() => navigate("/login/owner")}>INICIAR SESIÓN</button>
+            </div>
+        );
+    }
+
 
   return (
     <div className="container py-5" style={{ maxWidth: '950px' }}>

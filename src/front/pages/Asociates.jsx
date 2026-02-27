@@ -247,7 +247,7 @@ export const Asociates = () => {
                                                         </>
                                                     ) : (
                                                         <div className="alert alert-light text-center border-dashed">
-                                                            <p className="small mb-2">Inicia sesión para reservar</p>
+                                                            <p className="small mb-2">Inicia sesión como cliente para reservar</p>
                                                             <button className="btn btn-sm btn-gold-outline Oswald" onClick={() => navigate("/login/client")}>LOGIN</button>
                                                         </div>
                                                     )}

@@ -68,7 +68,8 @@ export const PrivateClient = () => {
         return (
             <div className="container py-5 text-center">
                 <h2 className="Oswald fw-bold text-danger">ACCESO DENEGADO</h2>
-                <button className="btn btn-dark Oswald mt-3" onClick={() => navigate("/login")}>IR AL LOGIN</button>
+                <p>Inicia sesión como cliente para acceder.</p>
+                <button className="btn btn-dark Oswald mt-3" onClick={() => navigate("/login/client")}>INICIAR SESIÓN</button>
             </div>
         );
     }

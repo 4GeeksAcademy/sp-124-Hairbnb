@@ -76,12 +76,14 @@ export const BarberServiceForm = () => {
 
     if (store.role !== "barber") {
         return (
-            <div className="container mt-4">
-                <h2 className="text-danger">Acceso denegado</h2>
-                <p>Inicia sesión como barbero para gestionar tus servicios.</p>
+            <div className="container py-5 text-center">
+                <h2 className="Oswald fw-bold text-danger">ACCESO DENEGADO</h2>
+                <p>Inicia sesión como barbero para acceder.</p>
+                <button className="btn btn-dark Oswald mt-3" onClick={() => navigate("/login/barber")}>INICIAR SESIÓN</button>
             </div>
         );
     }
+
 
     return (
         <div className="container py-5" style={{ maxWidth: "600px" }}>

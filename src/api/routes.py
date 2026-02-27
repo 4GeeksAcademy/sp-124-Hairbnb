@@ -944,9 +944,13 @@ def get_barber_schedules():
 @api.route("/schedules", methods=["POST"])
 @jwt_required()
 def new_schedule():
-    current_barber_id = get_jwt_identity()
+    current_user_id = get_jwt_identity()
+    claims = get_jwt()
+    role = claims.get("role")
+
     data = request.json
     invitation_id = data.get("invitation_id")
+
     day_of_week = data.get("day_of_week")
     start_time_str = data.get("start_time")
     end_time_str = data.get("end_time")
@@ -963,13 +967,16 @@ def new_schedule():
     if new_end <= new_start:
         return jsonify({"message": {"type": "error", "msg": "La hora de fin debe ser mayor a la de inicio"}}), 400
 
-    link = BarberBarbershop.query.filter_by(
-        id=invitation_id, barber_id=current_barber_id).first()
+    link = BarberBarbershop.query.get(invitation_id)
 
     if not link:
-        return jsonify({"message": {"type": "error", "msg": "Vínculo con barbería no válido o no te pertenece"}}), 403
+        return jsonify({"message": {"type": "error", "msg": "La invitación no existe"}}), 404
+    
+    if role != "admin" and str(link.barber_id) != str(current_user_id):
+        return jsonify({"message": {"type": "error", "msg": "No tienes permiso para editar este horario"}}), 403
+    
     overlapping = db.session.query(Schedule).join(BarberBarbershop).filter(
-        BarberBarbershop.barber_id == current_barber_id,
+        BarberBarbershop.barber_id == link.barber_id, # Usamos link.barber_id
         Schedule.day_of_week == day_of_week
     ).all()
 

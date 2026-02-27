@@ -25,8 +25,6 @@ export const AdminEditForms = () => {
                 return <AdminEditOwner />;
             case "appointments":
                 return <AdminEditAppt />;
-            case "adminusers":
-                return <AdminEditAdmin />;
             case "barber_services":
                 return <AdminEditBarberServices />;
             case "schedules":

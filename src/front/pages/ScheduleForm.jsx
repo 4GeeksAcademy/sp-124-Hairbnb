@@ -100,75 +100,63 @@ export const ScheduleForm = () => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        const invitation = myBarbershops.find(i => String(i.id) === String(selectedInvitation));
-        if (!invitation) return;
+    e.preventDefault();
+    const invitation = myBarbershops.find(i => String(i.id) === String(selectedInvitation));
+    if (!invitation) return;
 
-        const activeDays = Object.keys(weeklySchedule).filter(d => weeklySchedule[d].active);
-
-        for (let day of activeDays) {
-            const myHours = weeklySchedule[day];
-            const shop = invitation.barbershop.working_hours?.[dayLabels[day]];
-
-            if (!shop) {
-                dispatch({ type: "set-message", payload: { type: "error", msg: `El local parece estar cerrado el ${dayLabels[day]}` } });
-                return;
-            }
-
-            const isInsideRange = (start, end) => {
-                if (!start || !end) return true;
-                const s = toN(start);
-                const e = toN(end);
-                const inMorning = shop.m_start && (s >= toN(shop.m_start) && e <= toN(shop.m_end));
-                const inAfternoon = shop.a_start && (s >= toN(shop.a_start) && e <= toN(shop.a_end));
-                return inMorning || inAfternoon;
-            };
-
-            if (!isInsideRange(myHours.t1_start, myHours.t1_end)) {
-                dispatch({ type: "set-message", payload: { type: "error", msg: `Tu Turno 1 del ${dayLabels[day]} está fuera del horario del local.` } });
-                return;
-            }
-
-            if (myHours.t2_start && !isInsideRange(myHours.t2_start, myHours.t2_end)) {
-                dispatch({ type: "set-message", payload: { type: "error", msg: `Tu Turno 2 del ${dayLabels[day]} está fuera del horario del local.` } });
-                return;
-            }
+    const activeDays = Object.keys(weeklySchedule).filter(d => weeklySchedule[d].active);
+    
+    for (let day of activeDays) {
+        const d = weeklySchedule[day];
+        if (d.t2_start && toN(d.t1_end) > toN(d.t2_start)) {
+            dispatch({ type: "set-message", payload: { type: "error", msg: `En ${dayLabels[day]}, el Turno 1 no puede solapar al Turno 2.` } });
+            return;
         }
+    }
 
-        setLoading(true);
-        try {
-            await fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules/by_invitation/${selectedInvitation}`, {
-                method: "DELETE",
-                headers: { "Authorization": `Bearer ${store.token}` }
+    setLoading(true);
+    try {
+        const schedulesToSave = [];
+        activeDays.forEach(day => {
+            const d = weeklySchedule[day];
+            if (d.t1_start && d.t1_end) schedulesToSave.push({ day, start: d.t1_start, end: d.t1_end });
+            if (d.t2_start && d.t2_end) schedulesToSave.push({ day, start: d.t2_start, end: d.t2_end });
+        });
+
+        const delRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules/by_invitation/${selectedInvitation}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${store.token}` }
+        });
+
+        if (!delRes.ok) throw new Error("No se pudo limpiar el horario anterior");
+
+        for (const item of schedulesToSave) {
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${store.token}` },
+                body: JSON.stringify({
+                    invitation_id: selectedInvitation,
+                    day_of_week: item.day,
+                    start_time: item.start,
+                    end_time: item.end
+                })
             });
 
-            for (let day of activeDays) {
-                const d = weeklySchedule[day];
-                const sendBody = async (s, e_time) => {
-                    await fetch(`${import.meta.env.VITE_BACKEND_URL}/schedules`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${store.token}` },
-                        body: JSON.stringify({
-                            invitation_id: selectedInvitation,
-                            day_of_week: day,
-                            start_time: s,
-                            end_time: e_time
-                        })
-                    });
-                };
-                if (d.t1_start && d.t1_end) await sendBody(d.t1_start, d.t1_end);
-                if (d.t2_start && d.t2_end) await sendBody(d.t2_start, d.t2_end);
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.message?.msg || "Error al guardar tramo horario");
             }
-
-            dispatch({ type: "set-message", payload: { type: "success", msg: "Horario verificado y guardado" } });
-            navigate(-1);
-        } catch (err) {
-            console.error(err);
-            dispatch({ type: "set-message", payload: { type: "error", msg: "Error al conectar con el servidor" } });
-        } finally {
-            setLoading(false);
         }
-    };
+
+        dispatch({ type: "set-message", payload: { type: "success", msg: "Horario guardado correctamente" } });
+        navigate(-1);
+
+    } catch (err) {
+        dispatch({ type: "set-message", payload: { type: "error", msg: err.message } });
+    } finally {
+        setLoading(false);
+    }
+};
 
     return (
         <div className="container py-5" style={{ maxWidth: '850px' }}>

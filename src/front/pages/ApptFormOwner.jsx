@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import "../styles/forms.css"
 
 export const ApptFormOwner = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -38,7 +39,7 @@ export const ApptFormOwner = () => {
 
     const getDaysArray = (start) => {
         const d = new Date(start);
-        const dayName = d.getDay(); // 0=Dom, 1=Lun...
+        const dayName = d.getDay();
         const diff = d.getDate() - dayName + (dayName === 0 ? -6 : 1);
         const monday = new Date(d.setDate(diff));
 
@@ -186,120 +187,174 @@ export const ApptFormOwner = () => {
         } catch (e) { console.error(e); }
     };
 
-    if (store.role !== "owner") return <div className="container mt-4">Acceso denegado</div>;
+    if (store.role !== "owner") {
+        return (
+            <div className="container py-5 text-center">
+                <h2 className="Oswald fw-bold text-danger">ACCESO DENEGADO</h2>
+                <p>Inicia sesión como dueño para acceder.</p>
+                <button className="btn btn-dark Oswald mt-3" onClick={() => navigate("/login/owner")}>INICIAR SESIÓN</button>
+            </div>
+        );
+    }
+
 
     return (
-        <div className="container mt-4">
-            <h2 className="text-center mb-4">{isEditing ? "Modificar Cita" : "Nueva Reserva (Gestión)"}</h2>
-            <form onSubmit={handleSubmit} className="card p-4 shadow-sm border-0">
-
-                <div className={`mb-3 ${isEditing ? 'd-none' : ''}`}>
-                    <label className="form-label">Cliente</label>
-                    {foundUser ? (
-                        <div className="d-flex justify-content-between align-items-center p-2 alert alert-light border">
-                            <span><strong>{foundUser.name} {foundUser.last_name}</strong></span>
-                            <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => { setFoundUser(null); setData({ ...data, user_id: "" }) }}>Cambiar</button>
-                        </div>
-                    ) : (
-                        <div className="input-group">
-                            <input type="text" className="form-control" placeholder="Buscar por teléfono..." value={phoneSearch} onChange={e => setPhoneSearch(e.target.value)} />
-                            <button type="button" className="btn btn-dark" onClick={handleSearchUser}>Buscar</button>
-                        </div>
-                    )}
+        <div className="container py-5" style={{ maxWidth: '800px' }}>
+            <div className="booking-card shadow-lg">
+                <div className="booking-header text-center mb-4">
+                    <h2 className="Oswald mb-0 text-uppercase fw-bold">
+                        {isEditing ? "Gestión de cita" : "Nueva cita"}
+                    </h2>
+                    <div className="mt-2" style={{ width: '40px', height: '2px', background: '#d19f68', margin: '0 auto' }}></div>
                 </div>
 
-                <label className="form-label">Lugar</label>
+                <form onSubmit={handleSubmit} className="p-4 p-md-5">
+                    {!isEditing && (
+                        <div className="mb-5">
+                            <label className="Oswald text-uppercase small fw-bold text-muted mb-2 d-block">Identificar cliente</label>
+                            {foundUser ? (
+                                <div className="d-flex align-items-center justify-content-between p-2 ps-3 rounded-pill bg-light border border-gold">
+                                    <div className="d-flex align-items-center">
+                                        <div className="bg-dark text-gold rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '32px', height: '32px' }}>
+                                            <i className="fa-solid fa-check" style={{ fontSize: '0.8rem' }}></i>
+                                        </div>
+                                        <span className="fw-bold small">{foundUser.name} {foundUser.last_name}</span>
+                                    </div>
+                                    <button type="button" className="btn btn-sm text-muted Oswald border-0 pe-3"
+                                        onClick={() => { setFoundUser(null); setData({ ...data, user_id: "" }); setPhoneSearch(""); }}>
+                                        <i className="fa-solid fa-xmark me-1"></i> CAMBIAR
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="search-container-custom d-flex gap-2">
+                                    <input type="text" className="select-custom w-100" placeholder="Teléfono del cliente..." value={phoneSearch} onChange={e => setPhoneSearch(e.target.value)} />
+                                    <button type="button" className="btn btn-dark btn-search-inline Oswald" onClick={handleSearchUser}>
+                                        <i className="fas fa-search me-2"></i> BUSCAR
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                <div className="row">
+                        <div className="col-md-12 form-group-custom"></div>
+                <label>Lugar de la cita</label>
                 <select className="form-select mb-3" required value={data.barbershop_id}
                     onChange={e => setData({ ...data, barbershop_id: e.target.value, barber_id: "", barber_service_id: "", time: "", date: "" })}>
-                    <option value="">Selecciona un local</option>
+                    <option value="">Selecciona una ubicación</option>
                     {store.barbershops?.map(shop => (
                         <option key={shop.id} value={shop.id}>{shop.name}</option>
                     ))}
                 </select>
 
-                <label className="form-label">Barbero</label>
-                <select className="form-select mb-3" disabled={!data.barbershop_id} required value={data.barber_id}
-                    onChange={e => setData({ ...data, barber_id: e.target.value, barber_service_id: "", time: "", date: "" })}>
-                    <option value="">Selecciona un profesional</option>
-                    {currentBarbers?.map(inv => (
-                        <option key={inv.id} value={inv.barber?.id || inv.id}>{inv.barber?.name || inv.name}</option>
-                    ))}
-                </select>
-
-                <label className="form-label">Servicio</label>
-                <select className="form-select mb-3" disabled={!data.barber_id} required value={data.barber_service_id}
-                    onChange={e => setData({ ...data, barber_service_id: e.target.value, time: "", date: "" })}>
-                    <option value="">Elege servicio</option>
-                    {currentServices?.map(s => (
-                        <option key={s.id} value={s.id}>{s.name} - {s.price}€</option>
-                    ))}
-                </select>
-
-                <div className={`mb-4 ${isCalendarDisabled ? "opacity-50" : ""}`} style={{ pointerEvents: isCalendarDisabled ? 'none' : 'auto' }}>
-                    <label className="form-label fw-bold">Fecha de la cita</label>
-                    <div className="d-flex align-items-center justify-content-between mb-3 bg-light p-2 rounded border">
-                        <button type="button" className="btn btn-sm btn-outline-primary" onClick={handlePrevWeek}><i className="fas fa-chevron-left"></i></button>
-
-                        <div className={`d-flex overflow-hidden gap-2 text-center transition-all ${isChecking ? "opacity-25" : "opacity-100"}`} style={{ minHeight: '80px' }}>
-                            {isChecking ? (
-                                <div className="w-100 d-flex align-items-center justify-content-center">
-                                    <div className="spinner-border spinner-border-sm text-primary" role="status"></div>
-                                    <span className="ms-2 small text-muted">Consultando agenda...</span>
-                                </div>
-                            ) : (
-                                days.map((day, index) => {
-                                    const dateStr = getLocalDateString(day)
-                                    const isActive = data.date === dateStr;
-                                    const isPastDay = isPast(day);
-                                    const hasSlots = daysAvailability[dateStr];
-                                    const isFull = !isPastDay && daysAvailability.hasOwnProperty(dateStr) && !hasSlots;
-                                    const isDisabled = isPastDay || isFull;
-
-                                    return (
-                                        <div key={index}
-                                            onClick={() => { if (!isDisabled) setData({ ...data, date: dateStr, time: "" }); }}
-                                            style={{ cursor: isDisabled ? 'not-allowed' : 'pointer', minWidth: '85px' }}
-                                            className={`p-2 rounded transition-all border ${isActive ? 'bg-primary text-white border-primary shadow' : isFull ? 'bg-secondary-subtle text-secondary opacity-75' : isPastDay ? 'bg-light text-muted border-light' : 'bg-white border-secondary-subtle'}`}
-                                        >
-                                            <small className="d-block text-uppercase" style={{ fontSize: '0.65rem', fontWeight: 'bold' }}>{day.toLocaleDateString('es-ES', { weekday: 'short' })}</small>
-                                            <strong className="d-block fs-5">{day.getDate()}</strong>
-                                        </div>
-                                    );
-                                })
-                            )}
+                <div className="col-md-6 form-group-custom">
+                            <label>Barbero asignado</label>
+                            <select className="select-custom" disabled={!data.barbershop_id} required value={data.barber_id}
+                                onChange={e => setData({ ...data, barber_id: e.target.value, barber_service_id: "", time: "", date: "" })}>
+                                <option value="">Seleccionar profesional</option>
+                                {currentBarbers?.map(inv => <option key={inv.id} value={inv.barber.id}>{inv.barber.name}</option>)}
+                            </select>
                         </div>
 
-                        <button type="button" className="btn btn-sm btn-outline-primary" onClick={handleNextWeek}><i className="fas fa-chevron-right"></i></button>
+                        <div className="col-md-6 form-group-custom">
+                            <label>Servicio a realizar</label>
+                            <select className="select-custom" disabled={!data.barber_id} required value={data.barber_service_id}
+                                onChange={e => setData({ ...data, barber_service_id: e.target.value, time: "", date: "" })}>
+                                <option value="">Elegir servicio</option>
+                                {currentServices?.map(s => <option key={s.id} value={s.id}>{s.name} ({s.price}€)</option>)}
+                            </select>
+                        </div>
                     </div>
 
-                    <div className="mt-3">
-                        <div className="d-flex flex-wrap gap-2">
-                            {availableSlots.length > 0 ? (
-                                availableSlots.map(slot => (
-                                    <button key={slot} type="button" onClick={() => setData({ ...data, time: slot })}
-                                        className={`btn btn-sm px-3 py-2 rounded-pill border ${data.time === slot ? 'btn-primary shadow-sm' : 'btn-outline-secondary bg-white'}`}>
-                                        {slot}
+                    <div className={`mt-4 ${isCalendarDisabled ? "opacity-25" : ""}`}>
+                        <label className="Oswald text-uppercase small fw-bold text-muted mb-3 d-block">
+                            Elige tu momento
+                            {isChecking && <span className="ms-2 text-gold small fw-normal Oswald">(Verificando...)</span>}
+                        </label>
+
+                        <div className="calendar-wrapper">
+                            {isChecking && (
+                                <div className="loader-overlay">
+                                    <div className="spinner-gold"></div>
+                                    <small className="Oswald mt-2 text-dark" style={{ letterSpacing: '1px' }}>ACTUALIZANDO AGENDA</small>
+                                </div>
+                            )}
+
+                            <div className={`calendar-container ${isChecking ? 'is-loading-blur' : ''}`}>
+                                <div className="d-flex align-items-center justify-content-between mb-4">
+                                    <button type="button" className="btn btn-sm btn-dark rounded-circle"
+                                        onClick={handlePrevWeek} disabled={isChecking}>
+                                        <i className="fas fa-chevron-left"></i>
                                     </button>
-                                ))
-                            ) : (
-                                <div className="w-100 text-center py-2 bg-light rounded">
-                                    <small className="text-muted">{data.date ? "No hay turnos disponibles" : "Selecciona un día para ver disponibilidad."}</small>
+                                    <span className="Oswald fw-bold text-uppercase">Agenda semanal</span>
+                                    <button type="button" className="btn btn-sm btn-dark rounded-circle"
+                                        onClick={handleNextWeek} disabled={isChecking}>
+                                        <i className="fas fa-chevron-right"></i>
+                                    </button>
                                 </div>
-                            )}
+
+                                <div className="d-flex gap-2 overflow-auto pb-2">
+                                    {days.map((day, index) => {
+                                        const dateString = getLocalDateString(day);
+                                        const isActive = data.date === dateString;
+                                        const isPastDay = isPast(day);
+                                        const hasSlots = daysAvailability[dateString];
+                                        const isFull = !isPastDay && daysAvailability.hasOwnProperty(dateString) && !hasSlots;
+                                        const isDisabled = isCalendarDisabled || isPastDay || isFull || isChecking;
+
+                                        return (
+                                            <div key={index}
+                                                onClick={() => !isDisabled && setData({ ...data, date: dateString, time: "" })}
+                                                className={`day-pill text-center ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`}>
+                                                <small className="d-block Oswald" style={{ fontSize: '0.6rem' }}>
+                                                    {day.toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase()}
+                                                </small>
+                                                <strong className="fs-4 d-block">{day.getDate()}</strong>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="mt-4 pt-3 border-top">
+                                    <div className="d-flex flex-wrap justify-content-center gap-2">
+                                        {availableSlots.length > 0 ? (
+                                            availableSlots.map(slot => (
+                                                <button key={slot} type="button"
+                                                    disabled={isChecking}
+                                                    onClick={() => setData({ ...data, time: slot })}
+                                                    className={`time-chip btn ${data.time === slot ? 'selected' : ''}`}>
+                                                    {slot}
+                                                </button>
+                                            ))
+                                        ) : (
+                                            <div className="py-2">
+                                                <small className="text-muted Oswald uppercase">
+                                                    {isChecking ? "Buscando huecos..." : (data.date ? "No hay turnos" : "Selecciona un día")}
+                                                </small>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="mb-4">
-                    <label className="form-label">Notas</label>
-                    <textarea className="form-control" rows="2" value={data.notes} onChange={e => setData({ ...data, notes: e.target.value })}></textarea>
-                </div>
+                    <div className="mt-4 form-group-custom">
+                        <label>Notas especiales</label>
+                        <textarea className="select-custom" rows="2" value={data.notes}
+                            onChange={e => setData({ ...data, notes: e.target.value })}
+                            placeholder="¿Alguna petición para tu barbero?"></textarea>
+                    </div>
 
-                <div className="d-flex justify-content-between">
-                    <button type="button" className="btn btn-outline-secondary" onClick={() => navigate(-1)}>Cancelar</button>
-                    <button type="submit" className="btn btn-primary" disabled={!data.user_id || !data.time}>Guardar Cita</button>
-                </div>
-            </form>
+                    <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mt-5">
+                        <button type="button" className="btn btn-link text-dark text-decoration-none Oswald order-2 order-md-1" onClick={() => navigate(-1)}>
+                            VOLVER
+                        </button>
+                        <button type="submit" className="btn btn-confirm order-1 order-md-2 w-100 w-md-auto" disabled={!data.time}>
+                            {isEditing ? "ACTUALIZAR" : "CONFIRMAR"}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
-};
+}

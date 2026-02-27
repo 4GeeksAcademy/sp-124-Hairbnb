@@ -257,12 +257,14 @@ export const PrivateBarber = () => {
 
     if (store.role !== "barber") {
         return (
-            <div className="container mt-4">
-                <h2 className="text-danger">Acceso denegado</h2>
+            <div className="container py-5 text-center">
+                <h2 className="Oswald fw-bold text-danger">ACCESO DENEGADO</h2>
                 <p>Inicia sesión como barbero para acceder.</p>
+                <button className="btn btn-dark Oswald mt-3" onClick={() => navigate("/login/barber")}>INICIAR SESIÓN</button>
             </div>
         );
     }
+
 
     const confirmedAppts = store.appointments?.filter(a =>
         a.status === "confirmed" &&
@@ -445,41 +447,45 @@ export const PrivateBarber = () => {
                             ) : (
                                 store.barber_services?.map(s => (
                                     <div key={s.id} className="col-12 mb-3">
-    <div className="card h-100 border-0 shadow-sm overflow-hidden">
-        <div className="row g-0 align-items-center">
-            {/* Contenedor de la Imagen */}
-            <div className="col-4 col-md-3 bg-light d-flex align-items-center justify-content-center" style={{ minHeight: "120px" }}>
-                <img 
-                    src={s.service_demo_image || logo} 
-                    style={{ maxHeight: "100px", maxWidth: "90%", objectFit: "contain" }} 
-                    alt={s.name} 
-                />
-            </div>
-            
-            {/* Contenedor del Contenido */}
-            <div className="col-8 col-md-9">
-                <div className="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 className="Oswald fw-bold text-dark text-uppercase mb-1">{s.name}</h5>
-                        <p className="text-muted Oswald small mb-0">
-                            <i className="far fa-clock me-1"></i> {s.duration} MINUTOS
-                        </p>
-                        <span className="badge bg-dark text-gold Oswald mt-2">{s.price}€</span>
-                    </div>
-                    
-                    <div className="d-flex gap-2">
-                        <button className="btn btn-sm btn-outline-dark Oswald" onClick={() => { /* ... */ }}>
-                            EDITAR
-                        </button>
-                        <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteService(s.id)}>
-                            <i className="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+                                        <div className="card h-100 border-0 shadow-sm overflow-hidden">
+                                            <div className="row g-0 align-items-center">
+                                                <div className="col-4 col-md-3 bg-light d-flex align-items-center justify-content-center" style={{ minHeight: "120px" }}>
+                                                    <img
+                                                        src={s.service_demo_image || logo}
+                                                        style={{ maxHeight: "100px", maxWidth: "90%", objectFit: "contain" }}
+                                                        alt={s.name}
+                                                    />
+                                                </div>
+
+                                                <div className="col-8 col-md-9">
+                                                    <div className="card-body d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <h5 className="Oswald fw-bold text-dark text-uppercase mb-1">{s.name}</h5>
+                                                            <p className="text-muted Oswald small mb-0">
+                                                                <i className="far fa-clock me-1"></i> {s.duration} MINUTOS
+                                                            </p>
+                                                            <span className="badge bg-dark text-gold Oswald mt-2">{s.price}€</span>
+                                                        </div>
+
+                                                        <div className="d-flex gap-2">
+                                                            <button
+                                                                className="btn btn-sm btn-outline-dark Oswald"
+                                                                onClick={() => {
+                                                                    dispatch({ type: "set-barber_serviceInfo", payload: s });
+                                                                    navigate("/barber_services_form");
+                                                                }}
+                                                            >
+                                                                EDITAR
+                                                            </button>
+                                                            <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteService(s.id)}>
+                                                                <i className="fas fa-trash-alt"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 ))
                             )}
                         </div>

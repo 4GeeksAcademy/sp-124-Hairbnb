@@ -89,6 +89,7 @@ class Barbershop(db.Model):
             "address": self.address,
             "phone": self.phone,
             "barbershop_image": self.barbershop_image,
+            "owner_id": self.owner_id,
             "barbershop_description": self.barbershop_description,
             "latitude": self.latitude,
             "longitude": self.longitude,

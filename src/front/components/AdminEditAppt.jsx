@@ -35,9 +35,25 @@ export const AdminEditAppt = () => {
         return `${year}-${month}-${day}`;
     };
 
+    useEffect(() => {
+        const loadServices = async () => {
+            const token = store.token || localStorage.getItem("token");
+            try {
+                const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/barber_services`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const servicesData = await res.json();
+                    dispatch({ type: "set-barber_services", payload: servicesData });
+                }
+            } catch (error) { console.error("Error cargando servicios:", error); }
+        };
+        loadServices();
+    }, [store.token]);
+
     const getDaysArray = (start) => {
         const d = new Date(start);
-        const dayName = d.getDay(); // 0=Dom, 1=Lun...
+        const dayName = d.getDay();
         const diff = d.getDate() - dayName + (dayName === 0 ? -6 : 1);
         const monday = new Date(d.setDate(diff));
 
@@ -70,7 +86,6 @@ export const AdminEditAppt = () => {
         return d < today;
     };
 
-    // --- CARGA INICIAL ---
     useEffect(() => {
         const loadInitialData = async () => {
             const token = store.token || localStorage.getItem("token");
@@ -80,6 +95,7 @@ export const AdminEditAppt = () => {
                 if (resShops.ok) dispatch({ type: "set-barbershops", payload: await resShops.json() });
 
                 if (isEditing) {
+
                     const resAppt = await fetch(`${import.meta.env.VITE_BACKEND_URL}/appointments/${id}`, { headers });
                     if (resAppt.ok) {
                         const appt = await resAppt.json();
@@ -100,7 +116,6 @@ export const AdminEditAppt = () => {
         loadInitialData();
     }, [id, store.token]);
 
-    // --- CARGA DE BARBEROS ---
     useEffect(() => {
         if (!data.barbershop_id) return;
         const loadBarbers = async () => {
@@ -114,7 +129,6 @@ export const AdminEditAppt = () => {
         loadBarbers();
     }, [data.barbershop_id, store.token]);
 
-    // --- DISPONIBILIDAD SEMANAL ---
     useEffect(() => {
         if (isCalendarDisabled) return;
         const checkMultipleDays = async () => {
@@ -138,7 +152,6 @@ export const AdminEditAppt = () => {
         checkMultipleDays();
     }, [startDate, data.barber_id, data.barber_service_id, data.barbershop_id]);
 
-    // --- SLOTS DEL DÍA SELECCIONADO ---
     useEffect(() => {
         const fetchSlots = async () => {
             if (data.barber_id && data.barbershop_id && data.date && data.barber_service_id) {
@@ -254,79 +267,113 @@ export const AdminEditAppt = () => {
 
                         <div className="col-md-6 form-group-custom">
                             <label>Servicio a realizar</label>
-                            <select className="select-custom" disabled={!data.barber_id} required value={data.barber_service_id}
-                                onChange={e => setData({ ...data, barber_service_id: e.target.value, time: "", date: "" })}>
+                            <select
+                                className="select-custom"
+                                disabled={!data.barber_id}
+                                required
+                                value={data.barber_service_id ? String(data.barber_service_id) : ""}
+                                onChange={e => setData({ ...data, barber_service_id: e.target.value, time: "", date: "" })}
+                            >
                                 <option value="">Elegir servicio</option>
-                                {currentServices?.map(s => <option key={s.id} value={s.id}>{s.name} ({s.price}€)</option>)}
+                                {currentServices?.map(s => (
+                                    <option key={s.id} value={String(s.id)}>
+                                        {s.name} ({s.price}€)
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>
 
                     <div className={`mt-4 ${isCalendarDisabled ? "opacity-25" : ""}`}>
-                        <label className="Oswald text-uppercase small fw-bold text-muted mb-3 d-block">Fecha y Hora</label>
-                        <div className="calendar-wrapper border rounded p-3 bg-white">
-                            <div className="d-flex align-items-center justify-content-between mb-4 px-2">
-                                <button type="button" className="btn btn-sm btn-dark rounded-circle" onClick={handlePrevWeek} disabled={isCalendarDisabled}>
-                                    <i className="fas fa-chevron-left"></i>
-                                </button>
-                                <span className="Oswald fw-bold text-uppercase">Disponibilidad</span>
-                                <button type="button" className="btn btn-sm btn-dark rounded-circle" onClick={handleNextWeek} disabled={isCalendarDisabled}>
-                                    <i className="fas fa-chevron-right"></i>
-                                </button>
-                            </div>
+                        <label className="Oswald text-uppercase small fw-bold text-muted mb-3 d-block">
+                            Elige tu momento
+                            {isChecking && <span className="ms-2 text-gold small fw-normal Oswald">(Verificando...)</span>}
+                        </label>
 
-                            <div className="d-flex gap-2 overflow-auto pb-2">
-                                {days.map((day, i) => {
-                                    const dStr = getLocalDateString(day)
-                                    const hasSlots = daysAvailability[dStr];
-                                    const isActive = data.date === dStr;
-                                    const isDisabled = isPast(day) || (daysAvailability.hasOwnProperty(dStr) && !hasSlots);
+                        <div className="calendar-wrapper">
+                            {isChecking && (
+                                <div className="loader-overlay">
+                                    <div className="spinner-gold"></div>
+                                    <small className="Oswald mt-2 text-dark" style={{ letterSpacing: '1px' }}>ACTUALIZANDO AGENDA</small>
+                                </div>
+                            )}
 
-                                    return (
-                                        <div key={i} onClick={() => !isDisabled && setData({ ...data, date: dStr, time: "" })}
-                                            className={`day-pill text-center p-2 rounded border ${isActive ? 'bg-primary text-white' : ''} ${isDisabled ? 'opacity-50' : 'cursor-pointer'}`}
-                                            style={{ minWidth: '70px' }}>
-                                            <small className="d-block Oswald">{day.toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase()}</small>
-                                            <strong className="fs-4 d-block">{day.getDate()}</strong>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                            <div className={`calendar-container ${isChecking ? 'is-loading-blur' : ''}`}>
+                                <div className="d-flex align-items-center justify-content-between mb-4">
+                                    <button type="button" className="btn btn-sm btn-dark rounded-circle"
+                                        onClick={handlePrevWeek} disabled={isChecking}>
+                                        <i className="fas fa-chevron-left"></i>
+                                    </button>
+                                    <span className="Oswald fw-bold text-uppercase">Agenda semanal</span>
+                                    <button type="button" className="btn btn-sm btn-dark rounded-circle"
+                                        onClick={handleNextWeek} disabled={isChecking}>
+                                        <i className="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
 
-                            <div className="mt-4 pt-3 border-top text-center">
-                                <div className="d-flex flex-wrap justify-content-center gap-2">
-                                    {availableSlots.length > 0 ? (
-                                        availableSlots.map(slot => (
-                                            <button key={slot} type="button" onClick={() => setData({ ...data, time: slot })}
-                                                className={`btn btn-sm ${data.time === slot ? 'btn-primary' : 'btn-outline-dark'}`}>
-                                                {slot}
-                                            </button>
-                                        ))
-                                    ) : (
-                                        <small className="text-muted Oswald">{data.date ? "Sin disponibilidad" : "Elige un día"}</small>
-                                    )}
+                                <div className="d-flex gap-2 overflow-auto pb-2">
+                                    {days.map((day, index) => {
+                                        const dateString = getLocalDateString(day);
+                                        const isActive = data.date === dateString;
+                                        const isPastDay = isPast(day);
+                                        const hasSlots = daysAvailability[dateString];
+                                        const isFull = !isPastDay && daysAvailability.hasOwnProperty(dateString) && !hasSlots;
+                                        const isDisabled = isCalendarDisabled || isPastDay || isFull || isChecking;
+
+                                        return (
+                                            <div key={index}
+                                                onClick={() => !isDisabled && setData({ ...data, date: dateString, time: "" })}
+                                                className={`day-pill text-center ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`}>
+                                                <small className="d-block Oswald" style={{ fontSize: '0.6rem' }}>
+                                                    {day.toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase()}
+                                                </small>
+                                                <strong className="fs-4 d-block">{day.getDate()}</strong>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="mt-4 pt-3 border-top">
+                                    <div className="d-flex flex-wrap justify-content-center gap-2">
+                                        {availableSlots.length > 0 ? (
+                                            availableSlots.map(slot => (
+                                                <button key={slot} type="button"
+                                                    disabled={isChecking}
+                                                    onClick={() => setData({ ...data, time: slot })}
+                                                    className={`time-chip btn ${data.time === slot ? 'selected' : ''}`}>
+                                                    {slot}
+                                                </button>
+                                            ))
+                                        ) : (
+                                            <div className="py-2">
+                                                <small className="text-muted Oswald uppercase">
+                                                    {isChecking ? "Buscando huecos..." : (data.date ? "No hay turnos" : "Selecciona un día")}
+                                                </small>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div className="mt-4 form-group-custom">
-                        <label>Notas</label>
+                        <label>Notas especiales</label>
                         <textarea className="select-custom" rows="2" value={data.notes}
                             onChange={e => setData({ ...data, notes: e.target.value })}
-                            placeholder="Información adicional"></textarea>
+                            placeholder="¿Alguna petición para tu barbero?"></textarea>
                     </div>
 
-                    <div className="d-flex justify-content-between align-items-center mt-5">
-                        <button type="button" className="btn btn-link text-muted text-decoration-none Oswald" onClick={() => navigate(-1)}>
+                    <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mt-5">
+                        <button type="button" className="btn btn-link text-dark text-decoration-none Oswald order-2 order-md-1" onClick={() => navigate(-1)}>
                             VOLVER
                         </button>
-                        <button type="submit" className="btn-confirm px-5" disabled={!data.time || !data.user_id}>
-                            {isEditing ? "ACTUALIZAR" : "CREAR"}
+                        <button type="submit" className="btn btn-confirm order-1 order-md-2 w-100 w-md-auto" disabled={!data.time}>
+                            {isEditing ? "ACTUALIZAR" : "CONFIRMAR"}
                         </button>
                     </div>
                 </form>
             </div>
         </div>
     );
-};
+}
