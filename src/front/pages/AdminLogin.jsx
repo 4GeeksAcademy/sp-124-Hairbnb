@@ -44,8 +44,15 @@ export const AdminLogin = () => {
             localStorage.setItem("role", data.user.role);
             localStorage.setItem("userInfo", JSON.stringify(data.user));
 
-            dispatch({ type: "login", payload: data.user });
-            
+            dispatch({
+                type: "login",
+                payload: {
+                    token: data.token,
+                    role: data.user.role,
+                    userInfo: data.user
+                }
+            });
+
             dispatch({
                 type: "set-message",
                 payload: {
@@ -54,7 +61,7 @@ export const AdminLogin = () => {
                 }
             });
 
-            navigate("/4dm1n1str4t10n"); 
+            navigate("/4dm1n1str4t10n");
 
         } catch (err) {
             dispatch({
