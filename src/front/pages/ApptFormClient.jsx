@@ -30,7 +30,7 @@ export const ApptFormClient = () => {
 
     const getDaysArray = (start) => {
         const d = new Date(start);
-        const dayName = d.getDay();
+        const dayName = d.getDay(); // 0=Dom, 1=Lun...
         const diff = d.getDate() - dayName + (dayName === 0 ? -6 : 1);
         const monday = new Date(d.setDate(diff));
 
@@ -235,7 +235,7 @@ export const ApptFormClient = () => {
             const availabilityMap = {};
 
             const promises = days.map(async (day) => {
-                const dateStr = day.toISOString().split('T')[0];
+                const dateStr = getLocalDateString(day)
                 if (isPast(day)) return;
 
                 try {

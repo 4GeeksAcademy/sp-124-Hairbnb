@@ -28,14 +28,26 @@ export const AdminEditAppt = () => {
 
     const isCalendarDisabled = !data.barbershop_id || !data.barber_id || !data.barber_service_id;
 
-    // --- LÓGICA DE CALENDARIO ---
+    const getLocalDateString = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const getDaysArray = (start) => {
+        const d = new Date(start);
+        const dayName = d.getDay(); // 0=Dom, 1=Lun...
+        const diff = d.getDate() - dayName + (dayName === 0 ? -6 : 1);
+        const monday = new Date(d.setDate(diff));
+
         return Array.from({ length: 7 }, (_, i) => {
-            const d = new Date(start);
-            d.setDate(d.getDate() + i);
-            return d;
+            const date = new Date(monday);
+            date.setDate(monday.getDate() + i);
+            return date;
         });
     };
+
     const days = getDaysArray(startDate);
 
     const handlePrevWeek = () => {
@@ -109,7 +121,7 @@ export const AdminEditAppt = () => {
             setIsChecking(true);
             const map = {};
             const promises = days.map(async (day) => {
-                const dateStr = day.toISOString().split('T')[0];
+                const dateStr = getLocalDateString(day)
                 const url = `${import.meta.env.VITE_BACKEND_URL}/barber_availability?barber_id=${data.barber_id}&barbershop_id=${data.barbershop_id}&date=${dateStr}&service_id=${data.barber_service_id}`;
                 try {
                     const res = await fetch(url, { headers: { "Authorization": `Bearer ${store.token}` } });
@@ -205,7 +217,7 @@ export const AdminEditAppt = () => {
                                         </div>
                                         <span className="fw-bold small">{foundUser.name} {foundUser.last_name}</span>
                                     </div>
-                                    <button type="button" className="btn btn-sm text-muted Oswald border-0 pe-3" 
+                                    <button type="button" className="btn btn-sm text-muted Oswald border-0 pe-3"
                                         onClick={() => { setFoundUser(null); setData({ ...data, user_id: "" }); setPhoneSearch(""); }}>
                                         <i className="fa-solid fa-xmark me-1"></i> CAMBIAR
                                     </button>
@@ -265,7 +277,7 @@ export const AdminEditAppt = () => {
 
                             <div className="d-flex gap-2 overflow-auto pb-2">
                                 {days.map((day, i) => {
-                                    const dStr = day.toISOString().split('T')[0];
+                                    const dStr = getLocalDateString(day)
                                     const hasSlots = daysAvailability[dStr];
                                     const isActive = data.date === dStr;
                                     const isDisabled = isPast(day) || (daysAvailability.hasOwnProperty(dStr) && !hasSlots);

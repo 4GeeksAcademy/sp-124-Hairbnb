@@ -27,13 +27,25 @@ export const ApptFormOwner = () => {
         notes: preData.notes || ""
     });
 
+    const getLocalDateString = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const isCalendarDisabled = !data.barbershop_id || !data.barber_id || !data.barber_service_id;
 
     const getDaysArray = (start) => {
+        const d = new Date(start);
+        const dayName = d.getDay(); // 0=Dom, 1=Lun...
+        const diff = d.getDate() - dayName + (dayName === 0 ? -6 : 1);
+        const monday = new Date(d.setDate(diff));
+
         return Array.from({ length: 7 }, (_, i) => {
-            const d = new Date(start);
-            d.setDate(d.getDate() + i);
-            return d;
+            const date = new Date(monday);
+            date.setDate(monday.getDate() + i);
+            return date;
         });
     };
     const days = getDaysArray(startDate);
@@ -100,7 +112,7 @@ export const ApptFormOwner = () => {
             const availabilityMap = {};
 
             const promises = days.map(async (day) => {
-                const dateStr = day.toISOString().split('T')[0];
+                const dateStr = getLocalDateString(day)
                 if (isPast(day)) return;
 
                 try {
@@ -236,7 +248,7 @@ export const ApptFormOwner = () => {
                                 </div>
                             ) : (
                                 days.map((day, index) => {
-                                    const dateStr = day.toISOString().split('T')[0];
+                                    const dateStr = getLocalDateString(day)
                                     const isActive = data.date === dateStr;
                                     const isPastDay = isPast(day);
                                     const hasSlots = daysAvailability[dateStr];
