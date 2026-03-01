@@ -6,7 +6,6 @@ import { Link } from "react-router-dom";
 import userimg from "../../../public/user-icon.png"
 import "../styles/privatezone.css"
 
-
 export const OwnerGestion = () => {
   const { store, dispatch } = useGlobalReducer();
   const barbershop = store.barbershopInfo;
@@ -154,26 +153,23 @@ export const OwnerGestion = () => {
         </Link>
       </div>
 
-      <ul className="nav nav-tabs border-0 gap-2 mb-4">
-        <li className="nav-item">
-          <button
-            className={`nav-link Oswald fw-bold ${activeTab === "barbers" ? "bg-dark text-gold active" : "text-secondary border-0"}`}
+      <ul className="pb-tabs-nav border-0 gap-2 mb-4">
+        <li className="pb-tab-btn">
+          <button className={`pb-tab-btn Oswald fw-bold ${activeTab === "barbers" ? "active" : ""}`}
             onClick={() => setActiveTab("barbers")}
           >
-            MI EQUIPO
+            Mi equipo
           </button>
         </li>
-        <li className="nav-item">
-          <button
-            className={`nav-link Oswald fw-bold ${activeTab === "appointments" ? "bg-dark text-gold active" : "text-secondary border-0"}`}
+        <li className="pb-tab-btn">
+          <button className={`pb-tab-btn Oswald fw-bold ${activeTab === "appointments" ? "active" : ""}`}
             onClick={() => setActiveTab("appointments")}
           >
             AGENDA
           </button>
         </li>
-        <li className="nav-item">
-          <button
-            className={`nav-link Oswald fw-bold ${activeTab === "messages" ? "bg-dark text-gold active" : "text-secondary border-0"}`}
+        <li className="pb-tab-btn">
+          <button className={`pb-tab-btn Oswald fw-bold ${activeTab === "messages" ? "bg-dark text-gold active" : "text-secondary border-0"}`}
             onClick={() => setActiveTab("messages")}
           >
             MENSAJES (GLOBAL)
@@ -319,7 +315,7 @@ export const OwnerGestion = () => {
                             {dayApps.map(a => (
                               <div key={a.id} className="bg-white p-3 border-start border-3 border-gold shadow-sm">
                                 <div className="d-flex justify-content-between align-items-center mb-1">
-                                  <span className="badge bg-dark text-gold Oswald">{a.date.split("T")[1].slice(0, 5)}</span>
+                                  <span className="pb-badge-time Oswald">{a.date.split("T")[1].slice(0, 5)}</span>
                                   <div className="d-flex gap-2">
                                     <i className="fa-solid fa-pen text-secondary cursor-pointer" onClick={() => handleEdit(a)}></i>
                                     <i className="fa-solid fa-trash text-danger cursor-pointer" onClick={() => handleDelete(a.id)}></i>

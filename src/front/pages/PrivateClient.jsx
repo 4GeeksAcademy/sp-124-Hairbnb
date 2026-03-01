@@ -15,14 +15,14 @@ export const PrivateClient = () => {
     const now = new Date();
 
     const upcomingAppointments = appointments.filter(appt => {
-    const apptDate = new Date(appt.date);
-    return ["pending", "confirmed"].includes(appt.status) && apptDate >= now;
-});
+        const apptDate = new Date(appt.date);
+        return ["pending", "confirmed"].includes(appt.status) && apptDate >= now;
+    });
 
     const historyAppointments = appointments.filter(appt => {
-    const apptDate = new Date(appt.date);
-    return ["completed", "no_show", "cancelled"].includes(appt.status) || apptDate < now;
-});
+        const apptDate = new Date(appt.date);
+        return ["completed", "no_show", "cancelled"].includes(appt.status) || apptDate < now;
+    });
 
     useEffect(() => {
         if (location.state?.activeChatId || location.state?.activeTab === "messages") {
@@ -82,7 +82,7 @@ export const PrivateClient = () => {
                         <div key={appt.id} className="col-12">
                             <div className="card border-dark rounded-0 shadow-sm bg-white position-relative overflow-hidden">
                                 <div className={`position-absolute top-0 start-0 h-100 ${appt.status === 'confirmed' ? 'bg-success' :
-                                        appt.status === 'pending' ? 'bg-gold' : 'bg-secondary'
+                                    appt.status === 'pending' ? 'bg-gold' : 'bg-secondary'
                                     }`} style={{ width: '4px' }}></div>
 
                                 <div className="card-body p-3 ps-4">
@@ -167,17 +167,17 @@ export const PrivateClient = () => {
             </div>
 
             <ul className="pb-tabs-nav border-0 gap-2 mb-4">
-    {["appointments", "history", "messages", "ai_testing"].map((tab) => (
-        <li className="nav-item" key={tab}>
-            <button
-                className={`pb-tab-btn Oswald fw-bold ${activeTab === tab ? "active" : ""}`}
-                onClick={() => setActiveTab(tab)}
-            >
-                {tab === "appointments" ? "MIS CITAS" : tab === "history" ? "HISTORIAL" : tab === "messages" ? "MENSAJES" : "AI TESTING"}
-            </button>
-        </li>
-    ))}
-</ul>
+                {["appointments", "history", "messages", "ai_testing"].map((tab) => (
+                    <li className="nav-item" key={tab}>
+                        <button
+                            className={`pb-tab-btn Oswald fw-bold ${activeTab === tab ? "active" : ""}`}
+                            onClick={() => setActiveTab(tab)}
+                        >
+                            {tab === "appointments" ? "MIS CITAS" : tab === "history" ? "HISTORIAL" : tab === "messages" ? "MENSAJES" : "AI TESTING"}
+                        </button>
+                    </li>
+                ))}
+            </ul>
 
             <div className="tab-content">
                 {activeTab === "appointments" && renderAppointmentList(upcomingAppointments, false)}

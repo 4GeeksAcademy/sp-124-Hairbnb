@@ -23,7 +23,7 @@
 .pb-tab-btn {
     background: none;
     border: none;
-    padding: 12px 25px;
+    padding: 18px;
     font-family: 'Oswald', sans-serif;
     text-transform: uppercase;
     font-weight: 600;
@@ -80,3 +80,4 @@
     color: #ffffff;
     letter-spacing: 2px;
 }
+

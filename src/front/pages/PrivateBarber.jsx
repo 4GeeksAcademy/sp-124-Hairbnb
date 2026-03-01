@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
 import logo from "../../../public/Logo.png"
-
-
+import "../styles/privatezone.css";
 
 export const PrivateBarber = () => {
     const { store, dispatch } = useGlobalReducer();
@@ -281,21 +280,21 @@ export const PrivateBarber = () => {
         <div className="container-fluid py-5 px-md-5 bg-white min-vh-100">
             <h1 className="Oswald text-dark fw-bold mb-4 border-bottom pb-3">PANEL DE {store.userInfo?.name?.toUpperCase()}</h1>
 
-            <ul className="nav nav-tabs border-0 gap-2 mb-4">
-                <li className="nav-item">
-                    <button className={`nav-link Oswald fw-bold ${activeTab === "appointments" ? "bg-dark text-gold active" : "text-secondary border-0"}`} onClick={() => setActiveTab("appointments")}>CITAS</button>
+            <ul className="pb-tabs-nav border-0 gap-2 mb-4">
+                <li className="pb-tab-btn">
+                    <button className={`pb-tab-btn Oswald fw-bold ${activeTab === "appointments" ? "active" : ""}`} onClick={() => setActiveTab("appointments")}>CITAS</button>
                 </li>
-                <li className="nav-item">
-                    <button className={`nav-link Oswald fw-bold ${activeTab === "schedules" ? "bg-dark text-gold active" : "text-secondary border-0"}`} onClick={() => setActiveTab("schedules")}>HORARIOS</button>
+                <li className="pb-tab-btn">
+                    <button className={`pb-tab-btn Oswald fw-bold ${activeTab === "schedules" ? "active" : ""}`} onClick={() => setActiveTab("schedules")}>HORARIOS</button>
                 </li>
-                <li className="nav-item">
-                    <button className={`nav-link Oswald fw-bold ${activeTab === "services" ? "bg-dark text-gold active" : "text-secondary border-0"}`} onClick={() => setActiveTab("services")}>SERVICIOS</button>
+                <li className="pb-tab-btn">
+                    <button className={`pb-tab-btn Oswald fw-bold ${activeTab === "services" ? "active" : ""}`} onClick={() => setActiveTab("services")}>SERVICIOS</button>
                 </li>
-                <li className="nav-item">
-                    <button className={`nav-link Oswald fw-bold ${activeTab === "invitations" ? "bg-dark text-gold active" : "text-secondary border-0"}`} onClick={() => setActiveTab("invitations")}>SOLICITUDES</button>
+                <li className="pb-tab-btn">
+                    <button className={`pb-tab-btn Oswald fw-bold ${activeTab === "invitations" ? "active" : ""}`} onClick={() => setActiveTab("invitations")}>SOLICITUDES</button>
                 </li>
-                <li className="nav-item">
-                    <button className={`nav-link Oswald fw-bold ${activeTab === "clients" ? "bg-dark text-gold active" : "text-secondary border-0"}`} onClick={() => setActiveTab("clients")}>HISTORIAL CLIENTES</button>
+                <li className="pb-tab-btn">
+                    <button className={`pb-tab-btn Oswald fw-bold ${activeTab === "clients" ? "active" : ""}`} onClick={() => setActiveTab("clients")}>HISTORIAL CLIENTES</button>
                 </li>
             </ul>
 
@@ -331,11 +330,9 @@ export const PrivateBarber = () => {
 
                         <div className="mx-auto">
                             <div className="card border-dark shadow-sm">
-                                <div className="card-header bg-dark text-gold">
-                                    <h6 className="mb-0 Oswald text-uppercase">
-                                        {new Date(selectedDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                    </h6>
-                                </div>
+                                <h6 className="pb-header text-uppercase text-gold ps-3">
+                                    {new Date(selectedDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                </h6>
 
                                 <div className="card-body p-3 bg-light">
                                     {(() => {
@@ -376,10 +373,7 @@ export const PrivateBarber = () => {
                                                     <div className="card-body d-flex justify-content-between align-items-center p-3">
                                                         <div>
                                                             <div className="d-flex align-items-center gap-3 mb-1">
-                                                                <span className="badge bg-dark text-gold Oswald">{apptTime} - {endTime}</span>
-                                                                <span className="text-muted small fw-bold Oswald text-uppercase">
-                                                                    <i className="fas fa-location-dot me-1"></i> {a.barbershop_name || "Lugar"}
-                                                                </span>
+                                                                <span className="pb-badge-time Oswald">{apptTime} - {endTime}</span>  <i className="fas fa-location-dot me-1"></i> {a.barbershop_name || "Lugar"}
                                                             </div>
                                                             <h5 className="Oswald fw-bold mb-0">{a.user_name?.toUpperCase()}</h5>
                                                             <div className="text-gold fw-bold small text-uppercase Oswald">{a.service_name}</div>
@@ -443,13 +437,13 @@ export const PrivateBarber = () => {
 
                         <div className="row g-4">
                             {store.barber_services?.length === 0 ? (
-                                <div className="col-12 text-center py-5"><p className="Oswald text-muted">No hay servicios configurados.</p></div>
+                                <div className="col-12 text-center mx-auto py-5"><p className="Oswald text-muted">No hay servicios configurados.</p></div>
                             ) : (
                                 store.barber_services?.map(s => (
-                                    <div key={s.id} className="col-12 mb-3">
-                                        <div className="card h-100 border-0 shadow-sm overflow-hidden">
-                                            <div className="row g-0 align-items-center">
-                                                <div className="col-4 col-md-3 bg-light d-flex align-items-center justify-content-center" style={{ minHeight: "120px" }}>
+                                    <div key={s.id} className="col-sm-12 col-md-6 col-lg-4 mb-3 mx-auto">
+                                        <div className="card h-100 border-0 shadow-sm overflow-hidden mx-auto">
+                                            <div className="row g-0 align-items-center mx-auto">
+                                                <div className="col-4 col-md-3 bg-light mx-auto d-flex align-items-center justify-content-center" style={{ minHeight: "120px" }}>
                                                     <img
                                                         src={s.service_demo_image || logo}
                                                         style={{ maxHeight: "100px", maxWidth: "90%", objectFit: "contain" }}
@@ -457,14 +451,14 @@ export const PrivateBarber = () => {
                                                     />
                                                 </div>
 
-                                                <div className="col-8 col-md-9">
+                                                <div className="col-9">
                                                     <div className="card-body d-flex justify-content-between align-items-center">
                                                         <div>
                                                             <h5 className="Oswald fw-bold text-dark text-uppercase mb-1">{s.name}</h5>
                                                             <p className="text-muted Oswald small mb-0">
                                                                 <i className="far fa-clock me-1"></i> {s.duration} MINUTOS
                                                             </p>
-                                                            <span className="badge bg-dark text-gold Oswald mt-2">{s.price}€</span>
+                                                            <p className="pb-badge-time Oswald mt-2">{s.price}€</p>
                                                         </div>
 
                                                         <div className="d-flex gap-2">
