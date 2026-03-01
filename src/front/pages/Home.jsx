@@ -62,38 +62,38 @@ export const Home = () => {
                 </div>
             </section>
 
-            <section className="about-section py-5 position-relative overflow-hidden">
-                <img
-                    src={decoration}
-                    alt="Decoración Barbería"
-                    className="about-decor-img d-none d-lg-block"
-                />
+<section className="about-section py-5 position-relative overflow-hidden">
+    <img
+        src={decoration}
+        alt="Decoración"
+        className="about-decor-img d-none d-lg-block"
+    />
 
-                <div className="container py-5">
-                    <div className="row align-items-center mb-5">
-                        <div className="col-lg-6">
-                            <div className="about-img-wrap position-relative">
-                                <div className="border-decoration-gold" />
-                                <img
-                                    src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1000"
-                                    alt="Barbería Premium"
-                                    className="img-fluid position-relative z-index-1 shadow-lg border-gold"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="col-lg-6 ps-lg-5 mt-5 mt-lg-0">
-                            <h2 className="text-gold my-4 Oswald display-5 fw-bold">¿QUÉ ES HAIRBNB?</h2>
-                            <p className="text-black-50 fs-5 lh-base mb-4">
-                                Somos el puente entre los profesionales de la tijera y quienes buscan no solo un corte, sino una experiencia personalizada.
-                            </p>
-                            <p className="text-black-50 fs-5 lh-base mb-4">
-                                Hairbnb nace como la herramienta definitiva para digitalizar el sector de la barbería y peluquería, eliminando las barreras tradicionales y optimizando el tiempo de todos los integrantes del ecosistema.
-                            </p>
-                        </div>
-                    </div>
+    <div className="container py-5">
+        <div className="row align-items-center mb-5">
+            <div className="col-lg-6">
+                <div className="about-img-wrap">
+                    <img
+                        src="https://images.unsplash.com/photo-1596728325488-58c87691e9af?q=80&w=1473&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                        alt="Barbería Premium"
+                        className="img-fluid shadow-lg rounded-1"
+                        style={{height:"500px"}}
+                    />
                 </div>
-            </section>
+            </div>
+
+            <div className="col-lg-6 ps-lg-5 mt-5 mt-lg-0">
+                <h2 className="text-gold my-4 Oswald display-5 fw-bold text-uppercase">¿QUÉ ES HAIRBNB?</h2>
+                <p className="text-black-50 fs-5 lh-base mb-4">
+                    Somos el puente entre los profesionales de la tijera y quienes buscan no solo un corte, sino una experiencia personalizada.
+                </p>
+                <p className="text-black-50 fs-5 lh-base mb-4">
+                    Hairbnb nace como la herramienta definitiva para digitalizar el sector de la barbería y peluquería, eliminando las barreras tradicionales y optimizando el tiempo de todos los integrantes del ecosistema.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
 
             <section className="steps-section py-5 text-white">
                 <div className="container py-5">
