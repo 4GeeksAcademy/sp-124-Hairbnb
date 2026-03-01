@@ -239,3 +239,26 @@
   --gmpx-color-on-surface: #212529;
   --gmpx-border-radius: 12px;
 }
+
+.field-warning {
+  font-family: "Oswald", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.field-warning.warning {
+  color: #c89040;
+  background: rgba(209, 159, 104, 0.08);
+  border-left: 2px solid #d19f68;
+}
+
+.field-warning.error {
+  color: #c0392b;
+  background: rgba(192, 57, 43, 0.06);
+  border-left: 2px solid #c0392b;
+}

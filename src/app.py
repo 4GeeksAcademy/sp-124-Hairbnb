@@ -72,7 +72,6 @@ static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../
 
 @app.route('/')
 def sitemap():
-    # En Render, queremos que cargue el index.html
     return send_from_directory(static_file_dir, 'index.html')
 
 @app.route('/<path:path>', methods=['GET'])

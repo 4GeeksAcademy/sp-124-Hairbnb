@@ -27,7 +27,9 @@ import { PrivateBarber } from "./pages/PrivateBarber.jsx";
 import { PrivateOwner } from "./pages/PrivateOwner.jsx";
 import { ScheduleForm } from "./pages/ScheduleForm";
 import { Subscription } from "./pages/Suscription.jsx";
-
+import { AboutUs } from "./pages/AboutUs.jsx";
+import { Contact } from "./pages/Contact.jsx";
+import { Services } from "./pages/Services.jsx";
 
 import { AppointmentForm } from "./pages/deprecated/AppointmentForm";
 import { Appointments } from "./pages/deprecated/Appointments";
@@ -39,7 +41,6 @@ import { OwnerForm } from "./pages/deprecated/OwnerForm.jsx";
 import { Owners } from "./pages/deprecated/Owners";
 import { Schedules } from "./pages/deprecated/Schedules.jsx";
 import { ServiceForm } from "./pages/deprecated/ServiceForm.jsx";
-import { Services } from "./pages/deprecated/Services.jsx";
 import { UserForm } from "./pages/deprecated/UserForm.jsx";
 import { Users } from "./pages/deprecated/Users.jsx";
 
@@ -78,6 +79,9 @@ export const router = createBrowserRouter(
       <Route path="/private/client" element={<PrivateClient />} />
 
       <Route path="/subscription" element={<Subscription />} />
+      <Route path="/aboutus" element={<AboutUs />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/services" element={<Services />} />
 
 
       {/* En la carpeta ../deprecated

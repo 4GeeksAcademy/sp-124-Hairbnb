@@ -1,0 +1,131 @@
+.about-history-hero {
+    min-height: 100vh;
+    background: url("https://blogs.eltiempo.com/para-donde-va/wp-content/uploads/sites/371/2017/07/barberia-antigua1.jpg") no-repeat center center;
+    background-size: cover;
+    background-attachment: fixed;
+    color: white;
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.8) 0%,
+        rgba(0, 0, 0, 0.6) 50%,
+        rgba(0, 0, 0, 0.9) 100%
+    );
+    z-index: 0;
+}
+
+.history-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(209, 159, 104, 0.2);
+    border-radius: 8px;
+    height: 100%;
+    transition: all 0.3s ease;
+}
+
+.history-card:hover {
+    background: rgba(209, 159, 104, 0.1);
+    border-color: #d19f68;
+    transform: translateY(-5px);
+}
+
+.border-gold-glow {
+    box-shadow: 0 0 15px rgba(209, 159, 104, 0.2);
+    border-color: #d19f68;
+}
+
+.ls-3 { letter-spacing: 3px; }
+.z-index-1 { z-index: 1; }
+
+.border-decoration-gold {
+    position: absolute;
+    top: -25px;
+    left: -25px;
+    width: 100%;
+    height: 100%;
+    border: 8px solid #d19f68;
+    z-index: 0;
+}
+
+.about-sig {
+    border-left: 4px solid #d19f68;
+    padding-left: 20px;
+    font-style: italic;
+}
+
+.hairbnb-title {
+    line-height: 1.1;
+}
+
+.ls-2 { letter-spacing: 2px; }
+
+.z-index-1 { z-index: 1; }
+
+.testimonial-scroll-container {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 25px;
+    padding: 20px 10px;
+    scrollbar-width: none;
+}
+
+.testimonial-scroll-container::-webkit-scrollbar {
+    display: none;
+}
+
+.ambassador-card {
+    min-width: 350px;
+    max-width: 400px;
+    scroll-snap-align: center;
+    flex-shrink: 0;
+    border-top: 4px solid #d19f68;
+    background: white;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    border-radius: 4px;
+    transition: transform 0.3s ease;
+}
+
+.ambassador-card:hover {
+    transform: translateY(-5px);
+}
+
+.tag-badge {
+    display: inline-block;
+    background: rgba(209, 159, 104, 0.1);
+    color: #d19f68;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+.press-section {
+    background-color: #ffffff;
+}
+
+.press-logo-grid {
+    margin-top: 50px;
+}
+
+.press-logo {
+    max-height: 50px;
+    width: auto;
+    display: block;
+    margin: 0 auto;
+    transition: all 0.4s ease-in-out;
+}
+
+.press-logo:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}

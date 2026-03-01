@@ -1,12 +1,16 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import "../styles/navbar.css";
 import { HashLink } from "react-router-hash-link";
+import { useState, useEffect } from "react";
 
 
 export const Navbar = () => {
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
+    const [isScrolled, setIsScrolled] = useState(false);
+    const location = useLocation();
+    const isHomePage = location.pathname === "/";
 
     const getDashboardRoute = () => {
         if (store.role === "client") return "/private/client";
@@ -38,8 +42,26 @@ export const Navbar = () => {
         navigate("/");
     };
 
+    useEffect(() => {
+        const handleScroll = () => {
+            const offset = window.scrollY;
+            if (offset > 50) {
+                setIsScrolled(true);
+            } else {
+                setIsScrolled(false);
+            }
+        };
+
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    const navbarClass = (location.pathname !== "/") 
+    ? "navbar-scrolled" 
+    : (isScrolled ? "navbar-scrolled" : "navbar-transparent");
+
     return (
-        <nav className="navbar navbar-expand-lg navbar-dark hairbnb-navbar sticky-top">
+        <nav className={`navbar navbar-expand-lg navbar-dark hairbnb-navbar fixed-top ${navbarClass}`}>
             <div className="container">
                 <Link to="/" className="navbar-brand d-flex align-items-center">
                     <img src="/Logo.png" alt="Logo" width="50" className="me-2 logo-gold" />
@@ -61,6 +83,22 @@ export const Navbar = () => {
 
                         {!store.token ? (
                             <>
+                                <li className="nav-item">
+                                    <Link className="nav-link hairbnb-nav-link" to="/aboutus">
+                                        Sobre nosotros
+                                    </Link>
+                                </li>
+                                <li className="nav-item">
+                                    <Link className="nav-link hairbnb-nav-link" to="/services">
+                                        Servicios
+                                    </Link>
+                                </li>
+                                <li className="nav-item">
+                                    <Link className="nav-link hairbnb-nav-link" to="/contact">
+                                        Contacto
+                                    </Link>
+                                </li>
+
                                 <li className="nav-item dropdown">
                                     <Link className="nav-link hairbnb-nav-link dropdown-toggle" to="#" role="button" data-bs-toggle="dropdown">
                                         Iniciar Sesión
@@ -75,7 +113,7 @@ export const Navbar = () => {
                                     <HashLink
                                         smooth
                                         to="/#community"
-                                        className="nav-link hairbnb-btn"
+                                        className="nav-link hairbnb-btn px-4"
                                     >
                                         ÚNETE AHORA
                                     </HashLink>

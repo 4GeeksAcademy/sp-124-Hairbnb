@@ -18,17 +18,12 @@ import calendar
 import base64
 import deepl
 import stripe
-# from dotenv import load_dotenv
 
 api = Blueprint('api', __name__)
 
-# Allow CORS requests to this API
 CORS(api)
 
-
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-
-
 
 @api.route("/login/admin", methods=["POST"])
 def login_admin():
@@ -225,7 +220,7 @@ def new_user():
         return jsonify({"message": {"type": "error", "msg": "Necesitas una contraseña"}}), 400
     if len(password) < 8:
         return jsonify({"message": {"type": "error", "msg": "La contraseña debe tener al menos 8 caracteres"}}), 400
-    if len(phone) < 8:
+    if len(phone) < 9:
         return jsonify({"message": {"type": "error", "msg": "Introduce un número de teléfono correcto"}}), 400
     if not email:
         return jsonify({"message": {"type": "error", "msg": "Necesitas ingresar un email"}}), 400
@@ -976,7 +971,7 @@ def new_schedule():
         return jsonify({"message": {"type": "error", "msg": "No tienes permiso para editar este horario"}}), 403
     
     overlapping = db.session.query(Schedule).join(BarberBarbershop).filter(
-        BarberBarbershop.barber_id == link.barber_id, # Usamos link.barber_id
+        BarberBarbershop.barber_id == link.barber_id,
         Schedule.day_of_week == day_of_week
     ).all()
 

@@ -2,49 +2,88 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import "../styles/footer.css";
+import useGlobalReducer from "../hooks/useGlobalReducer";
 
 export const Footer = () => {
-	const navigate = useNavigate();
+    const navigate = useNavigate();
+    const { store, dispatch } = useGlobalReducer();
 
-	const user = "info";
-	const domain = "hairbnb.com";
+    const handleSubmit = (e) => {
+        dispatch({
+            type: "set-message",
+            payload: {
+                type: "success",
+                msg: "Como te decíamos, no pasará absolutamente nada"
+            }
+        });
+    };
 
-	const handleContactClick = () => {
-		window.location.href = `mailto:${user}@${domain}`;
-	};
+    return (
+        <footer className="hairbnb-footer">
+            <div className="container">
+                <div className="row py-5">
+                    <div className="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                        <div className="d-flex align-items-center mb-3">
+                            <img src="/Logo.png" alt="Logo" width="40" className="me-2 logo-gold" />
+                            <h4 className="hairbnb-brand text-gold mb-0">HAIRBNB</h4>
+                        </div>
+                        <p className="footer-text mb-4">
+                            Este sitio es el proyecto final realizado para el Bootcamp Full-Stack Software Developer de <strong>4Geeks Academy</strong>. Marzo de 2026.
+                        </p>
+                        <div className="contact-info">
+                            <h5 className="text-white fw-bold mb-1">+34 987 65 43 21</h5>
+                            <p className="text-muted small">hairbnb@gmail.com</p>
+                        </div>
+                    </div>
 
-	return (
-		<footer className="hairbnb-footer">
-			<div className="container py-5">
-				<div className="row align-items-center">
-					<div className="col-md-4 text-center text-md-start mb-4 mb-md-0">
-						<h4 className="hairbnb-brand text-gold mb-1">HAIRBNB</h4>
-						<p className="text-white-50 small mb-0">• Organiza tu estilo •</p>
-					</div>
+                    <div className="col-lg-2 col-md-6 mb-4 mb-lg-0 ps-lg-5">
+                        <h5 className="footer-title">UBICACIÓN</h5>
+                        <ul className="footer-links">
+                            <li><Link to="/">Madrid</Link></li>
+                            <li><Link to="/">Barcelona</Link></li>
+                            <li><Link to="/">Valencia</Link></li>
+                            <li><Link to="/">Sevilla</Link></li>
+                        </ul>
+                    </div>
 
-					<div className="col-md-4 text-center mb-4 mb-md-0">
-						<p className="text-white mb-2 small fw-bold text-uppercase ls-1">Contacto</p>
-						<a
-							href="mailto:info@hairbnb.com"
-							className="footer-link-gold small"
-						>
-							info@hairbnb.com
-						</a>
-					</div>
+                    <div className="col-lg-2 col-md-6 mb-4 mb-lg-0">
+                        <h5 className="footer-title">EXPLORA</h5>
+                        <ul className="footer-links">
+                            <li><Link to="/aboutus">Sobre nosotros</Link></li>
+                            <li><Link to="/services">Servicios</Link></li>
+                            <li><Link to="/asociates">Asociados</Link></li>
+                            <li><Link to="/contact">Contacto</Link></li>
+                        </ul>
+                    </div>
 
-					<div className="col-md-4 text-center text-md-end">
-						<button
-							className="btn-admin-link mb-2"
-							onClick={() => navigate("/login/admin")}
-						>
-							<i className="ti-settings me-1"></i> Administración
-						</button>
-						<p className="text-white-50 small mb-0">
-							© 2026 • Hecho por <a href="https://github.com/ssantv" target="_blank" rel="noopener noreferrer" className="footer-link-gold">Sandra Santos</a>
-						</p>
-					</div>
-				</div>
-			</div>
-		</footer>
-	);
+                    <div className="col-lg-5 col-md-6">
+                        <h5 className="footer-title">SUSCRÍBETE</h5>
+                        <p className="footer-text mb-4">Suscríbete ahora y no pasará absolutamente nada.</p>
+                        <div className="footer-newsletter">
+                            <input type="email" placeholder="Dirección de correo electrónico" />
+                            <button type="button" onClick={handleSubmit}>ENVIAR</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="footer-bottom py-4">
+                    <div className="row align-items-center">
+                        <div className="text-center">
+                            <p className="mb-0 small text-gold">
+                                Copyright ©2026 Todos los derechos reservados | Hecho por <a href="https://github.com/ssantv" target="_blank" className="text-gold">Sandra Santos</a>
+                            </p>
+                        </div>
+                        <div className="text-center mt-3 mt-2 mb-5">
+                            <div className="footer-social">
+                                <a><i class="fa-brands fa-x-twitter"></i></a>
+                                <a><i class="fa-brands fa-facebook-f"></i></a>
+                                <a><i class="fa-solid fa-globe"></i></a>
+                                <a><i class="fa-brands fa-instagram"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    );
 };

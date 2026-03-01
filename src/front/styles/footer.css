@@ -1,64 +1,96 @@
 .hairbnb-footer {
-  background-color: #16161a;
-  border-top: 1px solid rgba(209, 159, 104, 0.1);
-  color: #ffffff;
+    background-color: #0a0a0b;
+    background-image: url("https://www.transparenttextures.com/patterns/black-paper.png"); 
+    color: #ffffff;
+    padding-top: 40px;
 }
 
-.text-gold {
-  color: #d19f68;
+.footer-title {
+    font-family: "Oswald", sans-serif;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #ffffff;
+    margin-bottom: 25px;
 }
 
-.ls-1 {
-  letter-spacing: 1px;
+.footer-text {
+    color: #888;
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: justify;
+    text-justify: inter-word;
+    hyphens: auto;
 }
 
-.btn-link-gold {
-  background: none;
-  border: none;
-  color: #d19f68;
-  text-decoration: none;
-  padding: 0;
-  transition: 0.3s;
-  font-family: "Poppins", sans-serif;
+.footer-links {
+    list-style: none;
+    padding: 0;
 }
 
-.btn-link-gold:hover {
-  color: #fff;
-  text-decoration: underline;
+.footer-links li {
+    margin-bottom: 12px;
 }
 
-.btn-admin-link {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #888;
-  font-size: 11px;
-  padding: 4px 12px;
-  text-transform: uppercase;
-  transition: 0.3s;
-  border-radius: 2px;
+.footer-links a {
+    color: #888;
+    text-decoration: none;
+    font-size: 14px;
+    transition: 0.3s;
 }
 
-.btn-admin-link:hover {
-  background: rgba(209, 159, 104, 0.1);
-  color: #d19f68;
-  border-color: #d19f68;
+.footer-links a:hover {
+    color: #d19f68;
+    padding-left: 5px
 }
 
-.hairbnb-brand {
-  font-family: "Oswald", sans-serif;
-  letter-spacing: 2px;
+.footer-newsletter {
+    display: flex;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 5px;
 }
 
-.footer-link-gold {
-  color: #d19f68;
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  border-bottom: 1px solid transparent;
+.footer-newsletter input {
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 10px 15px;
+    flex-grow: 1;
+    font-size: 14px;
 }
 
-.footer-link-gold:hover {
-  color: #fff;
-  border-bottom: 1px solid #d19f68;
-  text-decoration: none;
+.footer-newsletter input:focus {
+    outline: none;
+}
+
+.footer-newsletter button {
+    background: transparent;
+    border: none;
+    color: #d19f68;
+    font-family: "Oswald", sans-serif;
+    font-weight: 500;
+    padding: 0 20px;
+    letter-spacing: 1px;
+    transition: 0.3s;
+}
+
+.footer-newsletter button:hover {
+    color: white;
+}
+
+.footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    margin-top: 20px;
+}
+
+.footer-social a {
+    color: #888;
+    margin-left: 20px;
+    font-size: 16px;
+    transition: 0.3s;
+}
+
+.footer-social a:hover {
+    color: #d19f68;
 }

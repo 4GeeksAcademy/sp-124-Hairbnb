@@ -11,42 +11,37 @@
     border-bottom: 4px solid #d19f68;
 }
 
-.pb-title-light {
-    font-family: 'Oswald', sans-serif;
-    color: #ffffff;
-    letter-spacing: 2px;
-}
-
 .pb-tabs-nav {
     display: flex;
-    gap: 1.5rem;
+    gap: 0.5rem;
     border-bottom: 2px solid #f2f2f2;
     margin: 2rem 0;
+    padding: 0;
+    list-style: none;
 }
 
 .pb-tab-btn {
     background: none;
     border: none;
-    padding: 10px 5px;
+    padding: 12px 25px;
     font-family: 'Oswald', sans-serif;
     text-transform: uppercase;
+    font-weight: 600;
     color: #888;
     transition: 0.3s;
-    position: relative;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    height: auto;
 }
 
 .pb-tab-btn.active {
-    color: #d19f68;
+    background-color: #1a1a1d;
+    color: #d19f68 !important;
 }
 
 .pb-tab-btn.active::after {
-    content: "";
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background: #d19f68;
+    display: none; 
 }
 
 .pb-card {
@@ -78,4 +73,10 @@
     font-family: 'Oswald', sans-serif;
     color: #1a1a1d;
     text-transform: uppercase;
+}
+
+.pb-title-light {
+    font-family: 'Oswald', sans-serif;
+    color: #ffffff;
+    letter-spacing: 2px;
 }

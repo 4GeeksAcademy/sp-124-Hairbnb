@@ -166,18 +166,18 @@ export const PrivateClient = () => {
                 </button>
             </div>
 
-            <ul className="nav nav-tabs border-0 gap-2 mb-4">
-                {["appointments", "history", "messages", "ai_testing"].map((tab) => (
-                    <li className="nav-item" key={tab}>
-                        <button
-                            className={`nav-link Oswald fw-bold border-0 ${activeTab === tab ? "bg-dark text-gold" : "text-muted"}`}
-                            onClick={() => setActiveTab(tab)}
-                        >
-                            {tab === "appointments" ? "MIS CITAS" : tab === "history" ? "HISTORIAL" : tab === "messages" ? "MENSAJES" : "AI TESTING"}
-                        </button>
-                    </li>
-                ))}
-            </ul>
+            <ul className="pb-tabs-nav border-0 gap-2 mb-4">
+    {["appointments", "history", "messages", "ai_testing"].map((tab) => (
+        <li className="nav-item" key={tab}>
+            <button
+                className={`pb-tab-btn Oswald fw-bold ${activeTab === tab ? "active" : ""}`}
+                onClick={() => setActiveTab(tab)}
+            >
+                {tab === "appointments" ? "MIS CITAS" : tab === "history" ? "HISTORIAL" : tab === "messages" ? "MENSAJES" : "AI TESTING"}
+            </button>
+        </li>
+    ))}
+</ul>
 
             <div className="tab-content">
                 {activeTab === "appointments" && renderAppointmentList(upcomingAppointments, false)}

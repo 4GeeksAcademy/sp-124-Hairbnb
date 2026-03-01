@@ -1,9 +1,33 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/home.css";
+import { useEffect, useState } from "react";
+import decoration from "../../../public/about-shape.png"
 
 export const Home = () => {
     const navigate = useNavigate();
+    const texts = [
+        { title: <>TU PRÓXIMO CORTE<br />A UN CLICK</>, sub: "Encuentra a los mejores barberos y gestiona tus citas." },
+        { title: <>ESTILO EXCLUSIVO<br />A TU ALCANCE</>, sub: "Transforma tu imagen en los salones más exclusivos." },
+        { title: <>RESERVA RÁPIDA<br />Y SENCILLA</>, sub: "La plataforma definitiva donde el estilo se une con la comodidad." },
+        { title: <>POTENCIA TU<br />SALÓN</>, sub: "La herramienta integral para gestionar tu equipo, tus citas y el crecimiento de tu negocio." },
+        { title: <>OLVÍDATE DE<br />LAS ESPERAS</>, sub: "Reserva en tiempo real y recibe recordatorios para que tu única preocupación sea lucir bien." },
+        { title: <>TU IMAGEN,<br />TU IDENTIDAD</>, sub: "Conecta con estilistas que entienden tu estilo y elevan tu confianza al siguiente nivel." },
+    ];
+    const [index, setIndex] = useState(0);
+    const [fade, setFade] = useState(true);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setFade(false);
+            setTimeout(() => {
+                setIndex((prev) => (prev + 1) % texts.length);
+                setFade(true);
+            }, 500);
+        }, 4000);
+
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <div className="home-container">
@@ -13,14 +37,14 @@ export const Home = () => {
                         <div className="col-lg-8">
                             <div className="hero-content text-start">
                                 <span className="text-gold text-uppercase fw-bold ls-2">Estilo & Profesionalidad</span>
-                                <h1 className="display-2 text-white fw-bold mt-2 mb-4 hairbnb-title">
-                                    TU PRÓXIMO CORTE <br /> A UN CLICK
-                                </h1>
-                                <p className="lead text-white-75 mb-5">
-                                    Hairbnb es la plataforma definitiva donde el estilo se une con la comodidad.
-                                    Encuentra a los mejores barberos, gestiona tus citas y transforma tu imagen
-                                    en los salones más exclusivos de tu ciudad.
-                                </p>
+                                <div className={`hero-animated-box ${fade ? 'fade-in' : 'fade-out'}`}>
+                                    <h1 className="display-2 text-white fw-bold mt-4 hairbnb-title">
+                                        {texts[index].title}
+                                    </h1>
+                                    <p className="lead text-white mb-5">
+                                        {texts[index].sub}
+                                    </p>
+                                </div>
                                 <div className="hero-btns">
                                     <button
                                         className="hairbnb-btn me-3"
@@ -38,24 +62,33 @@ export const Home = () => {
                 </div>
             </section>
 
-            <section className="about-section py-5">
+            <section className="about-section py-5 position-relative overflow-hidden">
+                <img
+                    src={decoration}
+                    alt="Decoración Barbería"
+                    className="about-decor-img d-none d-lg-block"
+                />
+
                 <div className="container py-5">
                     <div className="row align-items-center mb-5">
-                        <div className="col-md-6">
-                            <div className="about-img-container">
+                        <div className="col-lg-6">
+                            <div className="about-img-wrap position-relative">
+                                <div className="border-decoration-gold" />
                                 <img
                                     src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=1000"
                                     alt="Barbería Premium"
-                                    className="img-fluid border-gold shadow-lg"
+                                    className="img-fluid position-relative z-index-1 shadow-lg border-gold"
                                 />
                             </div>
                         </div>
-                        <div className="col-md-6 ps-md-5">
-                            <h2 className="text-gold mb-4 Oswald">¿QUÉ ES HAIRBNB?</h2>
-                            <p className="text-black-50 fs-5 lh-base">
+
+                        <div className="col-lg-6 ps-lg-5 mt-5 mt-lg-0">
+                            <h2 className="text-gold my-4 Oswald display-5 fw-bold">¿QUÉ ES HAIRBNB?</h2>
+                            <p className="text-black-50 fs-5 lh-base mb-4">
                                 Somos el puente entre los profesionales de la tijera y quienes buscan no solo un corte, sino una experiencia personalizada.
-                                Hairbnb nace como la herramienta definitiva para digitalizar el sector de la barbería y peluquería,
-                                eliminando las barreras tradicionales y optimizando el tiempo de todos los integrantes del ecosistema.
+                            </p>
+                            <p className="text-black-50 fs-5 lh-base mb-4">
+                                Hairbnb nace como la herramienta definitiva para digitalizar el sector de la barbería y peluquería, eliminando las barreras tradicionales y optimizando el tiempo de todos los integrantes del ecosistema.
                             </p>
                         </div>
                     </div>
@@ -74,21 +107,21 @@ export const Home = () => {
                             <div className="step-item">
                                 <div className="step-number Oswald">01</div>
                                 <h3 className="Oswald h4 mt-3">ENCUENTRA</h3>
-                                <p className="text-white-50">Explora los mejores barberos y salones cerca de tu ubicación actual.</p>
+                                <p className="text-white-50">Explora los mejores barberos y salones<br />cerca de tu ubicación actual.</p>
                             </div>
                         </div>
                         <div className="col-md-4">
                             <div className="step-item">
                                 <div className="step-number Oswald">02</div>
                                 <h3 className="Oswald h4 mt-3">RESERVA</h3>
-                                <p className="text-white-50">Elige el servicio, el profesional y la hora que mejor te convenga.</p>
+                                <p className="text-white-50">Elige el servicio, el profesional<br />y la hora que mejor te convenga.</p>
                             </div>
                         </div>
                         <div className="col-md-4">
                             <div className="step-item">
                                 <div className="step-number Oswald">03</div>
                                 <h3 className="Oswald h4 mt-3">DISFRUTA</h3>
-                                <p className="text-white-50">Recibe tu recordatorio, acude a tu cita y luce tu mejor versión.</p>
+                                <p className="text-white-50">Recibe tu recordatorio, acude a tu cita<br />y luce tu mejor versión.</p>
                             </div>
                         </div>
                     </div>
@@ -123,7 +156,7 @@ export const Home = () => {
                                         No es solo un corte, es tu carta de presentación.
                                     </p>
 
-                                    <button className="btn-outline-gold w-100 mt-auto" onClick={()=>navigate("/signup/client")}>EMPEZAR</button>
+                                    <button className="btn-outline-gold w-100 mt-auto" onClick={() => navigate("/signup/client")}>EMPEZAR</button>
                                 </div>
                             </div>
                         </div>
@@ -148,7 +181,7 @@ export const Home = () => {
                                     </p>
 
 
-                                    <button className="btn-outline-gold w-100 mt-auto" onClick={()=>navigate("/signup/barber")}>UNIRME</button>
+                                    <button className="btn-outline-gold w-100 mt-auto" onClick={() => navigate("/signup/barber")}>UNIRME</button>
                                 </div>
                             </div>
                         </div>
@@ -172,7 +205,7 @@ export const Home = () => {
                                         Toma el control y transforma tu pasión en éxito.
                                     </p>
 
-                                    <button className="btn-outline-gold w-100 mt-auto" onClick={()=>navigate("/signup/owner")}>GESTIONAR</button>
+                                    <button className="btn-outline-gold w-100 mt-auto" onClick={() => navigate("/signup/owner")}>GESTIONAR</button>
                                 </div>
                             </div>
                         </div>

@@ -63,12 +63,37 @@ export const BarberRegister = () => {
 
     const nextStep = (e) => {
         e.preventDefault();
-        if (!form.email || !form.password || !form.confirmPassword) {
-            dispatch({ type: "set-message", payload: { type: "error", msg: "Completa los datos de acceso" } });
+
+        if (!form.email || !form.password) {
+            dispatch({ 
+                type: "set-message", 
+                payload: { type: "error", msg: "Email y contraseña son obligatorios" } 
+            });
             return;
         }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(form.email)) {
+            dispatch({ 
+                type: "set-message", 
+                payload: { type: "error", msg: "Por favor, ingresa un email válido" } 
+            });
+            return;
+        }
+
+        if (form.password.length < 8) {
+            dispatch({ 
+                type: "set-message", 
+                payload: { type: "error", msg: "La contraseña debe tener al menos 8 caracteres" } 
+            });
+            return;
+        }
+
         if (form.password !== form.confirmPassword) {
-            dispatch({ type: "set-message", payload: { type: "error", msg: "Las contraseñas no coinciden" } });
+            dispatch({ 
+                type: "set-message", 
+                payload: { type: "error", msg: "Las contraseñas no coinciden" } 
+            });
             return;
         }
         setStep(2);
@@ -76,6 +101,16 @@ export const BarberRegister = () => {
 
     const handleSubmit = async e => {
         e.preventDefault();
+
+        if (!isEditing && step === 2) {
+            if (!form.name) {
+                dispatch({ 
+                    type: "set-message", 
+                    payload: { type: "error", msg: "El nombre es obligatorio" } 
+                });
+                return;
+            }
+        }
 
         const method = isEditing ? "PUT" : "POST";
         const url = isEditing
@@ -101,7 +136,10 @@ export const BarberRegister = () => {
             const data = await response.json();
 
             if (!response.ok) {
-                dispatch({ type: "set-message", payload: { type: "error", msg: data.msg || "Error en la operación" } });
+                dispatch({ 
+                    type: "set-message", 
+                    payload: { type: "error", msg: data.msg || "Error en la operación" } 
+                });
                 return;
             }
 
@@ -115,7 +153,10 @@ export const BarberRegister = () => {
             }
 
         } catch (err) {
-            dispatch({ type: "set-message", payload: { type: "error", msg: "Fallo de conexión" } });
+            dispatch({ 
+                type: "set-message", 
+                payload: { type: "error", msg: "Fallo de conexión" } 
+            });
         }
     };
 
@@ -151,16 +192,50 @@ export const BarberRegister = () => {
                             <h5 className="auth-label mb-3 text-dark fw-bold">Credenciales de acceso</h5>
 
                             <label className="auth-label">Correo electrónico</label>
-                            <input className="auth-input w-100 mb-3" name="email" value={form.email} type="email" placeholder="barber@ejemplo.com" onChange={handleChange} required />
+                            <input 
+                                className="auth-input w-100 mb-3" 
+                                name="email" 
+                                value={form.email} 
+                                type="email" 
+                                placeholder="barber@ejemplo.com" 
+                                onChange={handleChange} 
+                                required 
+                            />
 
                             <label className="auth-label">{isEditing ? "Nueva contraseña (opcional)" : "Contraseña"}</label>
-                            <input className="auth-input w-100 mb-3" type="password" name="password" minLength="8" placeholder="Mínimo 8 caracteres" onChange={handleChange} required={!isEditing} />
+                            <input 
+                                className="auth-input w-100 mb-1" 
+                                type="password" 
+                                name="password" 
+                                value={form.password}
+                                placeholder="Mínimo 8 caracteres" 
+                                onChange={handleChange} 
+                                required={!isEditing} 
+                            />
+                            {!isEditing && form.password && form.password.length < 8 && (
+                                <small className="field-warning warning">
+                                    La contraseña debe tener al menos 8 caracteres
+                                </small>
+                            )}
 
                             <label className="auth-label">Confirmar contraseña</label>
-                            <input className="auth-input w-100 mb-4" type="password" name="confirmPassword" minLength="8" placeholder="Repite la contraseña" onChange={handleChange} required={!isEditing} />
+                            <input 
+                                className="auth-input w-100 mb-1" 
+                                type="password" 
+                                name="confirmPassword" 
+                                value={form.confirmPassword}
+                                placeholder="Repite la contraseña" 
+                                onChange={handleChange} 
+                                required={!isEditing} 
+                            />
+                            {!isEditing && form.confirmPassword && form.password !== form.confirmPassword && (
+                                <small className="field-warning error">
+                                    Las contraseñas no coinciden
+                                </small>
+                            )}
 
                             {!isEditing && (
-                                <button type="submit" className="btn-auth-main">
+                                <button type="submit" className="btn-auth-main mt-3">
                                     Siguiente: Perfil <i className="fa-solid fa-chevron-right ms-2"></i>
                                 </button>
                             )}
@@ -182,12 +257,26 @@ export const BarberRegister = () => {
                             </div>
 
                             <div className="mb-4 text-center">
-                                <input type="file" className="form-control form-control-sm mx-auto" style={{ maxWidth: '250px' }} onChange={handleFileChange} accept="image/*" disabled={uploading} />
+                                <input 
+                                    type="file" 
+                                    className="form-control form-control-sm mx-auto" 
+                                    style={{ maxWidth: '250px' }} 
+                                    onChange={handleFileChange} 
+                                    accept="image/*" 
+                                    disabled={uploading} 
+                                />
                                 {uploading && <small className="text-gold d-block mt-2">Subiendo imagen...</small>}
                             </div>
 
                             <label className="auth-label">Nombre completo</label>
-                            <input className="auth-input w-100 mb-3" name="name" value={form.name} placeholder="Tu nombre artístico o real" onChange={handleChange} required />
+                            <input 
+                                className="auth-input w-100 mb-3" 
+                                name="name" 
+                                value={form.name} 
+                                placeholder="Tu nombre" 
+                                onChange={handleChange} 
+                                required 
+                            />
 
                             <label className="auth-label">Teléfono</label>
                             <input

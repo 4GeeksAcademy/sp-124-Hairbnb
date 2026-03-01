@@ -1,0 +1,97 @@
+.contact-page-container {
+    min-height: 100vh;
+}
+
+.contact-hero-section {
+    background: #1a1a1a;
+    padding: 80px 0;
+    border-bottom: 4px solid #d19f68;
+}
+
+.contact-form-card {
+    background: #ffffff;
+    border: 1px solid #f0f0f0;
+    border-radius: 25px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.05);
+}
+
+.contact-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.contact-form-group label {
+    font-family: "Oswald", sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 1.5px;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.contact-input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    background-color: #f9f9f9;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.95rem;
+}
+
+.contact-input:focus {
+    background-color: #fff;
+    border-color: #d19f68;
+    outline: none;
+    box-shadow: 0 5px 15px rgba(209, 159, 104, 0.1);
+    transform: translateY(-2px);
+}
+
+.btn-contact-submit {
+    background: #1a1a1a !important;
+    color: #d19f68 !important;
+    border: 2px solid #d19f68 !important;
+    padding: 15px 40px !important;
+    font-family: "Oswald", sans-serif;
+    letter-spacing: 2px;
+    border-radius: 12px !important;
+    transition: 0.4s;
+    width: 100%;
+    text-transform: uppercase;
+}
+
+.btn-contact-submit:hover {
+    background: #d19f68 !important;
+    color: #1a1a1a !important;
+    box-shadow: 0 10px 20px rgba(209, 159, 104, 0.2);
+}
+
+.info-card-sidebar {
+    background: #ffffff;
+    border: 1px solid #eee;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 20px;
+    transition: all 0.3s;
+}
+
+.info-card-sidebar:hover {
+    border-color: #d19f68;
+    background: #fdfdfd;
+    transform: translateX(10px);
+}
+
+.info-card-sidebar i {
+    font-size: 1.8rem;
+    color: #d19f68;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.ls-2 {
+    letter-spacing: 2px;
+}
+
+.text-gold {
+    color: #d19f68 !important;
+}

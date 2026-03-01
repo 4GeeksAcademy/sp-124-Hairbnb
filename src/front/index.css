@@ -1,9 +1,31 @@
-.layout {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh; 
-}
-
 .content {
     flex: 1;
+    margin-top: 90px; 
+}
+
+.home-page-content {
+    margin-top: -90px !important;
+}
+
+.content:has(.hero-section), 
+.content:has(.home-container) {
+    padding-top: 0 !important;
+}
+
+.private-view, .login-view, .services-view {
+    padding-top: 100px;
+}
+
+body, html {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#root > div > .home-page-content, 
+.hero-container, 
+.hero-section {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    top: 0 !important;
+    position: relative;
 }
