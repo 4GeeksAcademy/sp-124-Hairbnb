@@ -1579,18 +1579,24 @@ def get_availability():
     new_schedule = Schedule.query.filter_by(
         barber_barbershop_id=relation.id,
         day_of_week=day_name
-    ).first()
+    ).all()
 
     if not new_schedule:
         return jsonify([]), 200
 
     all_slots = []
-    current_time = datetime.combine(date_obj.date(), new_schedule.start_time)
-    end_time_limit = datetime.combine(date_obj.date(), new_schedule.end_time)
 
-    while current_time < end_time_limit:
-        all_slots.append(current_time)
-        current_time += timedelta(minutes=30)
+    for sch in new_schedule:
+        current_time = datetime.combine(date_obj.date(), sch.start_time)
+        end_time_limit = datetime.combine(date_obj.date(), sch.end_time)
+        
+
+        while current_time < end_time_limit:
+            slot_end_dt = current_time + timedelta(minutes=duration)
+            if slot_end_dt.time() > sch.end_time:
+                break
+            all_slots.append(current_time)
+            current_time += timedelta(minutes=30)
 
     existing_appointments = Appointment.query.filter(
         Appointment.barber_id == barber_id,
@@ -1604,9 +1610,6 @@ def get_availability():
     valid_slots = []
     for slot_start_dt in all_slots:
         slot_end_dt = slot_start_dt + timedelta(minutes=duration)
-
-        if slot_end_dt.time() > new_schedule.end_time:
-            continue
 
         collision = False
         for appt in existing_appointments:

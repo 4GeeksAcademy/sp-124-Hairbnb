@@ -156,6 +156,7 @@ export const Chatbot = () => {
   const handleLogout = () => {
     dispatch({ type: "logout" });
     setIsOpen(false);
+    navigate("/");
   };
 
   const handleOptionClick = (opcion) => {

@@ -3,6 +3,7 @@ import "../styles/services.css";
 import { HashLink } from "react-router-hash-link";
 
 export const Services = () => {
+  window.scrollTo(0,0);
   return (
     <div className="services-container">
       <section className="services-hero py-5 border-bottom">

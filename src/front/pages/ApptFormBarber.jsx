@@ -183,8 +183,8 @@ export const ApptFormBarber = () => {
                             {foundUser ? (
                                 <div className="d-flex align-items-center justify-content-between p-2 ps-3 rounded-pill bg-light border border-gold">
                                     <div className="d-flex align-items-center">
-                                        <div className="bg-dark text-gold rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '32px', height: '32px' }}>
-                                            <i className="fa-solid fa-check" style={{ fontSize: '0.8rem' }}></i>
+                                        <div className="rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '32px', height: '32px' }}>
+                                            <i className="fa-solid fa-user" style={{ fontSize: '0.8rem' }}></i>
                                         </div>
                                         <span className="fw-bold small">{foundUser.name} {foundUser.last_name}</span>
                                     </div>

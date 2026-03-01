@@ -3,6 +3,7 @@ import "../styles/contact.css";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 
 export const Contact = () => {
+    window.scrollTo(0,0);
     const { store, dispatch } = useGlobalReducer();
     const handleSubmit = (e) => {
         e.preventDefault();

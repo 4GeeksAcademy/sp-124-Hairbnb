@@ -7,6 +7,7 @@ import '../styles/asociates.css'
 import logo from "../../../public/Logo.png"
 
 const MapHandler = ({ selectedId, barbershops }) => {
+    window.scrollTo(0,0);
     const map = useMap();
 
     useEffect(() => {

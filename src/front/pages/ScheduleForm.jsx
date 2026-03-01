@@ -227,7 +227,7 @@ export const ScheduleForm = () => {
 
                                         <div className="d-flex flex-wrap gap-4 align-items-center">
                                             <div className="d-flex align-items-center gap-2">
-                                                <span className="badge bg-dark text-gold Oswald" style={{ fontSize: '0.6rem' }}>T1</span>
+                                                <span className="pb-badge-time Oswald" style={{ fontSize: '0.6rem' }}>T1</span>
                                                 <input
                                                     type="time"
                                                     className="time-input-minimal"
@@ -260,7 +260,7 @@ export const ScheduleForm = () => {
                                                         }}
                                                     />
                                                 </div>
-                                                <span className="badge bg-secondary text-white Oswald" style={{ fontSize: '0.6rem' }}>T2</span>
+                                                <span className="pb-badge-time Oswald" style={{ fontSize: '0.6rem' }}>T2</span>
                                                 <input
                                                     type="time"
                                                     className="time-input-minimal"

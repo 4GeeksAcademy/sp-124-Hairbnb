@@ -32,17 +32,17 @@ export const Footer = () => {
                         </p>
                         <div className="contact-info">
                             <h5 className="text-white fw-bold mb-1">+34 987 65 43 21</h5>
-                            <p className="text-muted small">hairbnb@gmail.com</p>
+                            <p className="text-muted text-gold small">hairbnb@gmail.com</p>
                         </div>
                     </div>
 
                     <div className="col-lg-2 col-md-6 mb-4 mb-lg-0 ps-lg-5">
                         <h5 className="footer-title">UBICACIÓN</h5>
                         <ul className="footer-links">
-                            <li><Link to="/">Madrid</Link></li>
-                            <li><Link to="/">Barcelona</Link></li>
-                            <li><Link to="/">Valencia</Link></li>
-                            <li><Link to="/">Sevilla</Link></li>
+                            <li><Link>Madrid</Link></li>
+                            <li><Link>Barcelona</Link></li>
+                            <li><Link>Valencia</Link></li>
+                            <li><Link>Sevilla</Link></li>
                         </ul>
                     </div>
 
@@ -75,10 +75,8 @@ export const Footer = () => {
                         </div>
                         <div className="text-center mt-3 mt-2 mb-5">
                             <div className="footer-social">
-                                <a><i class="fa-brands fa-x-twitter"></i></a>
-                                <a><i class="fa-brands fa-facebook-f"></i></a>
-                                <a><i class="fa-solid fa-globe"></i></a>
-                                <a><i class="fa-brands fa-instagram"></i></a>
+                                <a href="https://www.linkedin.com/in/sandra-santos-valderrey/" target="_blank"><i className="fa-brands fa-linkedin fa-2xl"></i></a>
+                                <a href="https://github.com/ssantv" target="_blank"><i className="fa-brands fa-github fa-2xl"></i></a>
                             </div>
                         </div>
                     </div>

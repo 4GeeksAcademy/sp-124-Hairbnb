@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import "../styles/aboutus.css";
 
 export const AboutUs = () => {
+    window.scrollTo(0,0);
     const testimonials = [
         {
             quote: "Pasamos de perder 5 citas al día por no coger el teléfono, a tener la agenda llena con un mes de antelación. Hairbnb es el recepcionista que nunca duerme.",

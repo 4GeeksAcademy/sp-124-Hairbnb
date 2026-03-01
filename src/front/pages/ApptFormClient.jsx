@@ -277,7 +277,7 @@ export const ApptFormClient = () => {
 
     return (
         <div className="container py-5" style={{ maxWidth: '750px' }}>
-            <div className="booking-card shadow-lg">
+            <div className="booking-card shadow-lg ">
                 <div className="booking-header">
                     <h2 className="Oswald mb-0 text-uppercase fw-bold">
                         {isEditing ? "Edita tu cita" : "Reserva tu cita"}
@@ -286,13 +286,13 @@ export const ApptFormClient = () => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-4 p-md-5">
-                    <div className="d-flex align-items-center mb-5 p-3 rounded-pill bg-light border">
-                        <div className="bg-dark text-gold rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '40px', height: '40px' }}>
+                    <div className="d-flex align-items-center mb-5 p-3 rounded-pill bg-light border ">
+                        <div className="rounded-circle d-flex align-items-center justify-content-center me-3 " style={{ width: '40px', height: '40px' }}>
                             <i className="fa-solid fa-user"></i>
                         </div>
                         <div>
                             <small className="text-muted d-block Oswald text-uppercase" style={{ fontSize: '0.6rem' }}>Cliente Seleccionado</small>
-                            <span className="fw-bold">{currentUser?.name} {currentUser?.last_name}</span>
+                            <span className="fw-bold ">{currentUser?.name} {currentUser?.last_name}</span>
                         </div>
                     </div>
 
