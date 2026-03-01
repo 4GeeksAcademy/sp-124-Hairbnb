@@ -169,7 +169,7 @@ export const OwnerGestion = () => {
           </button>
         </li>
         <li className="pb-tab-btn">
-          <button className={`pb-tab-btn Oswald fw-bold ${activeTab === "messages" ? "bg-dark text-gold active" : "text-secondary border-0"}`}
+          <button className={`pb-tab-btn Oswald fw-bold ${activeTab === "messages" ? "active" : ""}`}
             onClick={() => setActiveTab("messages")}
           >
             MENSAJES (GLOBAL)
