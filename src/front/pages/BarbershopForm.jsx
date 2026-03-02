@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { uploadToCloudinary } from "../utilities/cloudinary";
 import { APILoader, PlacePicker } from '@googlemaps/extended-component-library/react';
+import { DrawingManager } from "@react-google-maps/api";
 
 export const BarbershopForm = () => {
   const { store, dispatch } = useGlobalReducer();
@@ -87,6 +88,30 @@ export const BarbershopForm = () => {
     }));
   };
 
+  const validateHours = () => {
+    for (const [day, hours] of Object.entries(data.working_hours)) {
+      const { m_start, m_end, a_start, a_end } = hours;
+
+      if (m_start && m_end && m_start >= m_end)
+        return `${day}: El cierre de mañana debe ser posterior a la apertura`;
+      if (m_start && !m_end)
+        return `${day}: Falta la hora de cierre de mañana`;
+      if (!m_start && m_end)
+        return `${day}: Falta la hora de apertura de mañana`;
+
+      if (a_start && a_end && a_start >= a_end)
+        return `${day}: El cierre de tarde debe ser posterior a la apertura`;
+      if (a_start && !a_end)
+        return `${day}: Falta la hora de cierre de tarde`;
+      if (!a_start && a_end)
+        return `${day}: Falta la hora de apertura de tarde`;
+
+      if (m_end && a_start && a_start < m_end)
+        return `${day}: El turno de tarde no puede empezar antes de que acabe el de mañana`;
+    }
+    return null;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -94,6 +119,11 @@ export const BarbershopForm = () => {
       dispatch({ type: "set-message", payload: { type: "error", msg: "Faltan campos obligatorios" } });
       return;
     }
+    const hourError = validateHours();
+  if (hourError) {
+    dispatch({ type: "set-message", payload: { type: "error", msg: hourError } });
+    return;
+  }
 
     const isEditing = !!data.id;
     const url = isEditing

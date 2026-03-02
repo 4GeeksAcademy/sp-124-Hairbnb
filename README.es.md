@@ -1,81 +1,265 @@
-# Plantilla de WebApp con React JS y Flask API
+# Hairbnb
 
-Construye aplicaciones web usando React.js para el front end y python/flask para tu API backend.
+Plataforma de gestión integral para barberías. Conecta dueños, barberos y clientes en un mismo ecosistema: reservas online, gestión de horarios, chat en tiempo real, edición de look con IA y pagos por suscripción.
 
-- La documentación se puede encontrar aquí: https://4geeks.com/docs/start/react-flask-template
-- Aquí hay un video sobre [cómo usar esta plantilla](https://www.youtube.com/watch?v=qBz6Ddd2m38)
-- Integrado con Pipenv para la gestión de paquetes.
-- Despliegue rápido a Render [en solo unos pocos pasos aquí](https://4geeks.com/es/docs/start/despliega-con-render-com).
-- Uso del archivo .env.
-- Integración de SQLAlchemy para la abstracción de bases de datos.
+---
 
-### 1) Instalación:
+## Demo
 
-> Si usas Github Codespaces (recomendado) o Gitpod, esta plantilla ya vendrá con Python, Node y la base de datos Posgres instalados. Si estás trabajando localmente, asegúrate de instalar Python 3.10, Node.
+Deployed en [Render](https://hairbnb-bw01.onrender.com/)
 
-Se recomienda instalar el backend primero, asegúrate de tener Python 3.10, Pipenv y un motor de base de datos (se recomienda Posgres).
+---
 
-1. Instala los paquetes de python: `$ pipenv install`
-2. Crea un archivo .env basado en el .env.example: `$ cp .env.example .env`
-3. Instala tu motor de base de datos y crea tu base de datos, dependiendo de tu base de datos, debes crear una variable DATABASE_URL con uno de los valores posibles, asegúrate de reemplazar los valores con la información de tu base de datos:
+## Tech Stack de la aplicación
 
-| Motor     | DATABASE_URL                                        |
-| --------- | --------------------------------------------------- |
-| SQLite    | sqlite:////test.db                                  |
-| MySQL     | mysql://username:password@localhost:port/example    |
-| Postgres  | postgres://username:password@localhost:5432/example |
+### Frontend
+- React + Vite
+- React Router DOM
+- Socket.io Client
+- Google Maps Extended Component Library (`@googlemaps/extended-component-library`)
+- Cloudinary (subida de imágenes)
 
-4. Migra las migraciones: `$ pipenv run migrate` (omite si no has hecho cambios en los modelos en `./src/api/models.py`)
-5. Ejecuta las migraciones: `$ pipenv run upgrade`
-6. Ejecuta la aplicación: `$ pipenv run start`
+### Backend
+- Python + Flask
+- Flask-JWT-Extended (autenticación por roles)
+- Flask-SocketIO (mensajería en tiempo real)
+- SQLAlchemy + PostgreSQL
+- Stripe (pagos y suscripciones)
+- Stability AI (edición de imagen con IA)
+- DeepL (traducción automática de prompts)
 
-> Nota: Los usuarios de Codespaces pueden conectarse a psql escribiendo: `psql -h localhost -U gitpod example`
+---
 
-### Deshacer una migración
+## Roles de usuario
 
-También puedes deshacer una migración ejecutando
+| Rol | Descripción |
+|---|---|
+| `admin` | Acceso total a todos los datos y modelos |
+| `owner` | Gestiona sus barberías, barberos y suscripción |
+| `barber` | Gestiona su perfil, horarios y servicios |
+| `client` | Reserva citas y chatea con barberías |
 
-```sh
-$ pipenv run downgrade
+---
+
+## Funcionalidades principales
+
+### Autenticación
+- Login independiente por rol: `/login/admin`, `/login/owner`, `/login/barber`, `/login/client`
+- JWT con claims de rol incluido en cada token
+- Rutas privadas protegidas por rol
+
+### Barberías
+- CRUD completo de barberías (dueños y admin)
+- Configuración de horario semanal con turnos de mañana y tarde por día
+- Validación de coherencia de horarios (apertura < cierre, tarde no solapa mañana)
+- Geolocalización con Google Maps (latitud, longitud, dirección)
+- Subida de imagen a Cloudinary
+- Solo las barberías con suscripción activa son visibles públicamente
+
+### Barberos
+- Registro y gestión de perfil
+- Sistema de invitaciones: el dueño invita a un barbero a su barbería por email o teléfono
+- El barbero acepta o rechaza la invitación
+- Un barbero puede trabajar en varias barberías
+
+### Horarios de barberos
+- El barbero configura su horario por barbería (con uno o varios turnos por barbería por día)
+- Validación: el horario del barbero debe estar contenido dentro del horario del local
+- Validación: no se permiten solapamientos con turnos en las otras barberías en las que trabaja.
+
+### Servicios
+- Cada barbero gestiona su catálogo de servicios (nombre, precio, duración, imagen, descripción)
+- Los servicios son la base del sistema de reservas
+
+### Citas
+- Reserva de cita seleccionando barbero, servicio, fecha y hora
+- Validación de disponibilidad en tiempo real (`/barber_availability`)
+- Control de colisiones: no se permiten citas solapadas
+- Validación de horario laboral del barbero
+- Estados de cita: `pending`, `confirmed`, `completed`, `no_show`
+- Gestión de estado de las citas por barbero, dueño o admin
+
+### Chat en tiempo real
+- Conversaciones entre clientes y dueños de barbería
+- Mensajería en tiempo real via Socket.io
+- El admin puede eliminar mensajes y conversaciones
+
+### IA - Edición de look
+- El cliente sube una foto y describe el corte que quiere
+- El prompt se traduce automáticamente al inglés con DeepL
+- Stability AI edita la imagen mediante "search and replace"
+- Se devuelve la imagen editada
+
+### Suscripciones (Stripe)
+- Planes disponibles: mensual, trimestral y anual
+- Checkout con Stripe, redirección a URL de éxito/cancelación
+- Activación de suscripción tras pago confirmado
+- Verificación del estado y fecha de próximo pago
+- Solo barberías con suscripción activa aparecen en el listado público
+
+---
+
+## Modelos de datos
+
+| Modelo | Descripción |
+|---|---|
+| `User` | Clientes |
+| `Owner` | Dueños de barbería |
+| `Barber` | Barberos |
+| `AdminUser` | Administradores |
+| `Barbershop` | Barberías |
+| `BarberBarbershop` | Relación barbero ↔ barbería (invitación) |
+| `Schedule` | Horarios de barberos por barbería |
+| `BarberService` | Servicios ofrecidos por cada barbero |
+| `Appointment` | Citas reservadas |
+| `Conversation` | Conversaciones cliente ↔ dueño |
+| `ChatMessage` | Mensajes individuales de cada conversación |
+
+---
+
+## Variables de entorno
+
+### Backend
+```
+DATABASE_URL=postgresql://...
+JWT_SECRET_KEY=...
+STRIPE_SECRET_KEY=...
+PRICE_ONE_MONTH=price_...
+PRICE_THREE_MONTHS=price_...
+PRICE_TWELVE_MONTHS=price_...
+STABILITY_API_KEY=...
+DEEPL_API_KEY=...
+GOOGLE_GENAI_API_KEY=...
+VITE_FRONTEND_URL=https://tu-frontend.onrender.com
 ```
 
-### Población de la tabla de usuarios en el backend
-
-Para insertar usuarios de prueba en la base de datos, ejecuta el siguiente comando:
-
-```sh
-$ flask insert-test-users 5
+### Frontend
+```
+VITE_BACKEND_URL=...
+VITE_GOOGLE_MAPS_API_KEY=...
+VITE_CLOUDINARY_UPLOAD_PRESET=...
+VITE_CLOUDINARY_CLOUD_NAME=...
 ```
 
-Y verás el siguiente mensaje:
+---
+
+## Instalación local
+
+### Backend
+
+```bash
+# Clona el repositorio
+
+# Crea y activa el entorno virtual
+
+# Instala dependencias
+
+# Configura las variables de entorno
+
+# Edita .env con tus credenciales
+
+# Crea la base de datos y aplica migraciones
+
+# Levantar el puerto
 
 ```
-    Creating test users
-    test_user1@test.com created.
-    test_user2@test.com created.
-    test_user3@test.com created.
-    test_user4@test.com created.
-    test_user5@test.com created.
-    Users created successfully!
+
+### Frontend
+
+```bash
+# Instalación de npm
+
+# Levantar el puerto
+
 ```
 
-### **Nota importante para la base de datos y los datos dentro de ella**
+---
 
-Cada entorno de Github Codespace tendrá **su propia base de datos**, por lo que si estás trabajando con más personas, cada uno tendrá una base de datos diferente y diferentes registros dentro de ella. Estos datos **se perderán**, así que no pases demasiado tiempo creando registros manualmente para pruebas, en su lugar, puedes automatizar la adición de registros a tu base de datos editando el archivo ```commands.py``` dentro de la carpeta ```/src/api```. Edita la línea 32 de la función ```insert_test_data``` para insertar los datos según tu modelo (usa la función ```insert_test_users``` anterior como ejemplo). Luego, todo lo que necesitas hacer es ejecutar ```pipenv run insert-test-data```.
+## Deploy en Render
 
-### Instalación manual del Front-End:
+El proyecto está desplegado en Render con dos servicios separados:
 
--   Asegúrate de estar usando la versión 20 de node y de que ya hayas instalado y ejecutado correctamente el backend.
+- **Web Service** para el backend Flask (con gunicorn + eventlet para Socket.io)
+- **Static Site** para el frontend Vite
 
-1. Instala los paquetes: `$ npm install`
-2. ¡Empieza a codificar! inicia el servidor de desarrollo de webpack `$ npm run start`
+---
 
-## ¡Publica tu sitio web!
+## API — Endpoints principales
 
-Esta plantilla está 100% lista para desplegarse con Render.com y Heroku en cuestión de minutos. Por favor, lee la [documentación oficial al respecto](https://4geeks.com/docs/start/deploy-to-render-com).
+### Auth
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/api/login/client` | Login cliente |
+| POST | `/api/login/barber` | Login barbero |
+| POST | `/api/login/owner` | Login dueño |
+| POST | `/api/login/admin` | Login admin |
 
-### Contribuyentes
+### Usuarios
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/api/users` | Listar usuarios (admin) |
+| POST | `/api/users` | Registro de cliente |
+| GET | `/api/users/:id` | Ver perfil |
+| PUT | `/api/users/:id` | Editar perfil |
+| DELETE | `/api/users/:id` | Eliminar cuenta |
 
-Esta plantilla fue construida como parte del [Coding Bootcamp](https://4geeksacademy.com/us/coding-bootcamp) de 4Geeks Academy por [Alejandro Sanchez](https://twitter.com/alesanchezr) y muchos otros contribuyentes. Descubre más sobre nuestro [Curso de Desarrollador Full Stack](https://4geeksacademy.com/us/coding-bootcamps/part-time-full-stack-developer) y [Bootcamp de Ciencia de Datos](https://4geeksacademy.com/us/coding-bootcamps/datascience-machine-learning).
+### Barberías
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/api/barbershops` | Listar barberías activas |
+| POST | `/api/barbershops` | Crear barbería |
+| GET | `/api/barbershops/:id` | Ver barbería |
+| PUT | `/api/barbershops/:id` | Editar barbería |
+| DELETE | `/api/barbershops/:id` | Eliminar barbería |
+| GET | `/api/owners/barbershops` | Mis barberías (owner) |
 
-Puedes encontrar otras plantillas y recursos como este en la [página de github de la escuela](https://github.com/4geeksacademy/).
+### Invitaciones
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/api/invitations` | Ver mis invitaciones (barbero) |
+| POST | `/api/invitations` | Invitar barbero (owner) |
+| PUT | `/api/invitations/:id` | Aceptar invitación |
+| DELETE | `/api/invitations/:id` | Eliminar invitación |
+
+### Horarios
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/api/schedules` | Mis horarios (barbero) |
+| POST | `/api/schedules` | Crear turno |
+| PUT | `/api/schedules/:id` | Editar turno |
+| DELETE | `/api/schedules/:id` | Eliminar turno |
+| GET | `/api/schedules/by_invitation/:id` | Horarios por invitación |
+| DELETE | `/api/schedules/by_invitation/:id` | Borrar horarios de invitación |
+
+### Citas
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/api/appointments` | Listar citas |
+| POST | `/api/appointments` | Crear reserva |
+| PUT | `/api/appointments/:id` | Editar reserva |
+| DELETE | `/api/appointments/:id` | Cancelar reserva |
+| PUT | `/api/appointments/:id/status` | Cambiar estado |
+| GET | `/api/barber_availability` | Slots disponibles |
+
+### Chat
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/api/conversations` | Mis conversaciones |
+| POST | `/api/conversations` | Iniciar conversación |
+| GET | `/api/conversations/:id/messages` | Ver mensajes |
+| POST | `/api/messages` | Enviar mensaje |
+| DELETE | `/api/messages/:id` | Eliminar mensaje (admin) |
+
+### IA & Stripe
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/api/edit-hair` | Editar look con IA |
+| POST | `/api/create-checkout-session` | Crear sesión de pago |
+| POST | `/api/activate-subscription` | Activar suscripción |
+| GET | `/api/verify-subscription` | Verificar estado |
+
+---
+
+## Autores
+
+Desarrollado en solitario por Sandra Santos. Este sitio es el proyecto final realizado para el Bootcamp Full-Stack Software Developer de 4Geeks Academy. Marzo de 2026.

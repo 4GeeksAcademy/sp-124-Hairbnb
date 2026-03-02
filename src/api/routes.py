@@ -361,6 +361,38 @@ def get_barbershops():
 
 @api.route("/barbershops", methods=["POST"])
 @jwt_required()
+def validate_working_hours(working_hours):
+    if not working_hours:
+        return None  # Es opcional
+    
+    for day, hours in working_hours.items():
+        m_start = hours.get("m_start", "")
+        m_end = hours.get("m_end", "")
+        a_start = hours.get("a_start", "")
+        a_end = hours.get("a_end", "")
+
+        if m_start and m_end:
+            if m_start >= m_end:
+                return f"{day}: La hora de cierre de mañana debe ser posterior a la de apertura"
+        elif m_start and not m_end:
+            return f"{day}: Falta la hora de cierre de mañana"
+        elif not m_start and m_end:
+            return f"{day}: Falta la hora de apertura de mañana"
+
+        if a_start and a_end:
+            if a_start >= a_end:
+                return f"{day}: La hora de cierre de tarde debe ser posterior a la de apertura"
+        elif a_start and not a_end:
+            return f"{day}: Falta la hora de cierre de tarde"
+        elif not a_start and a_end:
+            return f"{day}: Falta la hora de apertura de tarde"
+
+        if m_end and a_start:
+            if a_start < m_end:
+                return f"{day}: El turno de tarde no puede empezar antes de que acabe el de mañana"
+
+    return None
+
 def new_barbershop():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -380,6 +412,10 @@ def new_barbershop():
     if len(data.get("phone")) < 8:
         return jsonify({"message": {"type": "error", "msg": "Introduce un número de teléfono correcto"}}), 400
 
+    error = validate_working_hours(data.get("working_hours"))
+    if error:
+        return jsonify({"message": {"type":"error", "msg":error}})
+    
     new_barbsh = Barbershop(
         name=data.get("name"),
         address=data.get("address"),
@@ -949,6 +985,7 @@ def new_schedule():
     day_of_week = data.get("day_of_week")
     start_time_str = data.get("start_time")
     end_time_str = data.get("end_time")
+    
 
     if not all([invitation_id, day_of_week, start_time_str, end_time_str]):
         return jsonify({"message": {"type": "error", "msg": "Faltan datos obligatorios"}}), 400
@@ -967,6 +1004,43 @@ def new_schedule():
     if not link:
         return jsonify({"message": {"type": "error", "msg": "La invitación no existe"}}), 404
     
+    barbershop = link.barbershop
+    working_hours = barbershop.working_hours if barbershop else None
+
+    day_map = {
+        "Monday": "Lunes", "Tuesday": "Martes", "Wednesday": "Miércoles",
+        "Thursday": "Jueves", "Friday": "Viernes", "Saturday": "Sábado", "Sunday": "Domingo"
+    }
+
+    if working_hours:
+        day_label = day_map.get(day_of_week)
+        shop_day = working_hours.get(day_label) if day_label else None
+
+        m_start = shop_day.get("m_start") if shop_day else None
+        m_end   = shop_day.get("m_end")   if shop_day else None
+        a_start = shop_day.get("a_start") if shop_day else None
+        a_end   = shop_day.get("a_end")   if shop_day else None
+
+        valid_slots = []
+        if m_start and m_end:
+            valid_slots.append((
+                datetime.strptime(m_start, "%H:%M").time(),
+                datetime.strptime(m_end,   "%H:%M").time()
+            ))
+        if a_start and a_end:
+            valid_slots.append((
+                datetime.strptime(a_start, "%H:%M").time(),
+                datetime.strptime(a_end,   "%H:%M").time()
+            ))
+
+        if not valid_slots:
+            return jsonify({"message": {"type": "error", "msg": f"La barbería está cerrada el {day_label or day_of_week}"}}), 400
+
+        fits = any(slot_start <= new_start and new_end <= slot_end for slot_start, slot_end in valid_slots)
+        if not fits:
+            slots_str = " / ".join([f"{s.strftime('%H:%M')}-{e.strftime('%H:%M')}" for s, e in valid_slots])
+            return jsonify({"message": {"type": "error", "msg": f"Tu turno debe estar dentro del horario del local: {slots_str}"}}), 400
+        
     if role != "admin" and str(link.barber_id) != str(current_user_id):
         return jsonify({"message": {"type": "error", "msg": "No tienes permiso para editar este horario"}}), 403
     
@@ -980,7 +1054,7 @@ def new_schedule():
             return jsonify({
                 "message": {
                     "type": "error",
-                    "msg": f"Ya tienes un turno el {day_of_week} de {s.start_time.strftime('%H:%M')} a {s.end_time.strftime('%H:%M')}."
+                    "msg": f"Ya tienes un turno el {day_of_week} de {s.start_time.strftime('%H:%M')} a {s.end_time.strftime('%H:%M')} en otra barberia."
                 }
             }), 409
 
@@ -1053,7 +1127,7 @@ def edit_schedule(schedule_id):
             return jsonify({
                 "message": {
                     "type": "error",
-                    "msg": f"Conflicto: Ya tienes un turno el {new_day} de {s.start_time.strftime('%H:%M')} a {s.end_time.strftime('%H:%M')}"
+                    "msg": f"Conflicto: Ya tienes un turno el {new_day} de {s.start_time.strftime('%H:%M')} a {s.end_time.strftime('%H:%M')} en otra barberia."
                 }
             }), 409
 

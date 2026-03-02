@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import decoration from "../../../public/about-shape.png"
 
 export const Home = () => {
-    window.scrollTo(0,0);
+    
     const navigate = useNavigate();
     const texts = [
         { title: <>TU PRÓXIMO CORTE<br />A UN CLICK</>, sub: "Encuentra a los mejores barberos y gestiona tus citas." },
@@ -26,6 +26,7 @@ export const Home = () => {
                 setFade(true);
             }, 500);
         }, 4000);
+        window.scrollTo(0,0);
 
         return () => clearInterval(interval);
     }, []);

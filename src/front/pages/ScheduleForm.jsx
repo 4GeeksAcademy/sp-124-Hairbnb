@@ -112,6 +112,30 @@ export const ScheduleForm = () => {
             dispatch({ type: "set-message", payload: { type: "error", msg: `En ${dayLabels[day]}, el Turno 1 no puede solapar al Turno 2.` } });
             return;
         }
+        const shop = getShopHours(day);
+
+        if (!shop || (!shop.m_start && !shop.a_start)) {
+            dispatch({ type: "set-message", payload: { type: "error", msg: `${dayLabels[day]}: La barbería está cerrada ese día.` } });
+            return;
+        }
+
+        const slots = [];
+        if (shop.m_start && shop.m_end) slots.push({ start: toN(shop.m_start), end: toN(shop.m_end) });
+        if (shop.a_start && shop.a_end) slots.push({ start: toN(shop.a_start), end: toN(shop.a_end) });
+
+        const fitsInShop = (start, end) => slots.some(s => s.start <= toN(start) && toN(end) <= s.end);
+
+        if (d.t1_start && d.t1_end && !fitsInShop(d.t1_start, d.t1_end)) {
+            const slotsStr = slots.map(s => `${shop.m_start || shop.a_start}-${shop.m_end || shop.a_end}`).join(" / ");
+            dispatch({ type: "set-message", payload: { type: "error", msg: `${dayLabels[day]} T1: Tu turno debe estar dentro del horario del local (${slotsStr}).` } });
+            return;
+        }
+
+        if (d.t2_start && d.t2_end && !fitsInShop(d.t2_start, d.t2_end)) {
+            const slotsStr = slots.map(s => `${shop.m_start || shop.a_start}-${shop.m_end || shop.a_end}`).join(" / ");
+            dispatch({ type: "set-message", payload: { type: "error", msg: `${dayLabels[day]} T2: Tu turno debe estar dentro del horario del local (${slotsStr}).` } });
+            return;
+        }
     }
 
     setLoading(true);

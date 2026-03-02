@@ -100,7 +100,7 @@ export const Navbar = () => {
                                 </li>
 
                                 <li className="nav-item dropdown">
-                                    <Link className="nav-link hairbnb-nav-link dropdown-toggle" to="#" role="button" data-bs-toggle="dropdown">
+                                    <Link className="nav-link hairbnb-nav-link dropdown-toggle me-4" to="#" role="button" data-bs-toggle="dropdown">
                                         Iniciar Sesión
                                     </Link>
                                     <ul className="dropdown-menu dropdown-menu-end hairbnb-dropdown shadow">
