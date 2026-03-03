@@ -360,8 +360,6 @@ def get_barbershops():
     return jsonify(data), 200
 
 
-@ api.route("/barbershops", methods=["POST"])
-@ jwt_required()
 def validate_working_hours(working_hours):
     if not working_hours:
         return None  # Es opcional
@@ -393,7 +391,8 @@ def validate_working_hours(working_hours):
                 return f"{day}: El turno de tarde no puede empezar antes de que acabe el de mañana"
 
     return None
-
+@ api.route("/barbershops", methods=["POST"])
+@ jwt_required()
 def new_barbershop():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
