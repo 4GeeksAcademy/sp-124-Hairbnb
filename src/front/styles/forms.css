@@ -108,6 +108,27 @@
   color: #1a1a1a !important;
 }
 
+.btn-outline {
+  background: transparent !important;
+  color: #d19f68;
+  border: 2px solid #d19f68 !important;
+  padding: 15px 40px !important;
+  font-family: "Oswald", sans-serif;
+  letter-spacing: 2px;
+  border-radius: 12px !important;
+  transition: 0.4s;
+}
+
+.btn-filled {
+  background: #d19f68 !important;
+  color: #fff;
+  padding: 15px 40px !important;
+  font-family: "Oswald", sans-serif;
+  letter-spacing: 2px;
+  border-radius: 12px !important;
+  transition: 0.4s;
+}
+
 .calendar-wrapper {
   position: relative;
   transition: all 0.3s ease;

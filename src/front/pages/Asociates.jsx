@@ -1,28 +1,102 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { APIProvider, Map, AdvancedMarker, Pin, useMap } from '@vis.gl/react-google-maps';
+import { APIProvider, Map, AdvancedMarker, Pin, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
 import { useNavigate } from 'react-router-dom';
 import useGlobalReducer from '../hooks/useGlobalReducer';
 import noAvailable from '../../../public/DefaultImage.png';
 import '../styles/asociates.css'
 import logo from "../../../public/Logo.png"
 
-const MapHandler = ({ selectedId, barbershops }) => {
-    window.scrollTo(0,0);
+const SearchBar = ({ onPlaceSelect }) => {
+    const placesLib = useMapsLibrary('places');
+    const inputRef = useRef(null);
+    const autocompleteRef = useRef(null);
+
+    useEffect(() => {
+        if (!placesLib || !inputRef.current) return;
+
+        autocompleteRef.current = new placesLib.Autocomplete(inputRef.current, {
+            fields: ['geometry', 'name', 'formatted_address'],
+        });
+
+        autocompleteRef.current.addListener('place_changed', () => {
+            const place = autocompleteRef.current.getPlace();
+            if (place?.geometry?.location) {
+                onPlaceSelect({
+                    lat: place.geometry.location.lat(),
+                    lng: place.geometry.location.lng(),
+                    name: place.name,
+                });
+            }
+        });
+
+        return () => {
+            if (autocompleteRef.current) {
+                placesLib.event?.clearInstanceListeners(autocompleteRef.current);
+            }
+        };
+    }, [placesLib, onPlaceSelect]);
+
+    return (
+        <div style={{
+            position: 'absolute',
+            top: '12px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 10,
+            width: '90%',
+            maxWidth: '400px',
+        }}>
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: '#fff',
+                borderRadius: '8px',
+                boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
+                padding: '0 12px',
+                border: '1px solid #e0e0e0',
+            }}>
+                <i className="fa-solid fa-magnifying-glass" style={{ color: '#d19f68', marginRight: '8px', fontSize: '14px' }} />
+                <input
+                    ref={inputRef}
+                    type="text"
+                    placeholder="Buscar dirección o lugar..."
+                    style={{
+                        border: 'none',
+                        outline: 'none',
+                        width: '100%',
+                        padding: '10px 0',
+                        fontSize: '14px',
+                        fontFamily: 'Oswald, sans-serif',
+                        background: 'transparent',
+                        color: '#16161a',
+                    }}
+                />
+            </div>
+        </div>
+    );
+};
+
+const MapHandler = ({ selectedId, barbershops, searchLocation }) => {
+    window.scrollTo(0, 0);
     const map = useMap();
 
     useEffect(() => {
         if (!map || !selectedId) return;
-
         const barber = barbershops.find(b => b.id === selectedId);
         if (barber) {
             const newPos = { lat: Number(barber.latitude), lng: Number(barber.longitude) };
             const bounds = map.getBounds();
-
             if (bounds && !bounds.contains(newPos)) {
                 map.panTo(newPos);
             }
         }
     }, [selectedId, map, barbershops]);
+
+    useEffect(() => {
+        if (!map || !searchLocation) return;
+        map.panTo(searchLocation);
+        map.setZoom(15);
+    }, [searchLocation, map]);
 
     return null;
 };
@@ -33,6 +107,7 @@ export const Asociates = () => {
     const [barbershops, setBarbershops] = useState([]);
     const [selectedId, setSelectedId] = useState(null);
     const [viewDetailId, setViewDetailId] = useState(null);
+    const [searchLocation, setSearchLocation] = useState(null);
     const listRefs = useRef({});
 
     useEffect(() => {
@@ -81,43 +156,28 @@ export const Asociates = () => {
 
     const handleSelectBarber = (barber, origin) => {
         setSelectedId(barber.id);
-
         if (origin === 'marker' && listRefs.current[barber.id]) {
-            listRefs.current[barber.id].scrollIntoView({
-                behavior: 'smooth',
-                block: 'nearest'
-            });
+            listRefs.current[barber.id].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     };
 
     const handleContact = async (barbershopId) => {
         if (!store.token) {
-            dispatch({
-                type: "set-message",
-                payload: { type: "danger", msg: "Debes iniciar sesión para contactar" }
-            });
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Debes iniciar sesión para contactar" } });
             return navigate("/login/client");
         }
-
         try {
             const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/conversations`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${store.token}`
-                },
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${store.token}` },
                 body: JSON.stringify({ barbershop_id: barbershopId })
             });
-
             const data = await response.json();
-            if (response.ok) {
-                navigate("/private/client", { state: { activeChatId: data.id } });
-            }
+            if (response.ok) navigate("/private/client", { state: { activeChatId: data.id } });
         } catch (error) {
             console.error("Error:", error);
         }
     };
-
 
     return (
         <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
@@ -125,7 +185,6 @@ export const Asociates = () => {
 
                 <div className="asociates-sidebar bg-white border-end shadow-sm col-12 col-lg-5"
                     style={{ height: '70vh', overflowY: 'auto' }}>
-
                     <div className="p-4">
                         <span className="text-gold text-uppercase small fw-bold Oswald">RED DE PROFESIONALES</span>
                         <h2 className="h4 fw-bold mb-4 Oswald">BARBERÍAS DE CONFIANZA</h2>
@@ -136,6 +195,7 @@ export const Asociates = () => {
                                 <p className="mt-2 text-muted">Buscando locales...</p>
                             </div>
                         )}
+
                         <div className="barber-list-container">
                             {barbershops.map(barber => (
                                 <div
@@ -159,20 +219,23 @@ export const Asociates = () => {
                                                 <i className="fa-solid fa-location-dot text-gold"></i> {barber.address}
                                             </p>
                                             <div className="d-flex justify-content-end">
-                                                <button className="btn btn-gold-outline btn-sm px-3 Oswald" onClick={(e) => { e.stopPropagation(); setViewDetailId(barber.id); }}>
+                                                <button
+                                                    className="btn btn-gold-outline btn-sm px-3 Oswald"
+                                                    onClick={(e) => { e.stopPropagation(); setViewDetailId(barber.id); }}
+                                                >
                                                     DETALLES
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-
                             ))}
                         </div>
                     </div>
                 </div>
 
-                <div className="col-12 col-lg-7" style={{ height: '70vh', minHeight: '400px', padding: 0 }}>
+                <div className="col-12 col-lg-7" style={{ height: '70vh', minHeight: '400px', padding: 0, position: 'relative' }}>
+
                     <Map
                         style={{ width: '100%', height: '100%' }}
                         defaultCenter={{ lat: 41.503, lng: -5.741 }}
@@ -182,7 +245,8 @@ export const Asociates = () => {
                         renderingType={'VECTOR'}
                         key={barbershops.length}
                     >
-                        <MapHandler selectedId={selectedId} barbershops={barbershops} />
+                        <SearchBar onPlaceSelect={setSearchLocation} />
+                        <MapHandler selectedId={selectedId} barbershops={barbershops} searchLocation={searchLocation} />
                         {barbershops.map(barber => (
                             <AdvancedMarker
                                 key={barber.id}
@@ -191,7 +255,7 @@ export const Asociates = () => {
                             >
                                 <Pin
                                     background={selectedId === barber.id ? '#d19f68' : '#999999'}
-                                    borderColor={selectedId === barber.id ? '#16161a' : '#16161a'}
+                                    borderColor={'#16161a'}
                                     glyphColor={'#ffffff'}
                                     scale={selectedId === barber.id ? 1.3 : 1}
                                 />
@@ -203,7 +267,6 @@ export const Asociates = () => {
                         <div className="custom-modal-overlay" onClick={() => setViewDetailId(null)}>
                             <div className="custom-modal-content" onClick={e => e.stopPropagation()}>
                                 <button className="btn-close position-absolute top-0 end-0 m-3" onClick={() => setViewDetailId(null)}></button>
-
                                 {(() => {
                                     const b = barbershops.find(x => x.id === viewDetailId);
                                     if (!b) return null;
@@ -215,12 +278,10 @@ export const Asociates = () => {
                                                     <h3 className="h4 Oswald text-white mb-0">{b.name?.toUpperCase()}</h3>
                                                 </div>
                                             </div>
-
                                             <div className="p-4">
                                                 <p className="text-muted small mb-4">
                                                     <i className="fa-solid fa-location-dot me-2 text-gold"></i>{b.address}
                                                 </p>
-
                                                 <div className="row">
                                                     <div className="col-12 col-md-6 mb-4">
                                                         <h6 className="Oswald fw-bold text-gold border-bottom pb-2 mb-2">HORARIOS</h6>
@@ -234,7 +295,6 @@ export const Asociates = () => {
                                                         </p>
                                                     </div>
                                                 </div>
-
                                                 <div className="d-grid gap-2 mt-4">
                                                     {store.token && store.role === "client" ? (
                                                         <>
@@ -262,6 +322,6 @@ export const Asociates = () => {
                     )}
                 </div>
             </div>
-        </APIProvider >
+        </APIProvider>
     );
 };

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import "../styles/ai.css"
 
-import gif from "../../../public/GIF.gif";
+import gif from "../../../public/secador.gif";
 
 export const AIHair = () => {
     const { store } = useGlobalReducer();
@@ -123,7 +124,7 @@ export const AIHair = () => {
                         />
                     </div>
 
-                    <div className="bg-light rounded-3 p-3 text-center position-relative overflow-hidden" style={{ minHeight: "200px" }}>
+                    <div className="t rounded-3 p-3 align-content-center  text-center position-relative overflow-hidden" style={{ minHeight: "200px" }}>
                         {previewUrl ? (
                             <>
                                 <img
@@ -133,14 +134,14 @@ export const AIHair = () => {
                                 />
                                 {status === "processing" && (
                                     <div className="position-absolute top-50 start-50 translate-middle">
-                                        <img src={gif} width="80" alt="Cargando" />
+                                        <img src={gif} className="gif-image-1" width="80" alt="Cargando" />
+                                        <img src={gif} className="gif-image-2" width="80" alt="Cargando" />
                                     </div>
                                 )}
                             </>
                         ) : (
                             <div className="d-flex flex-column justify-content-center h-100 opacity-50 ">
-                                <i className="fa-solid fa-image fa-2x p-4"></i>
-                                <span className="small p-4">Esperando imagen...</span>
+                                <span className="small p-4 text-golden Oswald">Asegúrate de añadir una imagen en la que estés de frente y con un fondo neutro<br/>para evitar errores en la "busqueda e intercambio de cabello" de la herramienta</span>
                             </div>
                         )}
                     </div>
@@ -174,7 +175,7 @@ export const AIHair = () => {
                         )}
 
                         {status === "error" && (
-                            <div className="text-center text-danger">
+                            <div className="text-center text-light">
                                 <i className="fa-solid fa-triangle-exclamation fa-2x mb-2"></i>
                                 <p className="small">Hubo un error. Prueba de nuevo más tarde.</p>
                                 <button className="btn btn-sm btn-outline-light" onClick={() => setStatus("idle")}>Reintentar</button>
@@ -185,7 +186,7 @@ export const AIHair = () => {
             </div>
 
             <button
-                className={`btn btn-lg w-100 mt-4 Oswald fw-bold ${!file || !prompt ? 'btn-secondary opacity-50' : 'btn-dark'}`}
+                className={`btn btn-lg w-50 mt-4 Oswald btn-gold mx-auto ${!file || !prompt ? 'btn-secondary opacity-50' : 'btn-dark'}`}
                 onClick={handleProcess}
                 disabled={status === "processing" || !file || !prompt}
             >

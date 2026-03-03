@@ -135,6 +135,17 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
+.custom-modal-content .btn-close {
+    position: sticky;
+    top: 10px;
+    float: right;
+    margin: 10px 10px 0 0;
+    z-index: 10;
+    background-color: white;
+    border-radius: 50%;
+    padding: 5px;
+}
+
 @keyframes modalFadeIn {
   from {
     opacity: 0;

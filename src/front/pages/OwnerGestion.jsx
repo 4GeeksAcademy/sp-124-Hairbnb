@@ -130,9 +130,9 @@ export const OwnerGestion = () => {
   if (store.role !== "owner") {
         return (
             <div className="container py-5 text-center">
-                <h2 className="Oswald fw-bold text-danger">ACCESO DENEGADO</h2>
+                <h2 className="Oswald fw-bold text-dark">ACCESO DENEGADO</h2>
                 <p>Inicia sesión como dueño para acceder.</p>
-                <button className="btn btn-dark Oswald mt-3" onClick={() => navigate("/login/owner")}>INICIAR SESIÓN</button>
+                <button className="btn pb-btn-filled Oswald mt-3" onClick={() => navigate("/login/owner")}>INICIAR SESIÓN</button>
             </div>
         );
     }
@@ -251,7 +251,7 @@ export const OwnerGestion = () => {
                       </div>
 
                       <div className="card-footer bg-white border-0 px-4 pb-3">
-                        <button className="btn btn-link text-danger text-decoration-none Oswald fw-bold w-100 py-1 small hover-opacity" style={{ fontSize: '0.7rem', letterSpacing: '1px' }}>
+                        <button className="btn btn-link text-dark text-decoration-none Oswald fw-bold w-100 py-1 small hover-opacity" style={{ fontSize: '0.7rem', letterSpacing: '1px' }}>
                           <i className="fa-solid fa-user-xmark me-2"></i>DESVINCULAR PERSONAL
                         </button>
                       </div>
@@ -318,7 +318,7 @@ export const OwnerGestion = () => {
                                   <span className="pb-badge-time Oswald">{a.date.split("T")[1].slice(0, 5)}</span>
                                   <div className="d-flex gap-2">
                                     <i className="fa-solid fa-pen text-secondary cursor-pointer" onClick={() => handleEdit(a)}></i>
-                                    <i className="fa-solid fa-trash text-danger cursor-pointer" onClick={() => handleDelete(a.id)}></i>
+                                    <i className="fa-solid fa-trash text-dark cursor-pointer" onClick={() => handleDelete(a.id)}></i>
                                   </div>
                                 </div>
                                 <div className="Oswald fw-bold text-dark text-uppercase small">{a.user_name}</div>

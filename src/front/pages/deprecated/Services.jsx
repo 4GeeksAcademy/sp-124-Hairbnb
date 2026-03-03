@@ -108,7 +108,7 @@ export const Services = () => {
                                 >
                                     <i className="fa-regular fa-pen-to-square"></i> Editar
                                 </Link>
-                                <button className="btn btn-outline-danger" onClick={() => deleteService(service.id)}>
+                                <button className="btn pb-btn-outline-dark" onClick={() => deleteService(service.id)}>
                                     <i className="fa-solid fa-xmark"></i> Borrar
                                 </button>
                             </div>

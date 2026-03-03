@@ -138,7 +138,7 @@ export const Navbar = () => {
                                     </li>
                                     <li><hr className="dropdown-divider bg-secondary opacity-25" /></li>
                                     <li>
-                                        <button className="dropdown-item hairbnb-dropdown-item text-danger fw-bold" onClick={handleLogout}>
+                                        <button className="dropdown-item hairbnb-dropdown-item fw-bold" onClick={handleLogout}>
                                             <i className="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
                                         </button>
                                     </li>

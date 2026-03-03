@@ -267,7 +267,7 @@ export const ApptFormClient = () => {
     if (store.role !== "client") {
         return (
             <div className="container py-5 text-center">
-                <h2 className="Oswald fw-bold text-danger">ACCESO DENEGADO</h2>
+                <h2 className="Oswald fw-bold text-dark">ACCESO DENEGADO</h2>
                 <p>Inicia sesión como cliente para acceder.</p>
                 <button className="btn btn-dark Oswald mt-3" onClick={() => navigate("/login/client")}>INICIAR SESIÓN</button>
             </div>
@@ -306,6 +306,17 @@ export const ApptFormClient = () => {
                                     <option key={shop.id} value={shop.id}>{shop.name}</option>
                                 ))}
                             </select>
+                            <small className="mt-2 d-block text-muted">
+                                ¿No sabes cuál elegir?{" "}
+                                <span
+                                    role="button"
+                                    className="text-gold fw-bold"
+                                    style={{ cursor: "pointer", textDecoration: "underline" }}
+                                    onClick={() => navigate("/asociates")}
+                                >
+                                    Busca el local en el mapa
+                                </span>
+                            </small>
                         </div>
 
                         <div className="col-md-6 form-group-custom">

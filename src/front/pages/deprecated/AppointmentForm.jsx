@@ -158,7 +158,7 @@ export const AppointmentForm = () => {
                                     <strong>{foundUser.name} {foundUser.last_name || ""}</strong>
                                 </div>
                                 {!isEditing && (
-                                    <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => { setFoundUser(null); setData({ ...data, user_id: "" }) }}>
+                                    <button type="button" className="btn btn-sm pb-btn-outline-dark" onClick={() => { setFoundUser(null); setData({ ...data, user_id: "" }) }}>
                                         Cambiar
                                     </button>
                                 )}

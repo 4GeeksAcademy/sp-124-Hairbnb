@@ -255,7 +255,7 @@ export const ClientRegister = () => {
                                 accept="image/*" 
                                 disabled={uploading} 
                             />
-                            {uploading && <small className="text-danger d-block mt-2">Subiendo imagen...</small>}
+                            {uploading && <small className="text-dark d-block mt-2">Subiendo imagen...</small>}
                             <div className="row mt-3">
                                 <div className="col-md-6 mb-3">
                                     <label className="auth-label">Nombre</label>

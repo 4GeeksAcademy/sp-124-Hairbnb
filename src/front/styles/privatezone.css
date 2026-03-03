@@ -67,6 +67,8 @@
 .pb-badge-time {
     border-left: 3px solid #d19f68;
     padding-left: 1rem;
+    border-right: 3px solid  #d19f68;
+    padding-right: 1rem;
 }
 
 .pb-title-dark {
@@ -81,3 +83,34 @@
     letter-spacing: 2px;
 }
 
+.pb-btn-outline {
+  background: transparent !important;
+  color: #d19f68;
+  border: 2px solid #d19f68 !important;
+  padding: 4px !important;
+  font-family: "Oswald", sans-serif;
+  letter-spacing: 2px;
+  border-radius: 12px !important;
+  transition: 0.4s;
+}
+
+.pb-btn-outline-dark {
+  background: transparent !important;
+  color: #1a1a1d;
+  border: 2px solid #1a1a1d !important;
+  padding: 4px !important;
+  font-family: "Oswald", sans-serif;
+  letter-spacing: 2px;
+  border-radius: 12px !important;
+  transition: 0.4s;
+}
+
+.pb-btn-filled {
+  background: #d19f68 !important;
+  color: #fff;
+  padding: 4px !important;
+  font-family: "Oswald", sans-serif;
+  letter-spacing: 2px;
+  border-radius: 12px !important;
+  transition: 0.4s;
+}

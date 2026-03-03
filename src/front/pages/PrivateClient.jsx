@@ -11,6 +11,14 @@ export const PrivateClient = () => {
     const [activeTab, setActiveTab] = useState("appointments");
     const navigate = useNavigate();
     const location = useLocation();
+    const statusName = {
+        'pending': 'Pendiente',
+        'accepted': 'Aceptada',
+        'confirmed': 'Confirmada',
+        'cancelled': 'Cancelada',
+        'completed': 'Completada',
+        'no_show': 'No presentado',
+    };
 
     const now = new Date();
 
@@ -48,6 +56,27 @@ export const PrivateClient = () => {
         if (store.token) fetchAppts();
     }, [store.token]);
 
+    const handleContact = async (barbershopId) => {
+
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/conversations`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${store.token}`
+                },
+                body: JSON.stringify({ barbershop_id: barbershopId })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                navigate("/private/client", { state: { activeChatId: data.id } });
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    };
+
     const handleCancelAppointment = async (apptId) => {
         if (!confirm("¿Estás seguro de que deseas cancelar esta cita?")) return;
         try {
@@ -67,9 +96,9 @@ export const PrivateClient = () => {
     if (store.role !== "client") {
         return (
             <div className="container py-5 text-center">
-                <h2 className="Oswald fw-bold text-danger">ACCESO DENEGADO</h2>
+                <h2 className="Oswald fw-bold text-dark">ACCESO DENEGADO</h2>
                 <p>Inicia sesión como cliente para acceder.</p>
-                <button className="btn btn-dark Oswald mt-3" onClick={() => navigate("/login/client")}>INICIAR SESIÓN</button>
+                <button className="btn pb-btn-filled Oswald mt-3" onClick={() => navigate("/login/client")}>INICIAR SESIÓN</button>
             </div>
         );
     }
@@ -80,65 +109,79 @@ export const PrivateClient = () => {
                 <div className="row g-3">
                     {list.map((appt) => (
                         <div key={appt.id} className="col-12">
-                            <div className="card border-dark rounded-0 shadow-sm bg-white position-relative overflow-hidden">
+                            <div className="card border-dark rounded-0 shadow-sm bg-white overflow-hidden">
                                 <div className={`position-absolute top-0 start-0 h-100 ${appt.status === 'confirmed' ? 'bg-success' :
                                     appt.status === 'pending' ? 'bg-gold' : 'bg-secondary'
                                     }`} style={{ width: '4px' }}></div>
 
-                                <div className="card-body p-3 ps-4">
-                                    <div className="row align-items-center">
-                                        <div className="col-md-2 text-center border-end border-light">
-                                            <div className="Oswald fw-bold text-dark h4 mb-0">{new Date(appt.date).getDate()}</div>
-                                            <div className="Oswald text-gold small fw-bold text-uppercase">
-                                                {new Date(appt.date).toLocaleString('es', { month: 'short' })}
-                                            </div>
-                                            <div className="small text-muted Oswald">
-                                                {new Date(appt.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </div>
+                                <div className="pb-appt-item flex-wrap gap-3">
+
+                                    <div className="pb-badge-time text-center border-right" style={{ minWidth: '60px' }}>
+                                        <span
+                                            className="badge border border-dark text-dark Oswald px-2 mb-2 text-uppercase"
+                                            style={{ fontSize: '0.8rem' }}
+                                        >
+                                            {statusName[appt.status] || appt.status.replace('_', ' ')}
+                                        </span>
+                                        <div className="Oswald fw-bold text-dark fs-1 lh-1">
+                                            {new Date(appt.date).getDate()}
                                         </div>
-
-                                        <div className="col-md-5 mt-3 mt-md-0">
-                                            <h6 className="Oswald fw-bold mb-1 text-uppercase text-dark">{appt.service_name}</h6>
-                                            <div className="d-flex flex-wrap gap-3">
-                                                <span className="small Oswald text-muted">
-                                                    <i className="fa-solid fa-shop text-gold me-2"></i>{appt.barbershop_name}
-                                                </span>
-                                                <span className="small Oswald text-muted">
-                                                    <i className="fa-solid fa-user-check text-gold me-2"></i>{appt.barber_name}
-                                                </span>
-                                            </div>
+                                        <div className="Oswald text-gold small fw-bold text-uppercase">
+                                            {new Date(appt.date).toLocaleString('es', { month: 'short' })}
                                         </div>
-
-                                        <div className="col-md-5 text-md-end mt-3 mt-md-0">
-                                            <div className="d-flex flex-md-row justify-content-md-end align-items-center gap-3">
-                                                <div className="me-md-3">
-                                                    <div className="Oswald fw-bold text-dark">{appt.price} €</div>
-                                                    <span className="badge border border-dark text-dark Oswald px-2 text-uppercase small" style={{ fontSize: '0.6rem' }}>
-                                                        {appt.status.replace('_', ' ')}
-                                                    </span>
-                                                </div>
-
-                                                {!isHistoryTab && (
-                                                    <div className="d-flex gap-2">
-                                                        <button
-                                                            className="btn btn-dark text-gold btn-sm Oswald fw-bold px-3"
-                                                            style={{ fontSize: '0.7rem' }}
-                                                            onClick={() => navigate("/client_appointment_form", { state: { editAppt: appt } })}
-                                                        >
-                                                            REPROGRAMAR
-                                                        </button>
-                                                        <button
-                                                            className="btn btn-outline-danger btn-sm Oswald fw-bold px-3"
-                                                            style={{ fontSize: '0.7rem' }}
-                                                            onClick={() => handleCancelAppointment(appt.id)}
-                                                        >
-                                                            CANCELAR
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
+                                        <div className="small text-muted Oswald">
+                                            {new Date(appt.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </div>
                                     </div>
+
+                                    <div className="flex-grow-1 px-3 border-left">
+                                        <span className="Oswald fw-bold text-dark fs-3">{appt.price} €</span>
+                                        <h6 className="Oswald fw-bold mb-1 fs-5 text-uppercase text-dark">
+                                            {appt.service_name}
+                                        </h6>
+                                        <div className="d-flex flex-wrap gap-3 fs-4">
+                                            <span className="small Oswald text-muted">
+                                                <i className="fa-solid fa-shop text-gold me-1"></i>{appt.barbershop_name}
+                                            </span>
+                                            <span className="small Oswald text-muted">
+                                                <i className="fa-solid fa-user-check text-gold me-1"></i>{appt.barber_name}
+                                            </span>
+                                        </div>
+
+
+                                        {!isHistoryTab && (
+                                            <div className="row align-items-center mt-3">
+                                                <div className="col-md-4 col-sm-12 text-center mb-1">
+
+                                                <button
+                                                    className="btn pb-btn-outline-dark Oswald fw-bold"
+                                                    onClick={() => handleContact(appt.barbershop_id)}
+                                                >
+                                                    CONTACTAR
+                                                </button>
+                                                </div>
+                                                <div className="col-md-4 col-sm-12 text-center mb-1">
+
+                                                <button
+                                                    className="btn pb-btn-filled Oswald fw-bold"
+                                                    onClick={() => navigate("/client_appointment_form", { state: { editAppt: appt } })}
+                                                >
+                                                    REPROGRAMAR
+                                                </button>
+                                                </div>
+                                                <div className="col-md-4 col-sm-12 text-center mb-1">
+
+                                                <button
+                                                    className="btn pb-btn-outline Oswald fw-bold"
+                                                    onClick={() => handleCancelAppointment(appt.id)}
+                                                >
+                                                    CANCELAR
+                                                </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
                                 </div>
                             </div>
                         </div>

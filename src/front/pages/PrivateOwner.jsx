@@ -106,9 +106,9 @@ export const PrivateOwner = () => {
   if (store.role !== "owner") {
         return (
             <div className="container py-5 text-center">
-                <h2 className="Oswald fw-bold text-danger">ACCESO DENEGADO</h2>
+                <h2 className="Oswald fw-bold text-dark">ACCESO DENEGADO</h2>
                 <p>Inicia sesión como dueño para acceder.</p>
-                <button className="btn btn-dark Oswald mt-3" onClick={() => navigate("/login/owner")}>INICIAR SESIÓN</button>
+                <button className="btn pb-btn-filled Oswald mt-3" onClick={() => navigate("/login/owner")}>INICIAR SESIÓN</button>
             </div>
         );
     }
@@ -197,7 +197,7 @@ export const PrivateOwner = () => {
                       <i className="fas fa-edit"></i>
                     </Link>
                     <button
-                      className="btn btn-sm btn-outline-danger border-2 rounded-circle d-flex align-items-center justify-content-center"
+                      className="btn btn-sm pb-btn-outline-dark border-2 rounded-circle d-flex align-items-center justify-content-center"
                       style={{ width: "32px", height: "32px" }}
                       onClick={() => handleDelete(el.id)}
                     >

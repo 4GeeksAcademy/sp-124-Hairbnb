@@ -131,7 +131,7 @@ export const ServiceForm = () => {
                                 />
                                 <button
                                     type="button"
-                                    className="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 shadow"
+                                    className="btn pb-btn-outline-dark btn-sm position-absolute top-0 end-0 m-1 shadow"
                                     onClick={() => setData(prev => ({ ...prev, service_demo_image: "" }))}
                                 >
                                     <i className="fas fa-times"></i>

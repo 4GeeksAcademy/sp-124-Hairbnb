@@ -20,7 +20,7 @@ export const Footer = () => {
 
     return (
         <footer className="hairbnb-footer">
-            <div className="container">
+            <div className="container-fluid">
                 <div className="row py-5">
                     <div className="col-lg-3 col-md-6 mb-4 mb-lg-0">
                         <div className="d-flex align-items-center mb-3">
@@ -49,10 +49,10 @@ export const Footer = () => {
                     <div className="col-lg-2 col-md-6 mb-4 mb-lg-0">
                         <h5 className="footer-title">EXPLORA</h5>
                         <ul className="footer-links">
-                            <li><Link to="/aboutus">Sobre nosotros</Link></li>
-                            <li><Link to="/services">Servicios</Link></li>
-                            <li><Link to="/asociates">Asociados</Link></li>
-                            <li><Link to="/contact">Contacto</Link></li>
+                            <li><Link to="/aboutus/#">Sobre nosotros</Link></li>
+                            <li><Link to="/services/#">Servicios</Link></li>
+                            <li><Link to="/asociates/#">Asociados</Link></li>
+                            <li><Link to="/contact/#">Contacto</Link></li>
                         </ul>
                     </div>
 

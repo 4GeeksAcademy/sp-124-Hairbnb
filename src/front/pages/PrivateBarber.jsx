@@ -257,9 +257,9 @@ export const PrivateBarber = () => {
     if (store.role !== "barber") {
         return (
             <div className="container py-5 text-center">
-                <h2 className="Oswald fw-bold text-danger">ACCESO DENEGADO</h2>
+                <h2 className="Oswald fw-bold text-dark">ACCESO DENEGADO</h2>
                 <p>Inicia sesión como barbero para acceder.</p>
-                <button className="btn btn-dark Oswald mt-3" onClick={() => navigate("/login/barber")}>INICIAR SESIÓN</button>
+                <button className="btn pb-btn-filled Oswald mt-3" onClick={() => navigate("/login/barber")}>INICIAR SESIÓN</button>
             </div>
         );
     }
@@ -380,8 +380,8 @@ export const PrivateBarber = () => {
                                                         </div>
 
                                                         <div className="d-flex gap-2">
-                                                            <button className="btn btn-sm btn-outline-success border-2 rounded-circle" onClick={() => updateAppointmentStatus(a.id, 'completed')} title="Finalizada"><i className="fas fa-check"></i></button>
-                                                            <button className="btn btn-sm btn-outline-danger border-2 rounded-circle" onClick={() => { if (window.confirm("¿Marcar No Presentado?")) updateAppointmentStatus(a.id, 'no_show'); }} title="No presentado"><i className="fas fa-user-slash"></i></button>
+                                                            <button className="btn btn-sm btn-outline-dark border-2 rounded-circle" onClick={() => updateAppointmentStatus(a.id, 'completed')} title="Finalizada"><i className="fas fa-check"></i></button>
+                                                            <button className="btn btn-sm btn-outline-dark border-2 rounded-circle" onClick={() => { if (window.confirm("¿Marcar No Presentado?")) updateAppointmentStatus(a.id, 'no_show'); }} title="No presentado"><i className="fas fa-user-slash"></i></button>
                                                             <button className="btn btn-sm btn-outline-dark border-2 rounded-circle" onClick={() => { dispatch({ type: "set-appointmentInfo", payload: a }); navigate("/barber_appointment_form"); }}><i className="fas fa-edit"></i></button>
                                                         </div>
                                                     </div>
@@ -414,7 +414,7 @@ export const PrivateBarber = () => {
                                                         <span className="Oswald fw-bold small text-dark">{s.start_time} - {s.end_time}</span>
                                                         <div className="d-flex gap-1">
                                                             <i className="fas fa-edit text-secondary cursor-pointer" style={{ fontSize: '10px' }} onClick={() => handleEditSchedule(s)}></i>
-                                                            <i className="fas fa-trash text-danger cursor-pointer" style={{ fontSize: '10px' }} onClick={() => deleteSchedule(s.id)}></i>
+                                                            <i className="fas fa-trash text-secondary cursor-pointer" style={{ fontSize: '10px' }} onClick={() => deleteSchedule(s.id)}></i>
                                                         </div>
                                                     </div>
                                                     <div className="text-gold Oswald fw-bold" style={{ fontSize: '9px' }}>{s.barbershop_name?.toUpperCase()}</div>
@@ -471,7 +471,7 @@ export const PrivateBarber = () => {
                                                             >
                                                                 EDITAR
                                                             </button>
-                                                            <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteService(s.id)}>
+                                                            <button className="btn btn-sm pb-btn-outline-dark" onClick={() => handleDeleteService(s.id)}>
                                                                 <i className="fas fa-trash-alt"></i>
                                                             </button>
                                                         </div>
@@ -494,7 +494,7 @@ export const PrivateBarber = () => {
                                 approvedInvitations.map(inv => (
                                     <li key={inv.id} className="list-group-item d-flex justify-content-between align-items-center shadow-sm mb-2 border-0">
                                         <span className="Oswald fw-bold">{inv.barbershop?.name?.toUpperCase()}</span>
-                                        <button className="btn btn-danger btn-sm Oswald fw-bold px-3" onClick={() => handleDeleteInv(inv.id)}>FINALIZAR CONTRATO</button>
+                                        <button className="btn pb-btn-outline-dark btn-sm Oswald fw-bold px-3" onClick={() => handleDeleteInv(inv.id)}>FINALIZAR CONTRATO</button>
                                     </li>
                                 ))}
                         </ul>
@@ -507,7 +507,7 @@ export const PrivateBarber = () => {
                                         <span className="Oswald fw-bold">{inv.barbershop?.name?.toUpperCase()}</span>
                                         <div className="btn-group gap-2">
                                             <button className="btn btn-dark text-gold Oswald fw-bold btn-sm px-4" onClick={() => handleAcceptInv(inv.id)}>ACEPTAR</button>
-                                            <button className="btn btn-outline-danger Oswald fw-bold btn-sm" onClick={() => handleDeleteInv(inv.id)}>RECHAZAR</button>
+                                            <button className="btn pb-btn-outline-dark Oswald fw-bold btn-sm" onClick={() => handleDeleteInv(inv.id)}>RECHAZAR</button>
                                         </div>
                                     </li>
                                 ))}
@@ -540,7 +540,7 @@ export const PrivateBarber = () => {
                                                 <p className="small Oswald text-muted mb-3">{p.service_name} @ {p.barbershop_name}</p>
                                                 <div className="d-flex gap-2">
                                                     <button className="btn btn-dark text-gold Oswald fw-bold btn-sm w-100" onClick={() => updateAppointmentStatus(p.id, "confirmed")}>ACEPTAR</button>
-                                                    <button className="btn btn-outline-danger Oswald fw-bold btn-sm w-100" onClick={() => handleDeleteAppt(p.id)}>RECHAZAR</button>
+                                                    <button className="btn pb-btn-outline-dark Oswald fw-bold btn-sm w-100" onClick={() => handleDeleteAppt(p.id)}>RECHAZAR</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -570,7 +570,7 @@ export const PrivateBarber = () => {
                                             <span className="badge bg-success px-3 py-2 Oswald fw-bold">TOTAL SERVICIOS: {store.appointments?.filter(a => Number(a.user_id) === Number(foundUser.id) && a.status === "completed").length || 0}</span>
                                         </div>
                                     </div>
-                                    <button type="button" className="btn btn-outline-danger Oswald fw-bold px-4" onClick={() => { setFoundUser(null); setPhoneSearch(""); }}>NUEVA BÚSQUEDA</button>
+                                    <button type="button" className="btn pb-btn-outline-dark Oswald fw-bold px-4" onClick={() => { setFoundUser(null); setPhoneSearch(""); }}>NUEVA BÚSQUEDA</button>
                                 </div>
                             ) : (
                                 <div className="d-flex gap-2">

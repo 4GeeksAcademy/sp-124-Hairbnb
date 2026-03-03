@@ -190,9 +190,9 @@ export const ApptFormOwner = () => {
     if (store.role !== "owner") {
         return (
             <div className="container py-5 text-center">
-                <h2 className="Oswald fw-bold text-danger">ACCESO DENEGADO</h2>
+                <h2 className="Oswald fw-bold text-dark">ACCESO DENEGADO</h2>
                 <p>Inicia sesión como dueño para acceder.</p>
-                <button className="btn btn-dark Oswald mt-3" onClick={() => navigate("/login/owner")}>INICIAR SESIÓN</button>
+                <button className="btn pb-btn-filled Oswald mt-3" onClick={() => navigate("/login/owner")}>INICIAR SESIÓN</button>
             </div>
         );
     }

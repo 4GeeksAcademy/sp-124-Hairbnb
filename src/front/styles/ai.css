@@ -1,5 +1,5 @@
 :root {
-  --gold: #d4af37;
+  --gold: #d19f68;
   --gold-soft: rgba(212, 175, 55, 0.15);
 }
 
@@ -28,6 +28,17 @@
   animation-fill-mode: both;
 }
 
+.gif-image-1{
+  transform: rotate(-30deg);
+  width: 50%;
+}
+
+.gif-image-2{
+  transform: rotate(30deg) scaleX(-1);
+  width: 50%;
+}
+
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -50,7 +61,7 @@
 }
 
 .btn-gold:hover {
-  background-color: #b8962e;
+  background-color: #d19f68;
   color: white;
 }
 
