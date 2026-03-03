@@ -144,7 +144,7 @@ export const ApptFormOwner = () => {
             }
         };
         fetchSlots();
-    }, [data.date, data.barber_id, data.barber_service_id]);
+    }, [data.date, data.barber_id, data.barber_service_id, data.barber_service_id]);
 
     const currentBarbers = store.barbers?.filter(inv => inv.status === "accepted" && Number(inv.barbershop_id) === Number(data.barbershop_id)) || [];
     const currentServices = store.barber_services?.filter(s => Number(s.barber_id) === Number(data.barber_id)) || [];
@@ -181,10 +181,16 @@ export const ApptFormOwner = () => {
             });
             if (resp.ok) {
                 dispatch({ type: "set-appointmentInfo", payload: null });
-                dispatch({ type: "set-message", payload: { "type": "success", "msg": "Cita gestionada" } });
+                dispatch({ type: "set-message", payload: { type: "success", msg: "Cita gestionada" } });
                 navigate(-1);
+            } else {
+                const errData = await resp.json();
+                dispatch({ type: "set-message", payload: { type: "error", msg: errData.message?.msg || "Error al gestionar la cita" } });
             }
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error(e);
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
+        }
     };
 
     if (store.role !== "owner") {
@@ -235,18 +241,18 @@ export const ApptFormOwner = () => {
                             )}
                         </div>
                     )}
-                <div className="row">
+                    <div className="row">
                         <div className="col-md-12 form-group-custom"></div>
-                <label>Lugar de la cita</label>
-                <select className="form-select mb-3" required value={data.barbershop_id}
-                    onChange={e => setData({ ...data, barbershop_id: e.target.value, barber_id: "", barber_service_id: "", time: "", date: "" })}>
-                    <option value="">Selecciona una ubicación</option>
-                    {store.barbershops?.map(shop => (
-                        <option key={shop.id} value={shop.id}>{shop.name}</option>
-                    ))}
-                </select>
+                        <label>Lugar de la cita</label>
+                        <select className="form-select mb-3" required value={data.barbershop_id}
+                            onChange={e => setData({ ...data, barbershop_id: e.target.value, barber_id: "", barber_service_id: "", time: "", date: "" })}>
+                            <option value="">Selecciona una ubicación</option>
+                            {store.barbershops?.map(shop => (
+                                <option key={shop.id} value={shop.id}>{shop.name}</option>
+                            ))}
+                        </select>
 
-                <div className="col-md-6 form-group-custom">
+                        <div className="col-md-6 form-group-custom">
                             <label>Barbero asignado</label>
                             <select className="select-custom" disabled={!data.barbershop_id} required value={data.barber_id}
                                 onChange={e => setData({ ...data, barber_id: e.target.value, barber_service_id: "", time: "", date: "" })}>

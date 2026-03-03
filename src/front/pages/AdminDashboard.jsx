@@ -8,7 +8,7 @@ export const AdminDashboard = () => {
     const [endpoint, setEndpoint] = useState("users");
     const [data, setData] = useState([]);
     const navigate = useNavigate();
-    
+
 
     const generalTables = [
         { route: "users", label: "CLIENTE", icon: "fa-users" },
@@ -53,7 +53,12 @@ export const AdminDashboard = () => {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${store.token}` }
             });
-            if (response.ok) loadData();
+            if (response.ok) {
+                dispatch({ type: "set-message", payload: { type: "success", msg: "Registro eliminado correctamente" } });
+                loadData();
+            } else {
+                dispatch({ type: "set-message", payload: { type: "error", msg: "Error al eliminar el registro" } });
+            }
         } catch (error) { console.error("Error al borrar"); }
     };
 
@@ -73,7 +78,7 @@ export const AdminDashboard = () => {
                     <span className="text-muted small">Gestión de datos</span>
                 </div>
                 <button className="btn-confirm" onClick={() => navigate(`/admin/${endpoint}`)}>
-                    <i className="fa-solid fa-plus me-2"></i> 
+                    <i className="fa-solid fa-plus me-2"></i>
                     NUEVO {currentLabel.slice(-1) === 's' ? currentLabel.slice(0, -1) : currentLabel}
                 </button>
             </div>

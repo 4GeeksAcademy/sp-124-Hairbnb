@@ -71,6 +71,7 @@ export const PrivateBarber = () => {
             });
         }
     };
+
     const handleSearchUser = async () => {
         if (!phoneSearch) return;
 
@@ -123,10 +124,10 @@ export const PrivateBarber = () => {
             const data = await response.json();
 
             if (response.ok) {
-                dispatch({ type: "set-message", payload: data.message });
+                dispatch({ type: "set-message", payload: { type: "success", msg: "Horario eliminado correctamente" } });
                 loadAll();
             } else {
-                dispatch({ type: "set-message", payload: data.message || { type: "error", msg: "No se pudo borrar" } });
+                dispatch({ type: "set-message", payload: { type: "error", msg: data.message?.msg || "No se pudo borrar" } });
             }
         } catch (error) {
             console.error(error);
@@ -155,15 +156,14 @@ export const PrivateBarber = () => {
 
             if (response.ok) {
                 const updatedAppointments = store.appointments.filter(appt => appt.id !== appointmentId);
-
                 dispatch({ type: "set-appointments", payload: updatedAppointments });
-
-                dispatch({ type: "set-message", payload: data.message });
+                dispatch({ type: "set-message", payload: { type: "success", msg: "Cita eliminada correctamente" } });
             } else {
-                dispatch({ type: "set-message", payload: data.message });
+                dispatch({ type: "set-message", payload: { type: "error", msg: data.message?.msg || "Error al eliminar la cita" } });
             }
         } catch (error) {
             console.error("Error:", error);
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
         }
     };
 
@@ -183,15 +183,14 @@ export const PrivateBarber = () => {
 
             if (response.ok) {
                 const updatedInvitations = store.invitations.filter(inv => inv.id !== invitationId);
-
                 dispatch({ type: "set-invitations", payload: updatedInvitations });
-
-                dispatch({ type: "set-message", payload: data.message });
+                dispatch({ type: "set-message", payload: { type: "success", msg: "Invitación eliminada" } });
             } else {
-                dispatch({ type: "set-message", payload: data.message });
+                dispatch({ type: "set-message", payload: { type: "error", msg: data.message?.msg || "Error al eliminar" } });
             }
         } catch (error) {
             console.error("Error:", error);
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
         }
     };
 
@@ -231,23 +230,15 @@ export const PrivateBarber = () => {
 
             if (response.ok) {
                 const updatedServices = store.barber_services.filter(s => s.id !== serviceId);
-
-                dispatch({
-                    type: "set-barber_services",
-                    payload: updatedServices
-                });
-
-                dispatch({
-                    type: "set-message",
-                    payload: { type: "success", msg: "Servicio eliminado correctamente" }
-                });
+                dispatch({ type: "set-barber_services", payload: updatedServices });
+                dispatch({ type: "set-message", payload: { type: "success", msg: "Servicio eliminado correctamente" } });
             } else {
                 const data = await response.json();
-                alert(data.message?.msg || "No se pudo eliminar el servicio");
+                dispatch({ type: "set-message", payload: { type: "error", msg: data.message?.msg || "No se pudo eliminar el servicio" } });
             }
         } catch (error) {
             console.error("Error eliminando servicio:", error);
-            alert("Error de conexión al intentar eliminar");
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
         }
     };
 
@@ -263,7 +254,6 @@ export const PrivateBarber = () => {
             </div>
         );
     }
-
 
     const confirmedAppts = store.appointments?.filter(a =>
         a.status === "confirmed" &&

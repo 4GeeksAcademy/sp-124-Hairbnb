@@ -120,10 +120,10 @@ export const BarbershopForm = () => {
       return;
     }
     const hourError = validateHours();
-  if (hourError) {
-    dispatch({ type: "set-message", payload: { type: "error", msg: hourError } });
-    return;
-  }
+    if (hourError) {
+      dispatch({ type: "set-message", payload: { type: "error", msg: hourError } });
+      return;
+    }
 
     const isEditing = !!data.id;
     const url = isEditing
@@ -143,9 +143,13 @@ export const BarbershopForm = () => {
       if (response.ok) {
         dispatch({ type: "set-message", payload: { type: "success", msg: "Barbería guardada correctamente" } });
         navigate(-1);
+      } else {
+        const errData = await response.json();
+        dispatch({ type: "set-message", payload: { type: "error", msg: errData.message?.msg || "Error al guardar la barbería" } });
       }
     } catch (err) {
       console.error("Error:", err);
+      dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
     }
   };
 

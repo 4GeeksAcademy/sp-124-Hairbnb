@@ -78,7 +78,7 @@ export const AdminEditAdmin = () => {
                 navigate("/4dm1n1str4t10n");
             } else {
                 const errorData = await response.json();
-                dispatch({ type: "set-message", payload: { type: "error", msg: errorData.msg || "Error en la operación" } });
+                dispatch({ type: "set-message", payload: { type: "error", msg: errorData.message?.msg || "Error en la operación" } });
             }
         } catch (err) {
             dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });

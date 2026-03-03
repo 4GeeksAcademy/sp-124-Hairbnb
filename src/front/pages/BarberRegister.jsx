@@ -96,6 +96,8 @@ export const BarberRegister = () => {
             });
             return;
         }
+
+        
         setStep(2);
     };
 
@@ -138,7 +140,7 @@ export const BarberRegister = () => {
             if (!response.ok) {
                 dispatch({ 
                     type: "set-message", 
-                    payload: { type: "error", msg: data.msg } 
+                    payload: { type: "error", msg: data.message?.msg } 
                 });
                 return;
             }

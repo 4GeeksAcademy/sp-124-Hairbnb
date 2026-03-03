@@ -71,9 +71,12 @@ export const PrivateClient = () => {
             const data = await response.json();
             if (response.ok) {
                 navigate("/private/client", { state: { activeChatId: data.id } });
+            } else {
+                dispatch({ type: "set-message", payload: { type: "error", msg: data.message?.msg || "Error al iniciar el chat" } });
             }
         } catch (error) {
             console.error("Error:", error);
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
         }
     };
 
@@ -87,9 +90,13 @@ export const PrivateClient = () => {
             if (response.ok) {
                 setAppointments(appointments.filter(a => a.id !== apptId));
                 dispatch({ type: "set-message", payload: { type: "success", msg: "Cita cancelada correctamente." } });
+            } else {
+                const errData = await response.json();
+                dispatch({ type: "set-message", payload: { type: "error", msg: errData.message?.msg || "Error al cancelar la cita" } });
             }
         } catch (err) {
             console.error("Error al cancelar:", err);
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
         }
     };
 
@@ -153,30 +160,30 @@ export const PrivateClient = () => {
                                             <div className="row align-items-center mt-3">
                                                 <div className="col-md-4 col-sm-12 text-center mb-1">
 
-                                                <button
-                                                    className="btn pb-btn-outline-dark Oswald fw-bold"
-                                                    onClick={() => handleContact(appt.barbershop_id)}
-                                                >
-                                                    CONTACTAR
-                                                </button>
+                                                    <button
+                                                        className="btn pb-btn-outline-dark Oswald fw-bold"
+                                                        onClick={() => handleContact(appt.barbershop_id)}
+                                                    >
+                                                        CONTACTAR
+                                                    </button>
                                                 </div>
                                                 <div className="col-md-4 col-sm-12 text-center mb-1">
 
-                                                <button
-                                                    className="btn pb-btn-filled Oswald fw-bold"
-                                                    onClick={() => navigate("/client_appointment_form", { state: { editAppt: appt } })}
-                                                >
-                                                    REPROGRAMAR
-                                                </button>
+                                                    <button
+                                                        className="btn pb-btn-filled Oswald fw-bold"
+                                                        onClick={() => navigate("/client_appointment_form", { state: { editAppt: appt } })}
+                                                    >
+                                                        REPROGRAMAR
+                                                    </button>
                                                 </div>
                                                 <div className="col-md-4 col-sm-12 text-center mb-1">
 
-                                                <button
-                                                    className="btn pb-btn-outline Oswald fw-bold"
-                                                    onClick={() => handleCancelAppointment(appt.id)}
-                                                >
-                                                    CANCELAR
-                                                </button>
+                                                    <button
+                                                        className="btn pb-btn-outline Oswald fw-bold"
+                                                        onClick={() => handleCancelAppointment(appt.id)}
+                                                    >
+                                                        CANCELAR
+                                                    </button>
                                                 </div>
                                             </div>
                                         )}

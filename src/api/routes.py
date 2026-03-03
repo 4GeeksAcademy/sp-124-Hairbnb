@@ -25,6 +25,7 @@ CORS(api)
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
+
 @api.route("/login/admin", methods=["POST"])
 def login_admin():
     email = request.json.get("email")
@@ -41,7 +42,7 @@ def login_admin():
             "token": access_token,
             "user": {"id": user.id, "name": user.name, "role": "admin"}
         }), 200
-    return jsonify({"msg": "Email o contraseña incorrectos"}), 401
+    return jsonify({"message": {"type": "error", "msg": "Email o contraseña incorrectos"}}), 401
 
 
 @api.route("/login/client", methods=["POST"])
@@ -60,7 +61,7 @@ def login_client():
             "token": access_token,
             "user": {"id": client.id, "name": client.name, "role": "client"}
         }), 200
-    return jsonify({"msg": "Email o contraseña incorrectos"}), 401
+    return jsonify({"message": {"type": "error", "msg": "Email o contraseña incorrectos"}}), 401
 
 
 @api.route("/login/barber", methods=["POST"])
@@ -79,7 +80,7 @@ def login_barber():
             "token": access_token,
             "user": {"id": barber.id, "name": barber.name, "role": "barber"}
         }), 200
-    return jsonify({"msg": "Email o contraseña incorrectos"}), 401
+    return jsonify({"message": {"type": "error", "msg": "Email o contraseña incorrectos"}}), 401
 
 
 @api.route("/login/owner", methods=["POST"])
@@ -98,7 +99,7 @@ def login_owner():
             "token": access_token,
             "user": {"id": owner.id, "name": owner.name, "role": "owner"}
         }), 200
-    return jsonify({"msg": "Email o contraseña incorrectos"}), 401
+    return jsonify({"message": {"type": "error", "msg": "Email o contraseña incorrectos"}}), 401
 
 
 # Zonas privadas por rol
@@ -108,8 +109,8 @@ def private_admin():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
     if claims.get("role") != "admin":
-        return jsonify({"msg": "No tienes permisos"}), 403
-    return jsonify({"msg": f"Hola de nuevo, {current_user_id}"}), 200
+        return jsonify({"message": {type: "error", "msg": "No tienes permisos"}}), 403
+    return jsonify({"message": {type: "success", "msg": f"Hola de nuevo, {current_user_id}"}}), 200
 
 
 @api.route("/private_owner")
@@ -118,8 +119,8 @@ def private_owner():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
     if claims.get("role") != "owner":
-        return jsonify({"msg": "No tienes permisos"}), 403
-    return jsonify({"msg": f"Hola de nuevo, {current_user_id}"}), 200
+        return jsonify({"message": {type: "error", "msg": "No tienes permisos"}}), 403
+    return jsonify({"message": {type: "success", "msg": f"Hola de nuevo, {current_user_id}"}}), 200
 
 
 @api.route("/private_barber")
@@ -128,8 +129,8 @@ def private_barber():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
     if claims.get("role") != "barber":
-        return jsonify({"msg": "No tienes permisos"}), 403
-    return jsonify({"msg": f"Hola de nuevo, {current_user_id}"}), 200
+        return jsonify({"message": {type: "error", "msg": "No tienes permisos"}}), 403
+    return jsonify({"message": {type: "sucess", "msg": f"Hola de nuevo, {current_user_id}"}}), 200
 
 
 @api.route("/private_client")
@@ -138,28 +139,28 @@ def private_client():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
     if claims.get("role") != "client":
-        return jsonify({"msg": "No tienes permisos"}), 403
-    return jsonify({"msg": f"Hola de nuevo, {current_user_id}"}), 200
+        return jsonify({"message": {"type": "error", "msg": "No tienes permisos"}}), 403
+    return jsonify({"message": {"type": "success", "msg": f"Hola de nuevo, {current_user_id}"}}), 200
 
 
-@api.route("/adminusers", methods=["GET"])
-@jwt_required()
+@ api.route("/adminusers", methods=["GET"])
+@ jwt_required()
 def get_adminusers():
     claims = get_jwt()
     if claims.get("role") != "admin":
-        return jsonify({"msg": "No tienes permisos"}), 403
+        return jsonify({"message": {"type": "error", "msg": "No tienes permisos"}}), 403
 
     adminusers = AdminUser.query.order_by(AdminUser.id).all()
     data = [adminuser.serialize() for adminuser in adminusers]
     return jsonify(data), 200
 
 
-@api.route("/admin/<string:model_name>", methods=["GET"])
-@jwt_required()
+@ api.route("/admin/<string:model_name>", methods=["GET"])
+@ jwt_required()
 def get_admin_data(model_name):
     claims = get_jwt()
     if claims.get("role") != "admin":
-        return jsonify({"msg": "Acceso restringido a administradores"}), 403
+        return jsonify({"message": {"type": "error", "msg": "Acceso restringido a administradores"}}), 403
 
     models_map = {
         "users": User,
@@ -177,25 +178,25 @@ def get_admin_data(model_name):
 
     model = models_map.get(model_name)
     if not model:
-        return jsonify({"msg": "Tabla no encontrada"}), 404
+        return jsonify({"message": {"type": "error", "msg": "Tabla no encontrada"}}), 404
 
     items = model.query.all()
     return jsonify([item.serialize() for item in items]), 200
 
 
 # ENDPOINTS DE USUARIOS
-@api.route("/users", methods=["GET"])
-@jwt_required()
+@ api.route("/users", methods=["GET"])
+@ jwt_required()
 def get_users():
     claims = get_jwt()
     if claims.get("role") != "admin":
-        return jsonify({"msg": "Acceso restringido"}), 403
+        return jsonify({"message": {"type": "error", "msg": "Acceso restringido"}}), 403
     users = User.query.order_by(User.id).all()
     data = [user.serialize() for user in users]
     return jsonify(data), 200
 
 
-@api.route("/users", methods=["POST"])
+@ api.route("/users", methods=["POST"])
 def new_user():
     data = request.json
     name = data.get("name")
@@ -238,14 +239,14 @@ def new_user():
     return jsonify({"message": {"type": "success", "msg": f"Usuario {name} {last_name} creado"}}), 201
 
 
-@api.route("/users/<int:user_id>", methods=["GET"])
-@jwt_required()
+@ api.route("/users/<int:user_id>", methods=["GET"])
+@ jwt_required()
 def get_single_user(user_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
 
     if str(current_user_id) != str(user_id) and claims.get("role") != "admin":
-        return jsonify({"msg": "No autorizado"}), 403
+        return jsonify({"message": {"type": "error", "msg": "No autorizado"}}), 403
 
     user = User.query.get(user_id)
     if not user:
@@ -256,22 +257,22 @@ def get_single_user(user_id):
     return jsonify(data), 200
 
 
-@api.route("/users/search", methods=["GET"])
-@jwt_required()
+@ api.route("/users/search", methods=["GET"])
+@ jwt_required()
 def search_user():
     claims = get_jwt()
     if claims.get("role") not in ["admin", "owner", "barber"]:
-        return jsonify({"msg": "No tienes permiso para buscar usuarios"}), 403
+        return jsonify({"message": {"type": "error", "msg": "No tienes permiso para buscar usuarios"}}), 403
 
     phone = request.args.get("phone")
     user = User.query.filter_by(phone=phone).first()
     if user:
         return jsonify(user.serialize()), 200
-    return jsonify({"msg": "No encontrado"}), 404
+    return jsonify({"message": {"type": "error", "msg": "No encontrado"}}), 404
 
 
-@api.route("/users/<int:user_id>", methods=["PUT"])
-@jwt_required()
+@ api.route("/users/<int:user_id>", methods=["PUT"])
+@ jwt_required()
 def edit_user(user_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -314,8 +315,8 @@ def edit_user(user_id):
     return jsonify({"message": {"type": "success", "msg": f"Usuario {user.name} actualizado"}}), 200
 
 
-@api.route("/users/<int:user_id>", methods=["DELETE"])
-@jwt_required()
+@ api.route("/users/<int:user_id>", methods=["DELETE"])
+@ jwt_required()
 def delete_user(user_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -333,15 +334,15 @@ def delete_user(user_id):
 
 
 # ENDPOINTS DE BARBERIAS
-@api.route("/owners/barbershops")
-@jwt_required()
+@ api.route("/owners/barbershops")
+@ jwt_required()
 def get_my_barbershops():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
     role = claims.get("role")
 
     if role not in ["owner", "admin"]:
-        return jsonify({"msg": "Acceso denegado: No tienes permisos"}), 403
+        return jsonify({"message": {"type": "error", "msg": "Acceso denegado: No tienes permisos"}}), 403
 
     if role == "admin":
         barbershops = Barbershop.query.all()
@@ -351,7 +352,7 @@ def get_my_barbershops():
     return jsonify([barb.serialize() for barb in barbershops]), 200
 
 
-@api.route("/barbershops", methods=["GET"])
+@ api.route("/barbershops", methods=["GET"])
 def get_barbershops():
     barbershops = Barbershop.query.order_by(Barbershop.id).all()
     data = [barbershop.serialize()
@@ -359,12 +360,12 @@ def get_barbershops():
     return jsonify(data), 200
 
 
-@api.route("/barbershops", methods=["POST"])
-@jwt_required()
+@ api.route("/barbershops", methods=["POST"])
+@ jwt_required()
 def validate_working_hours(working_hours):
     if not working_hours:
         return None  # Es opcional
-    
+
     for day, hours in working_hours.items():
         m_start = hours.get("m_start", "")
         m_end = hours.get("m_end", "")
@@ -399,7 +400,7 @@ def new_barbershop():
     role = claims.get("role")
 
     if role not in ["owner", "admin"]:
-        return jsonify({"msg": "Acceso denegado: No tienes permisos"}), 403
+        return jsonify({"message": {"type": "error", "msg": "Acceso denegado: No tienes permisos"}}), 403
 
     data = request.json
 
@@ -414,8 +415,8 @@ def new_barbershop():
 
     error = validate_working_hours(data.get("working_hours"))
     if error:
-        return jsonify({"message": {"type":"error", "msg":error}})
-    
+        return jsonify({"message": {"type": "error", "msg": error}})
+
     new_barbsh = Barbershop(
         name=data.get("name"),
         address=data.get("address"),
@@ -433,7 +434,7 @@ def new_barbershop():
     return jsonify({"message": {"type": "success", "msg": f"Barbería {new_barbsh.name} creada"}}), 201
 
 
-@api.route("/barbershops/<int:barbershop_id>", methods=["GET"])
+@ api.route("/barbershops/<int:barbershop_id>", methods=["GET"])
 def get_single_barbershop(barbershop_id):
     barbershop = Barbershop.query.get(barbershop_id)
     if not barbershop:
@@ -443,22 +444,22 @@ def get_single_barbershop(barbershop_id):
     return jsonify(data), 200
 
 
-@api.route("/barbershops/<int:barbershop_id>", methods=["PUT"])
-@jwt_required()
+@ api.route("/barbershops/<int:barbershop_id>", methods=["PUT"])
+@ jwt_required()
 def update_barbershop(barbershop_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
     role = claims.get("role")
 
     if role not in ["owner", "admin"]:
-        return jsonify({"msg": "Acceso denegado"}), 403
+        return jsonify({"message": {"type": "error", "msg": "Acceso denegado"}}), 403
 
     barbershop = Barbershop.query.get(barbershop_id)
     if not barbershop:
         return jsonify({"message": {"type": "error", "msg": "Barberia no encontrada"}}), 404
 
     if role == "owner" and str(barbershop.owner_id) != str(current_user_id):
-        return jsonify({"msg": "Esta barbería no te pertenece"}), 403
+        return jsonify({"message": {"type": "error", "msg": "Esta barbería no te pertenece"}}), 403
 
     data = request.json
 
@@ -479,8 +480,8 @@ def update_barbershop(barbershop_id):
     return jsonify({"message": {"type": "success", "msg": f"Barberia {barbershop.name} actualizada"}}), 200
 
 
-@api.route("/barbershops/<int:shop_id>/barbers", methods=["GET"])
-@jwt_required()
+@ api.route("/barbershops/<int:shop_id>/barbers", methods=["GET"])
+@ jwt_required()
 def get_barbers_linked(shop_id):
     claims = get_jwt()
     role = claims.get("role")
@@ -514,25 +515,25 @@ def get_barbers_linked(shop_id):
     return jsonify(results), 200
 
 
-@api.route("/barbershops/<int:barbershop_id>/appointments", methods=["GET"])
-@jwt_required()
+@ api.route("/barbershops/<int:barbershop_id>/appointments", methods=["GET"])
+@ jwt_required()
 def appointments_of_barbershop(barbershop_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
     role = claims.get("role")
 
     if role not in ["owner", "admin", "barber", "client"]:
-        return jsonify({"msg": "Acceso denegado"}), 403
+        return jsonify({"message": {"type": "error", "msg": "Acceso denegado"}}), 403
 
     barbershop = Barbershop.query.get(barbershop_id)
     if not barbershop:
-        return jsonify({"msg": "Barbería no encontrada"}), 404
+        return jsonify({"message": {"type": "error", "msg": "Barbería no encontrada"}}), 404
 
     query = Appointment.query.filter_by(barbershop_id=barbershop_id)
 
     if role == "owner":
         if str(barbershop.owner_id) != str(current_user_id):
-            return jsonify({"msg": "Esta barbería no te pertenece"}), 403
+            return jsonify({"message": {"type": "error", "msg": "Esta barbería no te pertenece"}}), 403
 
     elif role == "barber":
         query = query.filter_by(barber_id=int(current_user_id))
@@ -544,22 +545,22 @@ def appointments_of_barbershop(barbershop_id):
     return jsonify([a.serialize() for a in appointments]), 200
 
 
-@api.route("/barbershops/<int:barbershop_id>", methods=["DELETE"])
-@jwt_required()
+@ api.route("/barbershops/<int:barbershop_id>", methods=["DELETE"])
+@ jwt_required()
 def delete_barbershop(barbershop_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
     role = claims.get("role")
 
     if role not in ["owner", "admin"]:
-        return jsonify({"msg": "Acceso denegado"}), 403
+        return jsonify({"message": {"type": "error", "msg": "Acceso denegado"}}), 403
 
     barbershop = Barbershop.query.get(barbershop_id)
     if not barbershop:
         return jsonify({"message": {"type": "error", "msg": "Barberia no encontrada"}}), 404
 
     if role == "owner" and str(barbershop.owner_id) != str(current_user_id):
-        return jsonify({"msg": "No tienes permiso para eliminar una barbería que no te pertenece"}), 403
+        return jsonify({"message": {"type": "error", "msg": "No tienes permiso para eliminar una barbería que no te pertenece"}}), 403
 
     db.session.delete(barbershop)
     db.session.commit()
@@ -568,21 +569,21 @@ def delete_barbershop(barbershop_id):
 
 # ENDPOINTS DE DUEÑOS
 
-@api.route("/owners", methods=["GET"])
-@jwt_required()
+@ api.route("/owners", methods=["GET"])
+@ jwt_required()
 def get_owners():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
 
     if claims.get("role") != "admin":
-        return jsonify({"msg": "Acceso restringido al administrador"}), 403
+        return jsonify({"message": {"type": "error", "msg": "Acceso restringido al administrador"}}), 403
 
     owners = Owner.query.order_by(Owner.id).all()
     data = [owner.serialize() for owner in owners]
     return jsonify(data), 200
 
 
-@api.route("/owners", methods=["POST"])
+@ api.route("/owners", methods=["POST"])
 def new_owner():
     data = request.json
     name = data.get("name")
@@ -622,15 +623,15 @@ def new_owner():
     return jsonify({"message": {"type": "success", "msg": f"Dueño {name} creado"}}), 201
 
 
-@api.route("/owners/<int:owner_id>", methods=["GET"])
-@jwt_required()
+@ api.route("/owners/<int:owner_id>", methods=["GET"])
+@ jwt_required()
 def get_single_owner(owner_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
     role = claims.get("role")
 
     if str(current_user_id) != str(owner_id) and role != "admin":
-        return jsonify({"msg": "No tienes permiso para ver esta información"}), 403
+        return jsonify({"message": {"type": "error", "msg": "No tienes permiso para ver esta información"}}), 403
 
     owner = Owner.query.get(owner_id)
     if not owner:
@@ -639,8 +640,8 @@ def get_single_owner(owner_id):
     return jsonify(owner.serialize()), 200
 
 
-@api.route("/owners/<int:owner_id>", methods=["PUT"])
-@jwt_required()
+@ api.route("/owners/<int:owner_id>", methods=["PUT"])
+@ jwt_required()
 def edit_owner(owner_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -680,8 +681,8 @@ def edit_owner(owner_id):
     return jsonify({"message": {"type": "success", "msg": f"Dueño {owner.name} actualizado"}}), 200
 
 
-@api.route("/owners/<int:owner_id>", methods=["DELETE"])
-@jwt_required()
+@ api.route("/owners/<int:owner_id>", methods=["DELETE"])
+@ jwt_required()
 def delete_owner(owner_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -704,15 +705,15 @@ def delete_owner(owner_id):
 
 # ENDPOINTS DE BARBEROS
 
-@api.route('/barbers', methods=['GET'])
-@jwt_required()
+@ api.route('/barbers', methods=['GET'])
+@ jwt_required()
 def get_all_barbers():
     claims = get_jwt()
     result = BarberBarbershop.query.all()
     return jsonify([barber_union.serialize() for barber_union in result]), 200
 
 
-@api.route("/barbers", methods=["POST"])
+@ api.route("/barbers", methods=["POST"])
 def new_barber():
     data = request.json
     name = data.get("name")
@@ -746,8 +747,8 @@ def new_barber():
     return jsonify({"message": {"type": "success", "msg": f"Barbero {name} creado"}}), 201
 
 
-@api.route("/barbers/<int:barber_id>", methods=["GET"])
-@jwt_required()
+@ api.route("/barbers/<int:barber_id>", methods=["GET"])
+@ jwt_required()
 def get_single_barber(barber_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -758,13 +759,13 @@ def get_single_barber(barber_id):
         return jsonify({"message": {"type": "error", "msg": "Barbero no encontrado"}}), 404
 
     if role not in ["admin", "owner", "client"] and str(current_user_id) != str(barber_id):
-        return jsonify({"msg": "Acceso denegado"}), 403
+        return jsonify({"message": {"type": "error", "msg": "Acceso denegado"}}), 403
 
     return jsonify(barber.serialize()), 200
 
 
-@api.route("/barbers/<int:barber_id>", methods=["PUT"])
-@jwt_required()
+@ api.route("/barbers/<int:barber_id>", methods=["PUT"])
+@ jwt_required()
 def edit_barber(barber_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -799,8 +800,8 @@ def edit_barber(barber_id):
     return jsonify({"message": {"type": "success", "msg": f"Barbero {barber.name} actualizado"}}), 200
 
 
-@api.route("/barbers/<int:barber_id>", methods=["DELETE"])
-@jwt_required()
+@ api.route("/barbers/<int:barber_id>", methods=["DELETE"])
+@ jwt_required()
 def delete_barber(barber_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -820,8 +821,8 @@ def delete_barber(barber_id):
 
 # ENDPOINTS DE INVITACIONES DE BARBEROS A BARBERIAS
 
-@api.route("/invitations", methods=["GET"])
-@jwt_required()
+@ api.route("/invitations", methods=["GET"])
+@ jwt_required()
 def get_barber_invitations():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -843,8 +844,8 @@ def get_barber_invitations():
     return jsonify([invite.serialize() for invite in invitations]), 200
 
 
-@api.route("/invitations", methods=["POST"])
-@jwt_required()
+@ api.route("/invitations", methods=["POST"])
+@ jwt_required()
 def invite_barber():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -902,8 +903,8 @@ def invite_barber():
     return jsonify({"message": {"type": "success", "msg": "Solicitud enviada correctamente"}}), 201
 
 
-@api.route("/invitations/<int:invitation_id>", methods=["PUT"])
-@jwt_required()
+@ api.route("/invitations/<int:invitation_id>", methods=["PUT"])
+@ jwt_required()
 def accept_barber_invitations(invitation_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -926,8 +927,8 @@ def accept_barber_invitations(invitation_id):
     return jsonify({"message": "Invitación aceptada"}), 200
 
 
-@api.route("/invitations/<int:invitation_id>", methods=["DELETE"])
-@jwt_required()
+@ api.route("/invitations/<int:invitation_id>", methods=["DELETE"])
+@ jwt_required()
 def delete_barber_invitations(invitation_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -951,8 +952,8 @@ def delete_barber_invitations(invitation_id):
 
 # ENDPOINTS DE HORARIOS
 
-@api.route("/schedules", methods=["GET"])
-@jwt_required()
+@ api.route("/schedules", methods=["GET"])
+@ jwt_required()
 def get_barber_schedules():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -967,13 +968,13 @@ def get_barber_schedules():
         schedules = Schedule.query.all()
 
     else:
-        return jsonify({"msg": "No tienes permiso para ver horarios generales"}), 403
+        return jsonify({"message": {"type": "error", "msg": "No tienes permiso para ver horarios generales"}}), 403
 
     return jsonify([s.serialize() for s in schedules]), 200
 
 
-@api.route("/schedules", methods=["POST"])
-@jwt_required()
+@ api.route("/schedules", methods=["POST"])
+@ jwt_required()
 def new_schedule():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -985,7 +986,7 @@ def new_schedule():
     day_of_week = data.get("day_of_week")
     start_time_str = data.get("start_time")
     end_time_str = data.get("end_time")
-    
+
 
     if not all([invitation_id, day_of_week, start_time_str, end_time_str]):
         return jsonify({"message": {"type": "error", "msg": "Faltan datos obligatorios"}}), 400
@@ -1003,7 +1004,7 @@ def new_schedule():
 
     if not link:
         return jsonify({"message": {"type": "error", "msg": "La invitación no existe"}}), 404
-    
+
     barbershop = link.barbershop
     working_hours = barbershop.working_hours if barbershop else None
 
@@ -1017,9 +1018,9 @@ def new_schedule():
         shop_day = working_hours.get(day_label) if day_label else None
 
         m_start = shop_day.get("m_start") if shop_day else None
-        m_end   = shop_day.get("m_end")   if shop_day else None
+        m_end = shop_day.get("m_end") if shop_day else None
         a_start = shop_day.get("a_start") if shop_day else None
-        a_end   = shop_day.get("a_end")   if shop_day else None
+        a_end = shop_day.get("a_end") if shop_day else None
 
         valid_slots = []
         if m_start and m_end:
@@ -1036,14 +1037,16 @@ def new_schedule():
         if not valid_slots:
             return jsonify({"message": {"type": "error", "msg": f"La barbería está cerrada el {day_label or day_of_week}"}}), 400
 
-        fits = any(slot_start <= new_start and new_end <= slot_end for slot_start, slot_end in valid_slots)
+        fits = any(slot_start <= new_start and new_end <=
+                   slot_end for slot_start, slot_end in valid_slots)
         if not fits:
-            slots_str = " / ".join([f"{s.strftime('%H:%M')}-{e.strftime('%H:%M')}" for s, e in valid_slots])
+            slots_str = " / ".join(
+                [f"{s.strftime('%H:%M')}-{e.strftime('%H:%M')}" for s, e in valid_slots])
             return jsonify({"message": {"type": "error", "msg": f"Tu turno debe estar dentro del horario del local: {slots_str}"}}), 400
-        
+
     if role != "admin" and str(link.barber_id) != str(current_user_id):
         return jsonify({"message": {"type": "error", "msg": "No tienes permiso para editar este horario"}}), 403
-    
+
     overlapping = db.session.query(Schedule).join(BarberBarbershop).filter(
         BarberBarbershop.barber_id == link.barber_id,
         Schedule.day_of_week == day_of_week
@@ -1077,7 +1080,7 @@ def new_schedule():
         return jsonify({"message": {"type": "error", "msg": "Error al guardar"}}), 500
 
 
-@api.route("/schedules/<int:schedule_id>", methods=["GET"])
+@ api.route("/schedules/<int:schedule_id>", methods=["GET"])
 def get_single_schedule(schedule_id):
     schedule = Schedule.query.get(schedule_id)
     if not schedule:
@@ -1087,8 +1090,8 @@ def get_single_schedule(schedule_id):
     return jsonify(data), 200
 
 
-@api.route("/schedules/<int:schedule_id>", methods=["PUT"])
-@jwt_required()
+@ api.route("/schedules/<int:schedule_id>", methods=["PUT"])
+@ jwt_required()
 def edit_schedule(schedule_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -1099,7 +1102,7 @@ def edit_schedule(schedule_id):
         return jsonify({"message": {"type": "error", "msg": "Horario no encontrado"}}), 404
 
     if role != "admin" and str(schedule.invitations.barber_id) != str(current_user_id):
-        return jsonify({"msg": "No tienes permiso"}), 403
+        return jsonify({"message": {"type": "error", "msg": "No tienes permiso"}}), 403
 
     data = request.json
 
@@ -1143,8 +1146,8 @@ def edit_schedule(schedule_id):
         return jsonify({"message": {"type": "error", "msg": "Error al guardar cambios"}}), 500
 
 
-@api.route("/schedules/<int:schedule_id>", methods=["DELETE"])
-@jwt_required()
+@ api.route("/schedules/<int:schedule_id>", methods=["DELETE"])
+@ jwt_required()
 def delete_schedule(schedule_id):
     current_user_id = get_jwt_identity()
 
@@ -1154,7 +1157,7 @@ def delete_schedule(schedule_id):
 
     claims = get_jwt()
     if claims.get("role") != "admin" and str(schedule.invitations.barber_id) != str(current_user_id):
-        return jsonify({"msg": "No tienes permiso"}), 403
+        return jsonify({"message": {"type": "error", "msg": "No tienes permiso"}}), 403
 
     db.session.delete(schedule)
     db.session.commit()
@@ -1162,8 +1165,8 @@ def delete_schedule(schedule_id):
     return jsonify({"message": {"type": "success", "msg": "Horario eliminado correctamente"}}), 200
 
 
-@api.route("/schedules/by_invitation/<int:invitation_id>", methods=["GET"])
-@jwt_required()
+@ api.route("/schedules/by_invitation/<int:invitation_id>", methods=["GET"])
+@ jwt_required()
 def get_schedules_by_invitation(invitation_id):
     try:
         schedules = Schedule.query.filter_by(
@@ -1171,11 +1174,11 @@ def get_schedules_by_invitation(invitation_id):
 
         return jsonify([s.serialize() for s in schedules]), 200
     except Exception as e:
-        return jsonify({"msg": str(e)}), 500
+        return jsonify({"message": {"type": "error", "msg": str(e)}}), 500
 
 
-@api.route("/schedules/by_invitation/<int:invitation_id>", methods=["DELETE"])
-@jwt_required()
+@ api.route("/schedules/by_invitation/<int:invitation_id>", methods=["DELETE"])
+@ jwt_required()
 def delete_schedules_by_invitation(invitation_id):
     try:
         schedules = Schedule.query.filter_by(
@@ -1183,16 +1186,16 @@ def delete_schedules_by_invitation(invitation_id):
         for s in schedules:
             db.session.delete(s)
         db.session.commit()
-        return jsonify({"msg": "Horarios antiguos eliminados"}), 200
+        return jsonify({"message": {"type": "success", "msg": "Horarios antiguos eliminados"}}), 200
     except Exception as e:
         db.session.rollback()
-        return jsonify({"msg": str(e)}), 500
+        return jsonify({"message": {"type": "error", "msg": str(e)}}), 500
 
 
 # ENDPOINTS DE BARBERO Y SUS SERVICIOS
 
 
-@api.route("/barber_services", methods=["GET"])
+@ api.route("/barber_services", methods=["GET"])
 def get_barber_services():
     specific_barber = request.args.get("barber_id")
 
@@ -1206,8 +1209,8 @@ def get_barber_services():
     return jsonify(results), 200
 
 
-@api.route("/barber_services", methods=["POST"])
-@jwt_required()
+@ api.route("/barber_services", methods=["POST"])
+@ jwt_required()
 def new_barber_service():
     claims = get_jwt()
     data = request.json
@@ -1254,8 +1257,8 @@ def new_barber_service():
         return jsonify({"message": {"type": "error", "msg": str(e)}}), 500
 
 
-@api.route("/barber_services/<int:barber_service_id>", methods=["PUT"])
-@jwt_required()
+@ api.route("/barber_services/<int:barber_service_id>", methods=["PUT"])
+@ jwt_required()
 def edit_barber_service(barber_service_id):
     claims = get_jwt()
     current_barber_id = get_jwt_identity()
@@ -1281,7 +1284,7 @@ def edit_barber_service(barber_service_id):
     return jsonify({"message": {"type": "success", "msg": "Servicio actualizado"}}), 200
 
 
-@api.route("/barber_services/<int:barber_service_id>", methods=["GET"])
+@ api.route("/barber_services/<int:barber_service_id>", methods=["GET"])
 def get_barber_service(barber_service_id):
     barber_service = BarberService.query.get(barber_service_id)
     if not barber_service:
@@ -1291,8 +1294,8 @@ def get_barber_service(barber_service_id):
     return jsonify(data), 200
 
 
-@api.route("/barber_services/<int:barber_service_id>", methods=["DELETE"])
-@jwt_required()
+@ api.route("/barber_services/<int:barber_service_id>", methods=["DELETE"])
+@ jwt_required()
 def delete_barber_service(barber_service_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -1320,8 +1323,8 @@ def delete_barber_service(barber_service_id):
 
 # ENDPOINTS PARA LAS RESERVAS DE CITAS
 
-@api.route("/appointments", methods=["GET"])
-@jwt_required()
+@ api.route("/appointments", methods=["GET"])
+@ jwt_required()
 def get_appointments():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -1358,8 +1361,8 @@ def get_appointments():
     return jsonify([a.serialize() for a in appointments]), 200
 
 
-@api.route("/appointments/<int:appointment_id>", methods=["GET"])
-@jwt_required()
+@ api.route("/appointments/<int:appointment_id>", methods=["GET"])
+@ jwt_required()
 def get_single_appointment(appointment_id):
     appointment = Appointment.query.get(appointment_id)
 
@@ -1368,8 +1371,8 @@ def get_single_appointment(appointment_id):
     return jsonify(appointment.serialize()), 200
 
 
-@api.route("/appointments", methods=["POST"])
-@jwt_required()
+@ api.route("/appointments", methods=["POST"])
+@ jwt_required()
 def new_appointment():
     data = request.json
 
@@ -1452,8 +1455,8 @@ def new_appointment():
         return jsonify({"message": {"type": "error", "msg": str(e)}}), 500
 
 
-@api.route("/appointments/<int:appointment_id>", methods=["PUT"])
-@jwt_required()
+@ api.route("/appointments/<int:appointment_id>", methods=["PUT"])
+@ jwt_required()
 def edit_appointment(appointment_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -1541,8 +1544,8 @@ def edit_appointment(appointment_id):
         return jsonify({"message": {"type": "error", "msg": str(e)}}), 500
 
 
-@api.route("/appointments/<int:appointment_id>", methods=["DELETE"])
-@jwt_required()
+@ api.route("/appointments/<int:appointment_id>", methods=["DELETE"])
+@ jwt_required()
 def delete_appointment(appointment_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -1567,8 +1570,8 @@ def delete_appointment(appointment_id):
     return jsonify({"message": {"type": "success", "msg": "Reserva eliminada correctamente"}}), 200
 
 
-@api.route("/appointments/<int:appointment_id>/status", methods=["PUT"])
-@jwt_required()
+@ api.route("/appointments/<int:appointment_id>/status", methods=["PUT"])
+@ jwt_required()
 def change_appointment_status(appointment_id):
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -1611,15 +1614,15 @@ def change_appointment_status(appointment_id):
         return jsonify({"message": {"type": "error", "msg": f"Error al actualizar: {str(e)}"}}), 500
 
 
-@api.route("/my-appointments", methods=["GET"])
-@jwt_required()
+@ api.route("/my-appointments", methods=["GET"])
+@ jwt_required()
 def get_my_appointments():
     current_user_id = get_jwt_identity()
     my_appts = Appointment.query.filter_by(user_id=current_user_id).all()
     return jsonify([appt.serialize() for appt in my_appts]), 200
 
 
-@api.route("/barber_availability", methods=["GET"])
+@ api.route("/barber_availability", methods=["GET"])
 def get_availability():
     barber_id = request.args.get("barber_id")
     barbershop_id = request.args.get("barbershop_id")
@@ -1627,7 +1630,7 @@ def get_availability():
     service_id = request.args.get("service_id")
 
     if not all([barber_id, barbershop_id, date_str]):
-        return jsonify({"msg": "Faltan parámetros"}), 400
+        return jsonify({"message": {"type": "error", "msg": "Faltan parámetros"}}), 400
 
     duration = 30
     if service_id:
@@ -1639,7 +1642,7 @@ def get_availability():
         date_obj = datetime.strptime(date_str, "%Y-%m-%d")
         day_name = calendar.day_name[date_obj.weekday()]
     except:
-        return jsonify({"msg": "Fecha inválida"}), 400
+        return jsonify({"message": {"type": "error", "msg": "Fecha inválida"}}), 400
 
     relation = BarberBarbershop.query.filter_by(
         barber_id=barber_id,
@@ -1663,7 +1666,7 @@ def get_availability():
     for sch in new_schedule:
         current_time = datetime.combine(date_obj.date(), sch.start_time)
         end_time_limit = datetime.combine(date_obj.date(), sch.end_time)
-        
+
 
         while current_time < end_time_limit:
             slot_end_dt = current_time + timedelta(minutes=duration)
@@ -1703,8 +1706,8 @@ def get_availability():
 
 # ENDPOINTS PARA LOS CHATS
 
-@api.route("/conversations", methods=["GET"])
-@jwt_required()
+@ api.route("/conversations", methods=["GET"])
+@ jwt_required()
 def get_conversations():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -1719,25 +1722,25 @@ def get_conversations():
     elif role == "admin":
         pass
     else:
-        return jsonify({"msg": "Rol no autorizado para ver chats"}), 403
+        return jsonify({"message": {"type": "error", "msg": "Rol no autorizado para ver chats"}}), 403
 
     conversations = query.order_by(Conversation.last_message_at.desc()).all()
     return jsonify([c.serialize() for c in conversations]), 200
 
 
-@api.route('/conversations', methods=['POST'])
-@jwt_required()
+@ api.route('/conversations', methods=['POST'])
+@ jwt_required()
 def create_conversation():
     current_user_id = get_jwt_identity()
     body = request.get_json()
     barbershop_id = body.get("barbershop_id")
 
     if not barbershop_id:
-        return jsonify({"msg": "Falta el ID de la barbería"}), 400
+        return jsonify({"message": {"type": "error", "msg": "Falta el ID de la barbería"}}), 400
 
     barbershop = Barbershop.query.get(barbershop_id)
     if not barbershop:
-        return jsonify({"msg": "La barbería no existe"}), 404
+        return jsonify({"message": {"type": "error", "msg": "La barbería no existe"}}), 404
 
     owner_id = barbershop.owner_id
 
@@ -1761,8 +1764,8 @@ def create_conversation():
     return jsonify(new_conv.serialize()), 201
 
 
-@api.route("/conversations/<int:conv_id>/messages", methods=["GET"])
-@jwt_required()
+@ api.route("/conversations/<int:conv_id>/messages", methods=["GET"])
+@ jwt_required()
 def get_conversation_messages(conv_id):
     current_user_id = str(get_jwt_identity())
     claims = get_jwt()
@@ -1770,20 +1773,20 @@ def get_conversation_messages(conv_id):
 
     conv = Conversation.query.get(conv_id)
     if not conv:
-        return jsonify({"msg": "Conversación no encontrada"}), 404
+        return jsonify({"message": {"type": "error", "msg": "Conversación no encontrada"}}), 404
 
     is_owner = str(conv.owner_id) == current_user_id
     is_user = str(conv.user_id) == current_user_id
     is_admin = (role == "admin")
 
     if not (is_owner or is_user or is_admin):
-        return jsonify({"msg": "No tienes permiso para ver este chat"}), 403
+        return jsonify({"message": {"type": "error", "msg": "No tienes permiso para ver este chat"}}), 403
 
     return jsonify([m.serialize() for m in conv.chat_messages]), 200
 
 
-@api.route("/messages", methods=["POST"])
-@jwt_required()
+@ api.route("/messages", methods=["POST"])
+@ jwt_required()
 def send_message():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
@@ -1794,7 +1797,7 @@ def send_message():
     conversation_id = data.get("conversation_id")
 
     if not content or not conversation_id:
-        return jsonify({"msg": "Faltan datos obligatorios"}), 400
+        return jsonify({"message": {"type": "error", "msg": "Faltan datos obligatorios"}}), 400
 
     new_message = ChatMessage(
         conversation_id=conversation_id,
@@ -1821,8 +1824,8 @@ def send_message():
     return jsonify(new_message.serialize()), 201
 
 
-@api.route("/messages/<int:message_id>", methods=["DELETE"])
-@jwt_required()
+@ api.route("/messages/<int:message_id>", methods=["DELETE"])
+@ jwt_required()
 def delete_message(message_id):
     claims = get_jwt()
 
@@ -1842,8 +1845,8 @@ def delete_message(message_id):
         return jsonify({"message": {"type": "error", "msg": str(e)}}), 500
 
 
-@api.route("/conversations/<int:conv_id>", methods=["DELETE"])
-@jwt_required()
+@ api.route("/conversations/<int:conv_id>", methods=["DELETE"])
+@ jwt_required()
 def delete_conversation(conv_id):
     claims = get_jwt()
 
@@ -1865,16 +1868,16 @@ def delete_conversation(conv_id):
 
 # ENDPOINTS DE IA
 
-@api.route('/edit-hair', methods=['POST'])
+@ api.route('/edit-hair', methods=['POST'])
 def edit_hair():
     stability_key = os.getenv("STABILITY_API_KEY")
     translator = deepl.Translator(os.environ.get('DEEPL_API_KEY'))
 
     if not stability_key:
-        return jsonify({"msg": "Error: API Key no configurada en el servidor"}), 500
+        return jsonify({"message": {"type": "error", "msg": "Error: API Key no configurada en el servidor"}}), 500
 
     if 'image' not in request.files:
-        return jsonify({"msg": "No se ha subido ninguna imagen"}), 400
+        return jsonify({"message": {"type": "error", "msg": "No se ha subido ninguna imagen"}}), 400
 
     image = request.files['image']
     prompt = request.form.get('prompt')
@@ -1905,16 +1908,16 @@ def edit_hair():
             }), 200
         else:
             error_data = response.json()
-            return jsonify({"msg": f"Error de IA: {error_data.get('errors')}"}), response.status_code
+            return jsonify({"message": {"type": "error", "msg": f"Error de IA: {error_data.get('errors')}"}}), response.status_code
 
     except Exception as e:
-        return jsonify({"msg": "Fallo en la conexión con el servicio de IA"}), 500
+        return jsonify({"message": {"type": "error", "msg": "Fallo en la conexión con el servicio de IA"}}), 500
 
 
 # ENPOINTS DE STRIPE
 
-@api.route('/verify-subscription', methods=['GET'])
-@jwt_required()
+@ api.route('/verify-subscription', methods=['GET'])
+@ jwt_required()
 def check_subscription_status():
     current_user_id = get_jwt_identity()
     owner = Owner.query.get(current_user_id)
@@ -1964,8 +1967,8 @@ def check_subscription_status():
         return jsonify({"active_subscription": False, "error": str(e)}), 500
 
 
-@api.route('/activate-subscription', methods=['POST'])
-@jwt_required()
+@ api.route('/activate-subscription', methods=['POST'])
+@ jwt_required()
 def activate_subscription():
     current_user_id = get_jwt_identity()
     owner = Owner.query.get(current_user_id)
@@ -1973,7 +1976,7 @@ def activate_subscription():
     session_id = data.get('session_id')
 
     if not owner or not session_id:
-        return jsonify({"msg": "Datos incompletos"}), 400
+        return jsonify({"message": {"type": "error", "msg": "Datos incompletos"}}), 400
 
     try:
         session = stripe.checkout.Session.retrieve(session_id)
@@ -1990,13 +1993,13 @@ def activate_subscription():
     return jsonify({"active_subscription": False}), 400
 
 
-@api.route('/create-checkout-session', methods=['POST'])
-@jwt_required()
+@ api.route('/create-checkout-session', methods=['POST'])
+@ jwt_required()
 def create_checkout_session():
     current_user_id = get_jwt_identity()
     claims = get_jwt()
     if claims.get("role") != "owner":
-        return jsonify({"msg": "No tienes permisos"}), 403
+        return jsonify({"message": {"type": "error", "msg": "No tienes permisos"}}), 403
 
     data = request.json
 
@@ -2022,9 +2025,7 @@ def create_checkout_session():
         return jsonify({'url': session.url})
     except Exception as e:
         return jsonify(error=str(e)), 500
-    
+
 
 
 # NO TOCAR
-
-

@@ -123,7 +123,7 @@ export const ClientRegister = () => {
             if (!response.ok) {
                 dispatch({ 
                     type: "set-message", 
-                    payload: { type: "error", msg: data.msg || "Algo ha fallado" } 
+                    payload: { type: "error", msg: data.message?.msg || "Algo ha fallado" } 
                 });
                 return;
             }

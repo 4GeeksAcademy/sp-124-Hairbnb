@@ -128,7 +128,7 @@ export const OwnerRegister = () => {
             if (!response.ok) {
                 dispatch({
                     type: "set-message",
-                    payload: { type: "error", msg: data.msg || "Error al procesar los datos" }
+                    payload: { type: "error", msg: data.message?.msg || "Error al procesar los datos" }
                 });
                 return;
             }

@@ -36,7 +36,7 @@ export const ClientLogin = () => {
             if (!response.ok) {
                 dispatch({
                     type: "set-message",
-                    payload: { type: "error", msg: data.msg || "Credenciales incorrectas" }
+                    payload: { type: "error", msg: data.message?.msg || "Credenciales incorrectas" }
                 });
                 return;
             }

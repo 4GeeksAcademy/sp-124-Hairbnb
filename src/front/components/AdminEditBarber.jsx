@@ -109,7 +109,7 @@ export const AdminEditBarber = () => {
             } else {
                 dispatch({
                     type: "set-message",
-                    payload: { type: "error", msg: data.msg || "Algo ha fallado al guardar" }
+                    payload: { type: "error", msg: data.message?.msg || "Algo ha fallado al guardar" }
                 });
             }
 

@@ -30,20 +30,31 @@ export const Subscription = () => {
                 setStatus("pricing");
                 dispatch({ type: "set-message", payload: { type: "error", msg: "Error al validar el pago" } });
             }
-        } catch (error) { setStatus("pricing"); }
+        } catch (error) {
+            setStatus("pricing");
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión al validar el pago" } });
+        }
     };
 
     const handleSubscribe = async (plan) => {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/create-checkout-session`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${store.token || localStorage.getItem("token")}`
-            },
-            body: JSON.stringify({ plan })
-        });
-        const data = await response.json();
-        if (data.url) window.location.href = data.url;
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/create-checkout-session`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${store.token || localStorage.getItem("token")}`
+                },
+                body: JSON.stringify({ plan })
+            });
+            const data = await response.json();
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                dispatch({ type: "set-message", payload: { type: "error", msg: "No se pudo iniciar el proceso de pago" } });
+            }
+        } catch (error) {
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión con el servidor de pagos" } });
+        }
     };
 
     return (

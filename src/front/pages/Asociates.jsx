@@ -173,9 +173,14 @@ export const Asociates = () => {
                 body: JSON.stringify({ barbershop_id: barbershopId })
             });
             const data = await response.json();
-            if (response.ok) navigate("/private/client", { state: { activeChatId: data.id } });
+            if (response.ok) {
+                navigate("/private/client", { state: { activeChatId: data.id } });
+            } else {
+                dispatch({ type: "set-message", payload: { type: "error", msg: data.message?.msg || "Error al iniciar el chat" } });
+            }
         } catch (error) {
             console.error("Error:", error);
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
         }
     };
 

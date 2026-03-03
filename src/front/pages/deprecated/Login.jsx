@@ -32,7 +32,7 @@ export const Login = () => {
             if (!response.ok) {
                 dispatch({
                     type: "set-message",
-                    payload: { type: "error", msg: data.msg || `Error ${response.status}` }
+                    payload: { type: "error", msg: data.message || `Error ${response.status}` }
                 });
                 return;
             }

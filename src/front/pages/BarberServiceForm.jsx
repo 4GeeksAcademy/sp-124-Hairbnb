@@ -44,7 +44,7 @@ export const BarberServiceForm = () => {
         const token = store.token || localStorage.getItem("token");
 
         if (!token) {
-            alert("Tu sesión ha caducado. Por favor, vuelve a iniciar sesión.");
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Tu sesión ha caducado. Por favor, vuelve a iniciar sesión." } });
             navigate("/login");
             return;
         }
@@ -68,9 +68,14 @@ export const BarberServiceForm = () => {
                 dispatch({ type: "set-barber_serviceInfo", payload: null });
                 dispatch({ type: "set-message", payload: { type: "success", msg: `Servicio ${isEditing ? "actualizado" : "creado"} correctamente` } });
                 navigate(-1);
+            } else {
+                const errData = await response.json();
+                dispatch({ type: "set-message", payload: { type: "error", msg: errData.message?.msg || "Error al guardar el servicio" } });
             }
+            // ...
         } catch (error) {
             console.error("Error en la petición:", error);
+            dispatch({ type: "set-message", payload: { type: "error", msg: "Error de conexión" } });
         }
     };
 

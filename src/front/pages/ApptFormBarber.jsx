@@ -158,8 +158,11 @@ export const ApptFormBarber = () => {
             });
             if (resp.ok) {
                 dispatch({ type: "set-appointmentInfo", payload: null });
-                dispatch({ type: "set-message", payload: { "type": "success", "msg": "Cita registrada" } });
+                dispatch({ type: "set-message", payload: { type: "success", msg: "Cita registrada" } });
                 navigate(-1);
+            } else {
+                const errData = await resp.json();
+                dispatch({ type: "set-message", payload: { type: "error", msg: errData.message?.msg || "Error al guardar la cita" } });
             }
         } catch (e) { console.error(e); }
     };
