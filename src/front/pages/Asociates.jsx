@@ -237,7 +237,7 @@ export const Asociates = () => {
                 <div className="col-12 col-lg-7" style={{ height: '70vh', minHeight: '400px', padding: 0, position: 'relative' }}>
 
                     <Map
-                        style={{ width: '100%', height: '100%' }}
+                        style={{ width: '100%', height: '100%', borderRadius: "25%" }}
                         defaultCenter={{ lat: 41.503, lng: -5.741 }}
                         defaultZoom={15}
                         mapId="4f33f0e7f6ab915e"

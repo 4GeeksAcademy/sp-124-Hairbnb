@@ -138,7 +138,7 @@ export const BarberRegister = () => {
             if (!response.ok) {
                 dispatch({ 
                     type: "set-message", 
-                    payload: { type: "error", msg: data.msg || "Error en la operación" } 
+                    payload: { type: "error", msg: data.msg } 
                 });
                 return;
             }
